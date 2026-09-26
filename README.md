@@ -136,12 +136,11 @@ HTML 里凡是可以替换的位置都留了 `<!-- EDIT: ... -->` 注释，用�
 |------|------|
 | 首页 4 个数字（128+ / 3600+ / 46 / 12） | `index.html` 的 `data-count` 与 `data-suffix` |
 | 服务时长占比（34% / 22% …） | `index.html` 的 `data-fill` 与显示用的 `34%` 文本 |
-| 联系邮箱 `volunteer@guis.example.com` | `index.html` 与 `join.html` 的 `mailto:` 与 Outlook 深链（共 4 处） |
+| 联系邮箱 `volunteer@guiscn.com` | `index.html`（`mailto:` + 显示文字 + Outlook 深链）与 `join.html`（Outlook 深链） |
 | 发展历程 6 个节点 | `index.html` 的 `#journey` 区块 |
 | 4 个重点项目 | `index.html` 的 `#projects` 区块 |
 
-> 联系邮箱目前是 `guis.example.com`（不可路由的保留域名），**上线前务必换成真实邮箱**，
-> 可用 `grep -rn "guis.example.com" .` 一次找出全部位置。
+> 邮箱若需要改动，用 `grep -rn "volunteer@guiscn.com" .` 可以一次找出全部位置。
 
 ---
 
