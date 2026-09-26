@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-title="doc.title">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GUIS 义工社 | 广州优联国际学校学生志愿服务组织</title>
+<meta name="description" content="广州优联国际学校（GUIS）义工社 —— 由学生自主运营的志愿服务组织。社区关怀、环保行动、教育支持、公益募捐、赛事会务与文化交流。" />
+<meta name="theme-color" content="#FFFFFF" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png" />
+<link rel="apple-touch-icon" href="assets/logo/favicon.png" />
+
+<!-- Open Graph -->
+<meta property="og:type" content="website" />
+<meta property="og:title" content="GUIS 义工社 | 广州优联国际学校学生志愿服务组织" />
+<meta property="og:description" content="让每一份善意都落到实地。社区关怀、环保行动、教育支持、公益募捐、赛事会务与文化交流。" />
+<meta property="og:image" content="assets/logo/guis-logo-h.png" />
+
+<link rel="stylesheet" href="assets/site.css" />
+<script>document.documentElement.classList.add("js");</script>
+</head>
+<body>
+
+<!-- Ambient background -->
+<div class="bg" aria-hidden="true">
+  <div class="bg-mesh"></div>
+  <div class="bg-blob blob-a"></div>
+  <div class="bg-blob blob-b"></div>
+  <div class="bg-blob blob-c"></div>
+  <img class="bg-emblem" src="assets/logo/guis-emblem.png" alt="" />
+</div>
+<div class="spotlight" id="spotlight"></div>
+
+<!-- Navigation -->
+<nav>
+  <a href="#home" class="nav-logo">
+    <img class="logo-img" src="assets/logo/guis-logo-h.png" alt="Guangzhou Ulink International School" />
+    <span class="logo-div"></span>
+    <span class="org" data-i18n="nav.org">义工社</span>
+  </a>
+  <div class="nav-links">
+    <a href="#about" data-i18n="nav.about">关于我们</a>
+    <a href="#programs" data-i18n="nav.programs">服务项目</a>
+    <a href="#gallery" data-i18n="nav.gallery">志愿风采</a>
+    <a href="#team" data-i18n="nav.team">团队成员</a>
+    <a href="#journey" data-i18n="nav.journey">发展历程</a>
+    <a href="#contact" data-i18n="nav.contact">联系我们</a>
+    <a href="join.html" data-i18n="nav.join">招募信</a>
+    <div class="lang-switch" role="group" aria-label="Language / 语言">
+      <button class="lang-btn is-active" data-lang="zh" aria-pressed="true">中文</button>
+      <button class="lang-btn" data-lang="en" aria-pressed="false">EN</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ======================= HERO ======================= -->
+<header class="hero" id="home">
+  <img class="hero-logo reveal" src="assets/logo/guis-logo-v.png" alt="GUIS Guangzhou Ulink International School" />
+
+  <div class="hero-badge"><span class="dot"></span><span data-i18n="hero.badge">广州优联国际学校 · 学生志愿服务组织</span></div>
+
+  <h1 class="hero-title" data-i18n="hero.title">让每一份善意，都<span class="grad">落到实地</span>。</h1>
+
+  <p class="hero-sub" data-i18n="hero.sub">GUIS 义工社由学生自主运营。我们在校园与南沙社区之间，把想法变成有回响的行动 —— 一次探访、一场净滩、一间被重新点亮的图书角。</p>
+
+  <div class="hero-actions">
+    <a href="join.html" class="btn btn-primary" data-i18n="hero.cta1">阅读招募信</a>
+    <a href="#contact" class="btn btn-secondary" data-i18n="hero.cta2">加入我们</a>
+  </div>
+
+  <div class="scroll-hint"><span data-i18n="hero.scroll">向下浏览</span><span class="line"></span></div>
+</header>
+
+<main>
+
+  <!-- ======================= STATS ======================= -->
+  <section id="stats" style="padding-top:0;">
+    <div class="wrap">
+      <div class="stats reveal">
+        <!-- EDIT: 把下面数字换成义工社的真实数据 -->
+        <div class="stat">
+          <div class="num"><span data-count="128" data-suffix="+">0</span></div>
+          <div class="label" data-i18n="stat1.label">在册学生志愿者</div>
+        </div>
+        <div class="stat">
+          <div class="num"><span data-count="3600" data-suffix="+">0</span></div>
+          <div class="label" data-i18n="stat2.label">累计服务时长（小时）</div>
+        </div>
+        <div class="stat">
+          <div class="num"><span data-count="46">0</span></div>
+          <div class="label" data-i18n="stat3.label">本学年公益活动场次</div>
+        </div>
+        <div class="stat">
+          <div class="num"><span data-count="12">0</span></div>
+          <div class="label" data-i18n="stat4.label">长期合作社区与机构</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= ABOUT ======================= -->
+  <section id="about">
+    <div class="wrap">
+      <div class="two-col">
+        <div class="reveal">
+          <p class="eyebrow" data-i18n="about.eyebrow">关于我们</p>
+          <h2 class="section-title" data-i18n="about.title">一所学校，<span class="grad">一群愿意先动手的人</span>。</h2>
+          <div class="prose">
+            <p data-i18n="about.p1">GUIS 义工社成立于广州优联国际学校南沙校园，是<strong>由学生自主运营、学生事务处指导</strong>的志愿服务组织。我们把「知行合一」放进日程表：不只讨论公益，而是每周固定留出时间，去做一件具体、可被看见、可被复盘的事。</p>
+            <p data-i18n="about.p2">我们的服务半径从校园延伸到明珠湾与南沙社区。所有项目都由学生调研需求、设计方案、招募排班、现场执行，再一起复盘——失败的部分也写进记录，因为真实的经验比漂亮的总结更有用。</p>
+          </div>
+        </div>
+
+        <div class="block reveal d2">
+          <h3 style="font-size:1.05rem;font-weight:650;letter-spacing:-0.015em;margin-bottom:0.35rem;" data-i18n="about.listTitle">我们坚持的三件事</h3>
+          <ul class="bullets">
+            <li data-i18n="about.li1">服务前先调研：先弄清楚对方真正需要什么，再决定我们要做什么。</li>
+            <li data-i18n="about.li2">可持续而非一次性：能做成长期项目的事，就不只做一场活动。</li>
+            <li data-i18n="about.li3">记录与公开：服务时长、物资与款项全部留痕，可查询、可追溯。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="hairline" />
+
+  <!-- ======================= PROGRAMS ======================= -->
+  <section id="programs">
+    <div class="wrap">
+      <div class="reveal">
+        <p class="eyebrow" data-i18n="prog.eyebrow">服务项目</p>
+        <h2 class="section-title" data-i18n="prog.title">六大服务板块</h2>
+        <p class="lede" data-i18n="prog.lede">义工社下设六个项目组，各自有负责同学与固定排期，也经常联合行动。每个板块都从一件小事开始，一年一年往下做。</p>
+      </div>
+
+      <div class="grid">
+        <article class="card reveal d1">
+          <div class="card-tag" data-i18n="g1.tag">社区关怀</div>
+          <h3 data-i18n="g1.title">长者陪伴与社区探访</h3>
+          <p data-i18n="g1.desc">定期前往南沙社区探访独居与高龄长者，陪伴聊天、整理居家环境、协助使用智能设备，也帮社区记录他们的生活故事。</p>
+          <div class="chips">
+            <span class="chip" data-i18n="g1.k1">一个月两次</span>
+            <span class="chip" data-i18n="g1.k2">南沙社区</span>
+            <span class="chip" data-i18n="g1.k3">双语探访</span>
+          </div>
+        </article>
+
+        <article class="card reveal d2">
+          <div class="card-tag" data-i18n="g2.tag">环保行动</div>
+          <h3 data-i18n="g2.title">明珠湾净滩与环保倡导</h3>
+          <p data-i18n="g2.desc">沿明珠湾岸线开展周期性净滩，对捡拾物做分类称重与来源记录，并把数据整理成校园环保倡导材料。</p>
+          <div class="chips">
+            <span class="chip" data-i18n="g2.k1">每季度一次</span>
+            <span class="chip" data-i18n="g2.k2">垃圾分类记录</span>
+            <span class="chip" data-i18n="g2.k3">校园倡导</span>
+          </div>
+        </article>
+
+        <article class="card reveal d3">
+          <div class="card-tag" data-i18n="g3.tag">教育支持</div>
+          <h3 data-i18n="g3.title">周末课业辅导与阅读陪伴</h3>
+          <p data-i18n="g3.desc">为社区里的学龄儿童提供周末课业辅导与英文阅读陪伴，按学科分组、固定结对，一学期不换人，让关系有时间长起来。</p>
+          <div class="chips">
+            <span class="chip" data-i18n="g3.k1">每周六上午</span>
+            <span class="chip" data-i18n="g3.k2">固定结对</span>
+            <span class="chip" data-i18n="g3.k3">英文阅读</span>
+          </div>
+        </article>
+
+        <article class="card reveal d1">
+          <div class="card-tag" data-i18n="g4.tag">公益募捐</div>
+          <h3 data-i18n="g4.title">义卖市集与暖冬募集</h3>
+          <p data-i18n="g4.desc">组织校园义卖市集与季节性物资募集，从征集、定价、现场售卖到款项公示全程由学生完成，每一笔都有记录。</p>
+          <div class="chips">
+            <span class="chip" data-i18n="g4.k1">校园义卖</span>
+            <span class="chip" data-i18n="g4.k2">暖冬募集</span>
+            <span class="chip" data-i18n="g4.k3">款项公示</span>
+          </div>
+        </article>
+
+        <article class="card reveal d2">
+          <div class="card-tag" data-i18n="g5.tag">赛事与会务</div>
+          <h3 data-i18n="g5.title">校园活动与赛会志愿岗</h3>
+          <p data-i18n="g5.desc">为校运会、开放日、国际日等大型活动提供签到、引导、计时、后勤等志愿岗位，是很多新成员认识义工社的第一站。</p>
+          <div class="chips">
+            <span class="chip" data-i18n="g5.k1">校运会</span>
+            <span class="chip" data-i18n="g5.k2">校园开放日</span>
+            <span class="chip" data-i18n="g5.k3">计时与引导</span>
+          </div>
+        </article>
+
+        <article class="card reveal d3">
+          <div class="card-tag" data-i18n="g6.tag">国际文化交流</div>
+          <h3 data-i18n="g6.title">双语导览与文化交流日</h3>
+          <p data-i18n="g6.desc">在中外师生与来访家庭之间承担双语导览、翻译与文化活动策划，用语言把两个世界接在一起，也让新同学更快融入校园。</p>
+          <div class="chips">
+            <span class="chip" data-i18n="g6.k1">中英双语</span>
+            <span class="chip" data-i18n="g6.k2">校园导览</span>
+            <span class="chip" data-i18n="g6.k3">文化工作坊</span>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <hr class="hairline" />
+
+  <!-- ======================= GALLERY (工作照) ======================= -->
+  <section id="gallery">
+    <div class="wrap">
+      <div class="reveal">
+        <p class="eyebrow" data-i18n="gal.eyebrow">志愿风采</p>
+        <h2 class="section-title" data-i18n="gal.title">工作照</h2>
+        <p class="lede" data-i18n="gal.lede">每一次出勤都有人负责记录。这些照片来自过去一个学年的日常，点开可以看完整画面。</p>
+      </div>
+
+      <!-- EDIT: 把 assets/photos/shot-01.jpg ~ shot-08.jpg 换成真实工作照（保持文件名即可自动替换） -->
+      <div class="gallery reveal d1" id="gallery-grid">
+        <figure class="shot wide" data-caption-key="s1.cap">
+          <img src="assets/photos/shot-01.jpg" alt="" loading="lazy" />
+          <figcaption class="shot-cap" data-i18n="s1.cap">长者探访 · 南沙社区</figcaption>
+        </figure>
+        <figure class="shot tall" data-caption-key="s2.cap">
+          <img src="assets/photos/shot-02.jpg" alt="" loading="lazy" />
+          <figcaption class="shot-cap" data-i18n="s2.cap">明珠湾净滩 · 岸线清理</figcaption>
+        </figure>
+        <figure class="shot" data-caption-key="s3.cap">
+          <img src="assets/photos/shot-03.jpg" alt="" loading="lazy" />
+          <figcaption class="shot-cap" data-i18n="s3.cap">周末课业辅导 · 校内</figcaption>
+        </figure>
+        <figure class="shot" data-caption-key="s4.cap">
+          <img src="assets/photos/shot-04.jpg" alt="" loading="lazy" />
+          <figcaption class="shot-cap" data-i18n="s4.cap">慈善义卖市集 · 校园广场</figcaption>
+        </figure>
+        <figure class="shot" data-caption-key="s5.cap">
+          <img src="assets/photos/shot-05.jpg" alt="" loading="lazy" />
+          <figcaption class="shot-cap" data-i18n="s5.cap">暖冬衣物募集 · 分拣现场</figcaption>
+        </figure>
+        <figure class="shot wide" data-caption-key="s6.cap">
+          <img src="assets/photos/shot-06.jpg" alt="" loading="lazy" />
+          <figcaption class="shot-cap" data-i18n="s6.cap">校运会志愿岗 · 田径场</figcaption>
+        </figure>
+        <figure class="shot" data-caption-key="s7.cap">
+          <img src="assets/photos/shot-07.jpg" alt="" loading="lazy" />
+          <figcaption class="shot-cap" data-i18n="s7.cap">社区图书角整理 · 南沙</figcaption>
+        </figure>
+        <figure class="shot" data-caption-key="s8.cap">
+          <img src="assets/photos/shot-08.jpg" alt="" loading="lazy" />
+          <figcaption class="shot-cap" data-i18n="s8.cap">文化交流日 · 校园中庭</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <hr class="hairline" />
+
+  <!-- ======================= TEAM + 下拉履历 ======================= -->
+  <section id="team">
+    <div class="wrap">
+      <div class="reveal">
+        <p class="eyebrow" data-i18n="team.eyebrow">团队成员</p>
+        <h2 class="section-title" data-i18n="team.title">谁在把这件事往前推</h2>
+        <p class="lede" data-i18n="team.lede">义工社由学生执委会运营，下设六个项目组。点开每位成员下方的小三角，可以看到他／她在义工社的完整履历。</p>
+      </div>
+
+      <!-- EDIT: 以下为示例成员，请替换为义工社真实名单与履历 -->
+      <div class="team-grid">
+
+        <article class="member reveal d1">
+          <div class="member-top">
+            <div class="avatar">林</div>
+            <div class="member-id">
+              <div class="member-name" data-i18n="m1.name">林昭阳</div>
+              <div class="member-role" data-i18n="m1.role">社长 · 总负责</div>
+              <div class="member-meta" data-i18n="m1.meta">G12 · ULC 英式课程 · 2023 年入社</div>
+            </div>
+          </div>
+          <p class="bio" data-i18n="m1.bio">负责组织整体规划与对外沟通，牵头「一平米书房」社区阅读角改造项目。最关心的是：怎样让一个学生组织在两三年后依然运转得下去。</p>
+
+          <div class="cv">
+            <button class="cv-head" type="button" aria-expanded="false">
+              <span class="cv-label" data-i18n="ui.cv">查看履历</span>
+              <span class="cv-caret" aria-hidden="true"></span>
+            </button>
+            <div class="cv-body">
+              <div class="cv-inner">
+                <div class="cv-timeline">
+                  <div class="cv-item">
+                    <div class="cv-when" data-i18n="m1.c1.when">2023 · 秋</div>
+                    <div class="cv-what" data-i18n="m1.c1.what">发起义工社前身小组</div>
+                    <div class="cv-note" data-i18n="m1.c1.note">与十余名同学从校园图书整理与活动支持做起，第一学期完成 6 场小型服务。</div>
+                  </div>
+                  <div class="cv-item">
+                    <div class="cv-when" data-i18n="m1.c2.when">2024 · 春</div>
+                    <div class="cv-what" data-i18n="m1.c2.what">推动组织正式挂靠学生事务处</div>
+                    <div class="cv-note" data-i18n="m1.c2.note">建立招募、培训与工时记录三项制度，志愿者规模从 14 人扩展到 60 余人。</div>
+                  </div>
+                  <div class="cv-item">
+                    <div class="cv-when" data-i18n="m1.c3.when">2025 · 全年</div>
+                    <div class="cv-what" data-i18n="m1.c3.what">牵头「一平米书房」社区阅读角改造</div>
+                    <div class="cv-note" data-i18n="m1.c3.note">完成 3 个社区阅读角的选址、改造与图书上架，形成可复制的项目手册。</div>
+                  </div>
+                  <div class="cv-item">
+                    <div class="cv-when" data-i18n="m1.c4.when">2026 · 至今</div>
+                    <div class="cv-what" data-i18n="m1.c4.what">社长 · 建立六组并行架构</div>
+                    <div class="cv-note" data-i18n="m1.c4.note">重组为社区关怀、环保、教育、募捐、会务、交流六个项目组，各自设定年度目标。</div>
+                  </div>
+                </div>
+                <div class="cv-facts">
+                  <span class="cv-fact" data-i18n="m1.f1">累计服务 320 小时</span>
+                  <span class="cv-fact" data-i18n="m1.f2">项目统筹</span>
+                  <span class="cv-fact" data-i18n="m1.f3">中英双语</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="member reveal d2">
+          <div class="member-top">
+            <div class="avatar">陈</div>
+            <div class="member-id">
+              <div class="member-name" data-i18n="m2.name">陈嘉懿</div>
+              <div class="member-role" data-i18n="m2.role">副社长 · 项目统筹</div>
+              <div class="member-meta" data-i18n="m2.meta">G11 · NCPA 美式课程 · 2024 年入社</div>
+            </div>
+          </div>
+          <p class="bio" data-i18n="m2.bio">负责六个项目组的排期协调与物资预算，也是服务记录的维护人。习惯把每次活动都做成一份可复盘的表格。</p>
+
+          <div class="cv">
+            <button class="cv-head" type="button" aria-expanded="false">
+              <span class="cv-label" data-i18n="ui.cv">查看履历</span>
+              <span class="cv-caret" aria-hidden="true"></span>
+            </button>
+            <div class="cv-body">
+              <div class="cv-inner">
+                <div class="cv-timeline">
+                  <div class="cv-item">
+                    <div class="cv-when" data-i18n="m2.c1.when">2024 · 春</div>
+                    <div class="cv-what" data-i18n="m2.c1.what">加入义工社 · 会务志愿岗</div>
+                    <div class="cv-note" data-i18n="m2.c1.note">从校运会与开放日的签到引导岗开始，一学期累计出勤 11 场。</div>
+                  </div>
+                  <div class="cv-item">
+                    <div class="cv-when" data-i18n="m2.c2.when">2024 · 秋</div>
+                    <div class="cv-what" data-i18n="m2.c2.what">负责义卖市集的物资与账目</div>
+                    <div class="cv-note" data-i18n="m2.c2.note">设计摊位分配与实时记账表，两场义卖共募集并公示款项 18,600 元。</div>
+                  </div>
+                  <div class="cv-item">
+                    <div class="cv-when" data-i18n="m2.c3.when">2025 · 夏</div>
+                    <div class="cv-what" data-i18n="m2.c3.what">上线公益时数记录与公示机制</div>
+                    <div class="cv-note" data-i18n="m2.c3.note">统一工时口径与签到方式，让每位志愿者的服务时长可查询、可追溯。</div>
+                  </div>
+                  <div class="cv-item">
+                    <div class="cv-when" data-i18n="m2.c4.when">2026 · 至今</div>
+                    <div class="cv-what" data-i18n="m2.c4.what">副社长 · 项目统筹</div>
+                    <div class="cv-note" data-i18n="m2.c4.note">统筹六组排期与预算，把每场活动压缩成一份标准复盘模板。</div>
+                  </div>
+                </div>
+                <div class="cv-facts">
+                  <span class="cv-fact" data-i18n="m2.f1">累计服务 245 小时</span>
+                  <span class="cv-fact" data-i18n="m2.f2">预算与账目</span>
+                  <span class="cv-fact" data-i18n="m2.f3">数据记录</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="member reveal d3">
+          <div class="member-top">
+            <div class="avatar">黄</div>
+            <div class="member-id">
+              <div class="member-name" data-i18n="m3.name">黄乐怡</div>
+              <div class="member-role" data-i18n="m3.role">社区关怀组 · 组长</div>
+              <div class="member-meta" data-i18n="m3.meta">G11 · ULC 英式课程 · 2024 年入社</div>
+            </div>
+          </div>
+          <p class="bio" data-i18n="m3.bio">负责长者探访与社区联络。她把每次探访的口述记录整理成小册子，交回给社区和长者的家人。</p>
+
+          <div class="cv">
+            <button class="cv-head" type="button" aria-expanded="false">
+              <span class="cv-label" data-i18n="ui.cv">查看履历</span>
+              <span class="cv-caret" aria-hidden="true"></span>
+            </button>
+            <div class="cv-body">
+              <div class="cv-inner">
+                <div class="cv-timeline">
+                  <div class="cv-item">
+                    <div class="cv-when" data-i18n="m3.c1.when">2024 · 秋</div>
+                    <div class="cv-what" data-i18n="m3.c1.what">加入社区关怀组</div>
+                    <div class="cv-note" data-i18n="m3.c1.note">参与南沙社区首批长者入户探访，学习粤语问候与探访礼仪。</div>
+                  </div>
+                  <div class="cv-item">
+                    <div class="cv-when" data-i18n="m3.c2.when">2025 · 春</div>
+                    <div class="cv-what" data-i18n="m3.c2.what">发起「口述故事」记录计划</div>
+                    <div class="cv-note" data-i18n="m3.c2.note">为 14 位长者整理口述回忆并做成手写册，作为社区档案留存。</div>
+                  </div>
+                  <div class="cv-item">
+                    <div class="cv-when" data-i18n="m3.c3.when">2025 · 秋</div>
+                    <div class="cv-what" data-i18n="m3.c3.what">负责新志愿者探访培训</div>
+                    <div class="cv-note" data-i18n="m3.c3.note">编写 8 页探访手册，把「先听懂再帮忙」变成可教的流程。</div>
+                  </div>
+                  <div class="cv-item">
+                    <div class="cv-when" data-i18n="m3.c4.when">2026 · 至今</div>
+                    <div class="cv-what" data-i18n="m3.c4.what">社区关怀组组长</div>
+                    <div class="cv-note" data-i18n="m3.c4.note">固定一月两次探访排期，与 3 个社区建立长期对接关系。</div>
+                  </div>
+                </div>
+                <div class="cv-facts">
+                  <span class="cv-fact" data-i18n="m3.f1">累计服务 210 小时</span>
+                  <span class="cv-fact" data-i18n="m3.f2">长者探访</span>
+                  <span class="cv-fact" data-i18n="m3.f3">粤语 / 普通话</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="member reveal d1">
+          <div class="member-top">
+            <div class="avatar">苏</div>
+            <div class="member-id">
+              <div class="member-name" data-i18n="m4.name">苏文轩</div>
+              <div class="member-role" data-i18n="m4.role">环保行动组 · 组长</div>
+              <div class="member-meta" data-i18n="m4.meta">G10 · ULC 英式课程 · 2025 年入社</div>
+            </div>
+          </div>
+          <p class="bio" data-i18n="m4.bio">负责明珠湾净滩行动。坚持每次捡拾都称重、分类、记录来源，因为他相信「没有数据的环保只是心情」。</p>
+
+          <div class="cv">
+            <button class="cv-head" type="button" aria-expanded="false">
+              <span class="cv-label" data-i18n="ui.cv">查看履历</span>
+              <span class="cv-caret" aria-hidden="true"></span>
+            </button>
+            <div class="cv-body">
+              <div class="cv-inner">
+                <div class="cv-timeline">
+                  <div class="cv-item">
+                    <div class="cv-when" data-i18n="m4.c1.when">2025 · 春</div>
+                    <div class="cv-what" data-i18n="m4.c1.what">加入环保行动组</div>
+                    <div class="cv-note" data-i18n="m4.c1.note">首次参与明珠湾净滩，负责垃圾分类与称重记录。</div>
+                  </div>
+                  <div class="cv-item">
+                    <div class="cv-when" data-i18n="m4.c2.when">2025 · 秋</div>
+                    <div class="cv-what" data-i18n="m4.c2.what">设计净滩数据记录表</div>
+                    <div class="cv-note" data-i18n="m4.c2.note">按材质分类统计捡拾物重量与来源，为校园环保倡导提供依据。</div>
+                  </div>
+                  <div class="cv-item">
+                    <div class="cv-when" data-i18n="m4.c3.when">2026 · 春</div>
+                    <div class="cv-what" data-i18n="m4.c3.what">牵头校园减塑倡导周</div>
+                    <div class="cv-note" data-i18n="m4.c3.note">用净滩数据做成展板与宣讲，覆盖中高年级 12 个班级。</div>
+                  </div>
+                  <div class="cv-item">
+                    <div class="cv-when" data-i18n="m4.c4.when">2026 · 至今</div>
+                    <div class="cv-what" data-i18n="m4.c4.what">环保行动组组长</div>
+                    <div class="cv-note" data-i18n="m4.c4.note">把净滩固定为每季度一次，累计动员 210 人次参与。</div>
+                  </div>
+                </div>
+                <div class="cv-facts">
+                  <span class="cv-fact" data-i18n="m4.f1">累计服务 165 小时</span>
+                  <span class="cv-fact" data-i18n="m4.f2">净滩与分类</span>
+                  <span class="cv-fact" data-i18n="m4.f3">数据记录</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="member reveal d2">
+          <div class="member-top">
+            <div class="avatar">何</div>
+            <div class="member-id">
+              <div class="member-name" data-i18n="m5.name">何静仪</div>
+              <div class="member-role" data-i18n="m5.role">宣传与记录组 · 组长</div>
+              <div class="member-meta" data-i18n="m5.meta">G11 · NCPA 美式课程 · 2024 年入社</div>
+            </div>
+          </div>
+          <p class="bio" data-i18n="m5.bio">负责影像记录、公众号与展板。她说照片要拍得真实，「让人看见事情本来的样子，而不是我们想被看见的样子」。</p>
+
+          <div class="cv">
+            <button class="cv-head" type="button" aria-expanded="false">
+              <span class="cv-label" data-i18n="ui.cv">查看履历</span>
+              <span class="cv-caret" aria-hidden="true"></span>
+            </button>
+            <div class="cv-body">
+              <div class="cv-inner">
+                <div class="cv-timeline">
+                  <div class="cv-item">
+                    <div class="cv-when" data-i18n="m5.c1.when">2024 · 秋</div>
+                    <div class="cv-what" data-i18n="m5.c1.what">加入宣传与记录组</div>
+                    <div class="cv-note" data-i18n="m5.c1.note">跟随义卖与探访活动拍摄，建立社团影像归档规则。</div>
+                  </div>
+                  <div class="cv-item">
+                    <div class="cv-when" data-i18n="m5.c2.when">2025 · 春</div>
+                    <div class="cv-what" data-i18n="m5.c2.what">建立服务影像档案</div>
+                    <div class="cv-note" data-i18n="m5.c2.note">按项目与学期归档照片，并制定涉及长者与儿童肖像的使用规范。</div>
+                  </div>
+                  <div class="cv-item">
+                    <div class="cv-when" data-i18n="m5.c3.when">2025 · 秋</div>
+                    <div class="cv-what" data-i18n="m5.c3.what">负责学年成果展</div>
+                    <div class="cv-note" data-i18n="m5.c3.note">策划并执行校园公益成果展，展出 80 余张工作照与数据展板。</div>
+                  </div>
+                  <div class="cv-item">
+                    <div class="cv-when" data-i18n="m5.c4.when">2026 · 至今</div>
+                    <div class="cv-what" data-i18n="m5.c4.what">宣传与记录组组长</div>
+                    <div class="cv-note" data-i18n="m5.c4.note">每场活动安排记录岗，做到「有人做、也有人记」。</div>
+                  </div>
+                </div>
+                <div class="cv-facts">
+                  <span class="cv-fact" data-i18n="m5.f1">累计服务 190 小时</span>
+                  <span class="cv-fact" data-i18n="m5.f2">影像与排版</span>
+                  <span class="cv-fact" data-i18n="m5.f3">展陈策划</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="member reveal d3">
+          <div class="member-top">
+            <div class="avatar">张</div>
+            <div class="member-id">
+              <div class="member-name" data-i18n="m6.name">张亦驰</div>
+              <div class="member-role" data-i18n="m6.role">外联与合作组 · 组长</div>
+              <div class="member-meta" data-i18n="m6.meta">G12 · NCPA 美式课程 · 2023 年入社</div>
+            </div>
+          </div>
+          <p class="bio" data-i18n="m6.bio">负责与社区、公益机构及学校部门的对接。他的工作常常是打很多电话、写很多邮件，把「想做」变成「可以约上时间做」。</p>
+
+          <div class="cv">
+            <button class="cv-head" type="button" aria-expanded="false">
+              <span class="cv-label" data-i18n="ui.cv">查看履历</span>
+              <span class="cv-caret" aria-hidden="true"></span>
+            </button>
+            <div class="cv-body">
+              <div class="cv-inner">
+                <div class="cv-timeline">
+                  <div class="cv-item">
+                    <div class="cv-when" data-i18n="m6.c1.when">2023 · 秋</div>
+                    <div class="cv-what" data-i18n="m6.c1.what">加入义工社前身小组</div>
+                    <div class="cv-note" data-i18n="m6.c1.note">负责校内活动对接，是小组与学校部门之间的第一联系人。</div>
+                  </div>
+                  <div class="cv-item">
+                    <div class="cv-when" data-i18n="m6.c2.when">2024 · 秋</div>
+                    <div class="cv-what" data-i18n="m6.c2.what">建立首批校外合作渠道</div>
+                    <div class="cv-note" data-i18n="m6.c2.note">对接南沙街道社区中心与本地公益机构，落实长期服务点位。</div>
+                  </div>
+                  <div class="cv-item">
+                    <div class="cv-when" data-i18n="m6.c3.when">2025 · 全年</div>
+                    <div class="cv-what" data-i18n="m6.c3.what">推动暖冬衣物募集合作</div>
+                    <div class="cv-note" data-i18n="m6.c3.note">协调募集、运输与分拣环节，两季共募集衣物约 1,200 件。</div>
+                  </div>
+                  <div class="cv-item">
+                    <div class="cv-when" data-i18n="m6.c4.when">2026 · 至今</div>
+                    <div class="cv-what" data-i18n="m6.c4.what">外联与合作组组长</div>
+                    <div class="cv-note" data-i18n="m6.c4.note">维护 12 家长期合作社区与机构的对接人清单与年度沟通计划。</div>
+                  </div>
+                </div>
+                <div class="cv-facts">
+                  <span class="cv-fact" data-i18n="m6.f1">累计服务 280 小时</span>
+                  <span class="cv-fact" data-i18n="m6.f2">对外联络</span>
+                  <span class="cv-fact" data-i18n="m6.f3">中英双语</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <hr class="hairline" />
+
+  <!-- ======================= SERVICE TIME DISTRIBUTION ======================= -->
+  <section id="contribution">
+    <div class="wrap">
+      <div class="reveal">
+        <p class="eyebrow" data-i18n="ct.eyebrow">服务分布</p>
+        <h2 class="section-title" data-i18n="ct.title">本学年服务时长分布</h2>
+        <p class="lede" data-i18n="ct.lede">按项目板块统计的服务时长占比（2025–26 学年）。数据每学期更新一次，口径与每位志愿者的个人工时记录一致。</p>
+      </div>
+
+      <!-- EDIT: 换成真实统计占比 -->
+      <div class="skills reveal d2">
+        <div class="skill">
+          <div class="skill-head"><span class="skill-name" data-i18n="ct.s1">社区关怀与长者陪伴</span><span class="skill-val">34%</span></div>
+          <div class="bar"><span data-fill="34"></span></div>
+        </div>
+        <div class="skill">
+          <div class="skill-head"><span class="skill-name" data-i18n="ct.s2">环保与可持续行动</span><span class="skill-val">22%</span></div>
+          <div class="bar"><span data-fill="22"></span></div>
+        </div>
+        <div class="skill">
+          <div class="skill-head"><span class="skill-name" data-i18n="ct.s3">教育支持与课业辅导</span><span class="skill-val">18%</span></div>
+          <div class="bar"><span data-fill="18"></span></div>
+        </div>
+        <div class="skill">
+          <div class="skill-head"><span class="skill-name" data-i18n="ct.s4">公益募捐与义卖</span><span class="skill-val">14%</span></div>
+          <div class="bar"><span data-fill="14"></span></div>
+        </div>
+        <div class="skill">
+          <div class="skill-head"><span class="skill-name" data-i18n="ct.s5">赛事与会务支持</span><span class="skill-val">8%</span></div>
+          <div class="bar"><span data-fill="8"></span></div>
+        </div>
+        <div class="skill">
+          <div class="skill-head"><span class="skill-name" data-i18n="ct.s6">文化交流与对外联络</span><span class="skill-val">4%</span></div>
+          <div class="bar"><span data-fill="4"></span></div>
+        </div>
+      </div>
+
+      <div class="chips reveal d3" style="margin-top:2rem;">
+        <span class="chip" data-i18n="sk1">需求调研</span>
+        <span class="chip" data-i18n="sk2">活动策划</span>
+        <span class="chip" data-i18n="sk3">志愿者培训</span>
+        <span class="chip" data-i18n="sk4">现场执行</span>
+        <span class="chip" data-i18n="sk5">记录与复盘</span>
+        <span class="chip" data-i18n="sk6">物资统筹</span>
+        <span class="chip" data-i18n="sk7">对外联络</span>
+        <span class="chip" data-i18n="sk8">财务公开</span>
+        <span class="chip" data-i18n="sk9">安全预案</span>
+        <span class="chip" data-i18n="sk10">成效评估</span>
+      </div>
+    </div>
+  </section>
+
+  <hr class="hairline" />
+
+  <!-- ======================= ROSTER ======================= -->
+  <section id="roster">
+    <div class="wrap">
+      <div class="reveal">
+        <p class="eyebrow" data-i18n="ro.eyebrow">岗位一览</p>
+        <h2 class="section-title" data-i18n="ro.title">常态化志愿岗位</h2>
+        <p class="lede" data-i18n="ro.lede">新成员从这些岗位开始。每个岗位都有固定的带队同学与上岗前培训，不需要经验，但需要守时。</p>
+      </div>
+
+      <div class="courses reveal d2">
+        <div class="course"><span class="code">VOL-01</span><span class="name" data-i18n="ro1.name">长者陪伴探访</span><span class="tag" data-i18n="ro1.tag">社区关怀</span></div>
+        <div class="course"><span class="code">VOL-02</span><span class="name" data-i18n="ro2.name">明珠湾净滩与分类记录</span><span class="tag" data-i18n="ro2.tag">环保行动</span></div>
+        <div class="course"><span class="code">VOL-03</span><span class="name" data-i18n="ro3.name">周末课业辅导与阅读陪伴</span><span class="tag" data-i18n="ro3.tag">教育支持</span></div>
+        <div class="course"><span class="code">VOL-04</span><span class="name" data-i18n="ro4.name">义卖市集摊位与收银</span><span class="tag" data-i18n="ro4.tag">公益募捐</span></div>
+        <div class="course"><span class="code">VOL-05</span><span class="name" data-i18n="ro5.name">校运会与开放日志愿岗</span><span class="tag" data-i18n="ro5.tag">赛事会务</span></div>
+        <div class="course"><span class="code">VOL-06</span><span class="name" data-i18n="ro6.name">双语导览与文化工作坊</span><span class="tag" data-i18n="ro6.tag">国际交流</span></div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="hairline" />
+
+  <!-- ======================= PROJECTS ======================= -->
+  <section id="projects">
+    <div class="wrap">
+      <div class="reveal">
+        <p class="eyebrow" data-i18n="pj.eyebrow">重点项目</p>
+        <h2 class="section-title" data-i18n="pj.title">四个做得比较久的项目</h2>
+        <p class="lede" data-i18n="pj.lede">它们都不是一次性的活动，而是有固定周期、固定负责人、固定记录方式的长期项目。</p>
+      </div>
+
+      <div class="grid">
+        <article class="card project reveal d1">
+          <div class="card-tag" data-i18n="pj1.tag">社区关怀</div>
+          <h3 data-i18n="pj1.title">「一平米书房」社区阅读角改造</h3>
+          <p data-i18n="pj1.desc">把社区里闲置的一角改造成儿童阅读空间：墙面翻新、书架自建、图书分类上架，并排定每周的伴读值班表。</p>
+          <div class="metrics">
+            <div class="metric"><div class="m-label" data-i18n="ui.when">时间</div><div class="m-value" data-i18n="pj1.a">2025 年秋起 · 长期</div></div>
+            <div class="metric"><div class="m-label" data-i18n="ui.scale">规模</div><div class="m-value" data-i18n="pj1.b">32 名志愿者 · 3 个阅读角</div></div>
+            <div class="metric"><div class="m-label" data-i18n="ui.partner">合作</div><div class="m-value" data-i18n="pj1.c">南沙街道社区中心</div></div>
+          </div>
+        </article>
+
+        <article class="card project reveal d2">
+          <div class="card-tag" data-i18n="pj2.tag">环保行动</div>
+          <h3 data-i18n="pj2.title">明珠湾净滩系列行动</h3>
+          <p data-i18n="pj2.desc">沿明珠湾岸线周期性清理垃圾，按材质分类称重并记录来源，再把数据转化成校园减塑倡导的展板与宣讲内容。</p>
+          <div class="metrics">
+            <div class="metric"><div class="m-label" data-i18n="ui.when">时间</div><div class="m-value" data-i18n="pj2.a">每季度一次</div></div>
+            <div class="metric"><div class="m-label" data-i18n="ui.scale">规模</div><div class="m-value" data-i18n="pj2.b">累计 210 人次</div></div>
+            <div class="metric"><div class="m-label" data-i18n="ui.partner">合作</div><div class="m-value" data-i18n="pj2.c">明珠湾生态志愿队</div></div>
+          </div>
+        </article>
+
+        <article class="card project reveal d3">
+          <div class="card-tag" data-i18n="pj3.tag">公益募捐</div>
+          <h3 data-i18n="pj3.title">「暖冬」衣物募集与分拣</h3>
+          <p data-i18n="pj3.desc">面向全校征集冬季衣物，按尺码与季节分类、清洗检查、打包贴标，再交由本地公益仓统一配送。全程公示流向。</p>
+          <div class="metrics">
+            <div class="metric"><div class="m-label" data-i18n="ui.when">时间</div><div class="m-value" data-i18n="pj3.a">每年 11–12 月</div></div>
+            <div class="metric"><div class="m-label" data-i18n="ui.scale">规模</div><div class="m-value" data-i18n="pj3.b">募集衣物约 1,200 件</div></div>
+            <div class="metric"><div class="m-label" data-i18n="ui.partner">合作</div><div class="m-value" data-i18n="pj3.c">本地公益仓</div></div>
+          </div>
+        </article>
+
+        <article class="card project reveal d4">
+          <div class="card-tag" data-i18n="pj4.tag">赛事会务</div>
+          <h3 data-i18n="pj4.title">校运会与校园开放日志愿岗</h3>
+          <p data-i18n="pj4.desc">为校运会与开放日提供签到、引导、计时、广播与后勤岗位，也是每年新成员最集中的一次实战练兵。</p>
+          <div class="metrics">
+            <div class="metric"><div class="m-label" data-i18n="ui.when">时间</div><div class="m-value" data-i18n="pj4.a">每学年 · 春秋各一次</div></div>
+            <div class="metric"><div class="m-label" data-i18n="ui.scale">规模</div><div class="m-value" data-i18n="pj4.b">90+ 个志愿岗位</div></div>
+            <div class="metric"><div class="m-label" data-i18n="ui.partner">合作</div><div class="m-value" data-i18n="pj4.c">学校学生事务处</div></div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <hr class="hairline" />
+
+  <!-- ======================= JOURNEY ======================= -->
+  <section id="journey">
+    <div class="wrap">
+      <div class="reveal">
+        <p class="eyebrow" data-i18n="jr.eyebrow">发展历程</p>
+        <h2 class="section-title" data-i18n="jr.title">从十几个人开始</h2>
+        <p class="lede" data-i18n="jr.lede">义工社不是一天长成现在这样的。下面是几个我们自己觉得还算重要的节点。</p>
+      </div>
+
+      <!-- EDIT: 换成义工社真实的里程碑 -->
+      <div class="timeline">
+        <div class="tl-item reveal d1">
+          <div class="tl-year" data-i18n="t1.year">2023</div>
+          <div class="tl-title" data-i18n="t1.title">义工社前身小组成立</div>
+          <div class="tl-desc" data-i18n="t1.desc">由十余名同学发起，从校园图书整理与活动支持做起，第一学期完成 6 场小型服务。</div>
+        </div>
+        <div class="tl-item reveal d2">
+          <div class="tl-year" data-i18n="t2.year">2024</div>
+          <div class="tl-title" data-i18n="t2.title">正式挂靠学生事务处</div>
+          <div class="tl-desc" data-i18n="t2.desc">建立招募、培训与工时记录三项制度，服务范围从校园扩展到南沙社区。</div>
+        </div>
+        <div class="tl-item reveal d3">
+          <div class="tl-year" data-i18n="t3.year">2025</div>
+          <div class="tl-title" data-i18n="t3.title">首个长期项目落地</div>
+          <div class="tl-desc" data-i18n="t3.desc">「一平米书房」社区阅读角改造启动，形成固定的项目组与轮值机制。</div>
+        </div>
+        <div class="tl-item reveal d4">
+          <div class="tl-year" data-i18n="t4.year">2025</div>
+          <div class="tl-title" data-i18n="t4.title">公益时数上云并公示</div>
+          <div class="tl-desc" data-i18n="t4.desc">统一工时口径与签到方式，每位志愿者的服务时长可查询、可追溯。</div>
+        </div>
+        <div class="tl-item reveal d5">
+          <div class="tl-year" data-i18n="t5.year">2026</div>
+          <div class="tl-title" data-i18n="t5.title">六组并行的组织架构</div>
+          <div class="tl-desc" data-i18n="t5.desc">社区关怀、环保、教育、募捐、会务、交流六个板块独立运作，也经常联合行动。</div>
+        </div>
+        <div class="tl-item reveal d6">
+          <div class="tl-year" data-i18n="t6.year">下一步</div>
+          <div class="tl-title" data-i18n="t6.title">把可复制的模式带到更多社区</div>
+          <div class="tl-desc" data-i18n="t6.desc">整理项目手册与培训材料，让下一届同学接手时不用从零开始。</div>
+        </div>
+      </div>
+
+      <!-- ======================= BEYOND ======================= -->
+      <div style="margin-top:clamp(3rem,7vw,5rem);">
+        <div class="reveal">
+          <p class="eyebrow" data-i18n="bd.eyebrow">社团文化</p>
+          <h2 class="section-title" data-i18n="bd.title">除了做活动，我们还做这些</h2>
+        </div>
+        <div class="grid">
+          <article class="card reveal d1">
+            <h3 data-i18n="b1.title">学生自主运营</h3>
+            <p data-i18n="b1.desc">从需求调研到现场执行都由学生完成，老师只在安全与预算环节提供指导。做错了就复盘，这是我们的成长方式。</p>
+          </article>
+          <article class="card reveal d2">
+            <h3 data-i18n="b2.title">可追溯的服务记录</h3>
+            <p data-i18n="b2.desc">每一场活动都有签到、工时与影像留痕，物资与款项按学期公示，家长与学校随时可以查。</p>
+          </article>
+          <article class="card reveal d3">
+            <h3 data-i18n="b3.title">多元与双语</h3>
+            <p data-i18n="b3.desc">成员来自不同的课程体系与文化背景，工作语言在中英之间自然切换，这也是我们服务国际社区的方式。</p>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="hairline" />
+
+  <!-- ======================= CONTACT ======================= -->
+  <section id="contact">
+    <div class="wrap">
+      <div class="block contact-card reveal">
+        <p class="eyebrow" data-i18n="co.eyebrow">联系我们</p>
+        <h2 class="section-title" data-i18n="co.title">想一起做点<span class="grad">具体的事</span>？</h2>
+        <p class="lede" data-i18n="co.lede">无论你是 GUIS 的同学、愿意合作的社区与机构，还是想参与服务的家长，都欢迎写信告诉我们。我们也接受社区服务需求提报。</p>
+
+        <!-- EDIT: 替换为义工社真实邮箱 -->
+        <a class="contact-mail" href="mailto:volunteer@guis.example.com">volunteer@guis.example.com</a>
+
+        <div class="hero-actions">
+          <a class="btn btn-primary" target="_blank" rel="noopener noreferrer"
+             href="https://outlook.live.com/mail/0/deeplink/compose?to=volunteer@guis.example.com&amp;subject=GUIS%20%E4%B9%89%E5%B7%A5%E7%A4%BE%20%C2%B7%20%E5%90%88%E4%BD%9C%E4%B8%8E%E5%8F%82%E4%B8%8E%E5%92%A8%E8%AF%A2"
+             data-i18n="co.btn">写信给义工社</a>
+          <a class="btn btn-secondary" href="join.html" data-i18n="co.alt">阅读招募信</a>
+        </div>
+
+        <div class="contact-lines">
+          <span class="contact-line"><strong data-i18n="co.l1k">例会时间</strong> · <span data-i18n="co.l1v">学期间每周三 16:30</span></span>
+          <span class="contact-line"><strong data-i18n="co.l2k">招募窗口</strong> · <span data-i18n="co.l2v">每学期开学后两周</span></span>
+          <span class="contact-line"><strong data-i18n="co.l3k">指导单位</strong> · <span data-i18n="co.l3v">GUIS 学生事务处</span></span>
+        </div>
+
+        <p class="contact-meta" data-i18n="co.meta">广州 · 南沙区伟立路 8 号 · 广州优联国际学校校园内</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap footer-inner">
+    <div class="footer-brand">
+      <img src="assets/logo/guis-wordmark.png" alt="GUIS" />
+      <span class="footer-org" data-i18n="footer.org">广州优联国际学校义工社<br />Guangzhou Ulink International School Volunteer Service</span>
+    </div>
+    <span data-i18n="footer.text">© 2026 GUIS 义工社 · 学生自主运营 · 服务记录公开可查。</span>
+    <div class="footer-links">
+      <a href="#home" data-i18n="footer.top">回到顶部</a>
+      <a href="join.html" data-i18n="nav.join">招募信</a>
+    </div>
+  </div>
+</footer>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="图片查看">
+  <button class="lightbox-close" type="button" aria-label="关闭" data-i18n-attr="aria-label:ui.close">✕</button>
+  <button class="lightbox-nav prev" type="button" aria-label="上一张" data-i18n-attr="aria-label:ui.prev">‹</button>
+  <figure>
+    <img id="lightbox-img" src="" alt="" />
+    <figcaption id="lightbox-cap"></figcaption>
+  </figure>
+  <button class="lightbox-nav next" type="button" aria-label="下一张" data-i18n-attr="aria-label:ui.next">›</button>
+</div>
+
+<script src="assets/i18n.js"></script>
+<script src="assets/main.js"></script>
+</body>
+</html>
