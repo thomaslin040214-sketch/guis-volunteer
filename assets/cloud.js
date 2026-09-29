@@ -71,8 +71,12 @@
     },
 
     /* ---------- 报名 ---------- */
+    /* 注意：这里故意不链 .select()。
+       报名是匿名提交，插入后回读表示会受 registrations 的 SELECT 策略限制
+       （匿名者读不到任何报名行），PostgREST 会报 42501。
+       重复报名由 (activity_id, email) 唯一约束返回 23505 来识别。 */
     register: function (payload) {
-      return db.from("registrations").insert(payload).select();
+      return db.from("registrations").insert(payload);
     },
 
     listRegistrations: function (activityId) {
