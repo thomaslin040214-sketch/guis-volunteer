@@ -314,7 +314,7 @@ window.SITE_I18N = {
     "ui.next": "Next",
 
     "hero.badge": "Guangzhou Ulink International School · Student-led service",
-    "hero.title": "One Earth, <span class=\"grad\">one love</span>.",
+    "hero.title": "One Love, <span class=\"grad\">One Heart</span>.",
     "hero.sub": "GUIS Volunteer Service is run by students. Between our campus and the Nansha community, we turn good intentions into things that actually happen — a visit, an event, a charity sale that came together.",
     "hero.cta1": "Read the letter to join",
     "hero.cta2": "Get involved",
@@ -328,7 +328,7 @@ window.SITE_I18N = {
     "about.eyebrow": "About us",
     "about.title": "One school, <span class=\"grad\">a group of people who go first</span>.",
     "about.p1": "GUIS Volunteer Service is based on the Nansha campus of Guangzhou Ulink International School — a <strong>student-run organisation guided by the Student Affairs Office</strong>. We put \"learning through doing\" on the timetable: rather than only talking about service, we set aside time every week to do one concrete thing that can be seen and reviewed.",
-    "about.p2": "Our work reaches from the campus out to Mingzhu Bay and the wider Nansha community. Students research the need, design the project, recruit and roster, run it on the ground, then review it together — including what went wrong, because an honest record is more useful than a tidy summary.",
+    "about.p2": "Our work reaches from the campus out to Pearl Bay and the wider Nansha community. Students research the need, design the project, recruit and roster, run it on the ground, then review it together — including what went wrong, because an honest record is more useful than a tidy summary.",
     "about.listTitle": "Three things we hold to",
     "about.li1": "Ask before serving: understand what people actually need before deciding what we will do.",
     "about.li2": "Sustainable, not one-off: if something can become a long-term project, we don't stop at a single event.",
