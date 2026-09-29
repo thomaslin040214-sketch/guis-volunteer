@@ -3,6 +3,9 @@
 > 广州优联国际学校（Guangzhou Ulink International School）学生志愿服务组织官网
 > 白色底色 · GUIS 品牌红 `#9C2126` · 纯静态 HTML / CSS / JS（无框架、无构建步骤）
 
+**线上地址**：https://thomaslin040214-sketch.github.io/guis-volunteer/
+**仓库地址**：https://github.com/thomaslin040214-sketch/guis-volunteer
+
 ---
 
 ## 一、本地预览
@@ -166,22 +169,26 @@ HTML 里凡是可以替换的位置都留了 `<!-- EDIT: ... -->` 注释，用�
 
 ## 六、部署到 GitHub Pages
 
-```bash
-# 1. 在 GitHub 新建一个空仓库，例如 guis-volunteer
-# 2. 在本目录执行（把 <你的用户名> 换成实际的）
-git remote add origin https://github.com/<你的用户名>/guis-volunteer.git
-git branch -M main
-git push -u origin main
-# 3. 仓库 Settings → Pages → Source 选 "Deploy from a branch" → main / (root) → Save
-# 4. 一两分钟后访问 https://<你的用户名>.github.io/guis-volunteer/
-```
+本站已部署完成，仓库为 `thomaslin040214-sketch/guis-volunteer`，
+Pages 来源设为 **Deploy from a branch → `main` / `/ (root)`**。
 
-首次提交前如果 Git 提示缺少身份信息：
+**日常更新流程**：改完文件后提交并推送，GitHub 会自动重新构建，通常 1–2 分钟后线上生效。
 
 ```bash
-git config user.name  "你的名字"
-git config user.email "你的邮箱"
+git add -A
+git commit -m "说明这次改了什么"
+git push
 ```
+
+若要重新部署到一个新仓库：
+
+```bash
+gh repo create <新仓库名> --public --source=. --remote=origin --push
+gh api -X POST repos/<你的用户名>/<新仓库名>/pages \
+  -f 'source[branch]=main' -f 'source[path]=/'
+```
+
+> 注意：Pages 免费版只支持**公开**仓库。若仓库是私有的，Pages 不会生效。
 
 ---
 
