@@ -273,3 +273,58 @@ table.data .row-actions { display: flex; gap: 0.35rem; flex-wrap: wrap; }
   .queue-mask.is-waiting .queue-bar span { animation: none; width: 60%; }
   .queue-card { transition-duration: 0.01ms; }
 }
+
+/* ============================================================
+   部门成员 & 管理层（首页 #team）
+   ============================================================ */
+
+/* 子板块标题（部门成员 / 管理层） */
+.block-title {
+  font-size: clamp(1.25rem, 2.4vw, 1.6rem); font-weight: 700;
+  letter-spacing: -0.02em; color: var(--text-main); margin: 0.2rem 0 0.5rem;
+}
+
+/* 部门块 */
+.dept { margin-top: 2.2rem; }
+.dept:first-of-type { margin-top: 1rem; }
+.dept-name {
+  font-size: 1.05rem; font-weight: 650; letter-spacing: -0.01em;
+  color: var(--text-main); margin: 0 0 1rem;
+}
+.dept-name-en {
+  font-weight: 500; font-size: 0.82rem; color: var(--text-subtle);
+  margin-left: 0.4rem; letter-spacing: 0;
+}
+
+/* 架构图：部长在上，部员在下 */
+.org-chart { display: flex; flex-direction: column; align-items: center; }
+.org-head-wrap { width: 100%; max-width: 460px; }
+.org-connector {
+  width: 2px; height: 26px; margin: 0.2rem 0;
+  background: linear-gradient(to bottom, var(--red-tint-2), var(--hairline));
+}
+.dept-members {
+  display: flex; flex-wrap: wrap; gap: 0.9rem; justify-content: center;
+  width: 100%; margin-top: 0.4rem;
+}
+
+/* 部员小卡（无履历） */
+.mmini {
+  background: #fff; border: 1px solid var(--card-border); border-radius: var(--radius-md);
+  padding: 0.85rem 1.1rem; box-shadow: var(--shadow-sm);
+  display: flex; align-items: center; gap: 0.7rem;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  flex: 0 1 auto; min-width: 180px;
+}
+.mmini:hover { border-color: var(--card-border-hover); box-shadow: var(--shadow-md); }
+.mmini .avatar { width: 42px; height: 42px; font-size: 0.92rem; }
+.mmini .member-name { font-size: 0.92rem; }
+.mmini .member-meta { font-size: 0.74rem; }
+
+/* 管理层网格（复用 .team-grid） */
+#lead-list.team-grid { margin-top: 1.6rem; }
+
+@media (max-width: 600px) {
+  .dept-members { gap: 0.6rem; }
+  .mmini { min-width: 140px; flex: 1 1 calc(50% - 0.6rem); }
+}

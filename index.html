@@ -260,314 +260,33 @@
   <section id="team">
     <div class="wrap">
       <div class="reveal">
-        <p class="eyebrow" data-i18n="team.eyebrow">团队成员</p>
+        <p class="eyebrow" data-i18n="team.eyebrow">成员架构</p>
         <h2 class="section-title" data-i18n="team.title">谁在把这件事往前推</h2>
-        <p class="lede" data-i18n="team.lede">义工社由学生执委会运营，下设六个项目组。点开每位成员下方的小三角，可以看到他／她在义工社的完整履历。</p>
+        <p class="lede" data-i18n="team.lede">义工组织按办公室下设三个部门，每个部门由一位部长牵头、部员协作；另有执委会（社长、副社长）统筹全局。点开每位部长与执委下方的小三角，可以看到他／她的过往履历。</p>
       </div>
 
-      <!-- EDIT: 以下为示例成员，请替换为义工社真实名单与履历 -->
-      <div class="team-grid">
+      <!-- 部门成员 -->
+      <div class="reveal">
+        <p class="eyebrow" data-i18n="dept.eyebrow">部门成员</p>
+        <h3 class="block-title" data-i18n="dept.title">三个部门，各有牵头人</h3>
+        <p class="lede" data-i18n="dept.lede">每个部门架构相同：一位部长在上、部员在下。只有部长展示过往履历，部员只列头像、姓名与加入时间。所有头像、姓名、加入时间都在 assets/team.js 里编辑。</p>
+      </div>
 
-        <article class="member reveal d1">
-          <div class="member-top">
-            <div class="avatar">陈</div>
-            <div class="member-id">
-              <div class="member-name" data-i18n="m1.name">陈颂茵</div>
-              <div class="member-role" data-i18n="m1.role">社长 · 总负责</div>
-              <div class="member-meta" data-i18n="m1.meta">G12 · ULC 英式课程 · 2023 年加入</div>
-            </div>
-          </div>
-          <p class="bio" data-i18n="m1.bio">负责组织整体规划与对外沟通，牵头「一平米书房」社区阅读角改造项目。最关心的是：怎样让一个学生组织在两三年后依然运转得下去。</p>
+      <div id="dept-list" class="dept-list">
+        <!-- 由 assets/team.js 根据 window.GUIS_TEAM 渲染 -->
+      </div>
 
-          <div class="cv">
-            <button class="cv-head" type="button" aria-expanded="false">
-              <span class="cv-label" data-i18n="ui.cv">查看履历</span>
-              <span class="cv-caret" aria-hidden="true"></span>
-            </button>
-            <div class="cv-body">
-              <div class="cv-inner">
-                <div class="cv-timeline">
-                  <div class="cv-item">
-                    <div class="cv-when" data-i18n="m1.c1.when">2023 · 秋</div>
-                    <div class="cv-what" data-i18n="m1.c1.what">首先加入并参与建设ULC义工组织HR人力资源部门</div>
-                    <div class="cv-note" data-i18n="m1.c1.note">后被调配至公共关系及对外宣传部任部</div>
-                  </div>
-                  <div class="cv-item">
-                    <div class="cv-when" data-i18n="m1.c2.when">2024 · 春</div>
-                    <div class="cv-what" data-i18n="m1.c2.what">推动组织正式挂靠学生事务处</div>
-                    <div class="cv-note" data-i18n="m1.c2.note">建立招募、培训与工时记录三项制度，志愿者规模从 14 人扩展到 60 余人。</div>
-                  </div>
-                  <div class="cv-item">
-                    <div class="cv-when" data-i18n="m1.c3.when">2025 · 全年</div>
-                    <div class="cv-what" data-i18n="m1.c3.what">牵头「一平米书房」社区阅读角改造</div>
-                    <div class="cv-note" data-i18n="m1.c3.note">完成 3 个社区阅读角的选址、改造与图书上架，形成可复制的项目手册。</div>
-                  </div>
-                  <div class="cv-item">
-                    <div class="cv-when" data-i18n="m1.c4.when">2026 · 至今</div>
-                    <div class="cv-what" data-i18n="m1.c4.what">社长 · 建立六组并行架构</div>
-                    <div class="cv-note" data-i18n="m1.c4.note">重组为社区关怀、环保、教育、募捐、会务、交流六个项目组，各自设定年度目标。</div>
-                  </div>
-                </div>
-                <div class="cv-facts">
-                  <span class="cv-fact" data-i18n="m1.f1">累计服务 320 小时</span>
-                  <span class="cv-fact" data-i18n="m1.f2">项目统筹</span>
-                  <span class="cv-fact" data-i18n="m1.f3">中英双语</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </article>
+      <hr class="hairline" />
 
-        <article class="member reveal d2">
-          <div class="member-top">
-            <div class="avatar">陈</div>
-            <div class="member-id">
-              <div class="member-name" data-i18n="m2.name">陈嘉懿</div>
-              <div class="member-role" data-i18n="m2.role">副社长 · 项目统筹</div>
-              <div class="member-meta" data-i18n="m2.meta">G11 · NCPA 美式课程 · 2024 年入社</div>
-            </div>
-          </div>
-          <p class="bio" data-i18n="m2.bio">负责六个项目组的排期协调与物资预算，也是服务记录的维护人。习惯把每次活动都做成一份可复盘的表格。</p>
+      <!-- 管理层 -->
+      <div class="reveal">
+        <p class="eyebrow" data-i18n="lead.eyebrow">管理层</p>
+        <h3 class="block-title" data-i18n="lead.title">执委会与部门负责人</h3>
+        <p class="lede" data-i18n="lead.lede">社长、副社长与三个部门的部长，他们是组织的管理层，均展示完整履历。社长、副社长的信息在 assets/team.js 的 leadership 数组里编辑，三位部长的履历与其部门头像共用同一份数据。</p>
+      </div>
 
-          <div class="cv">
-            <button class="cv-head" type="button" aria-expanded="false">
-              <span class="cv-label" data-i18n="ui.cv">查看履历</span>
-              <span class="cv-caret" aria-hidden="true"></span>
-            </button>
-            <div class="cv-body">
-              <div class="cv-inner">
-                <div class="cv-timeline">
-                  <div class="cv-item">
-                    <div class="cv-when" data-i18n="m2.c1.when">2024 · 春</div>
-                    <div class="cv-what" data-i18n="m2.c1.what">加入义工社 · 会务志愿岗</div>
-                    <div class="cv-note" data-i18n="m2.c1.note">从校运会与开放日的签到引导岗开始，一学期累计出勤 11 场。</div>
-                  </div>
-                  <div class="cv-item">
-                    <div class="cv-when" data-i18n="m2.c2.when">2024 · 秋</div>
-                    <div class="cv-what" data-i18n="m2.c2.what">负责义卖市集的物资与账目</div>
-                    <div class="cv-note" data-i18n="m2.c2.note">设计摊位分配与实时记账表，两场义卖共募集并公示款项 18,600 元。</div>
-                  </div>
-                  <div class="cv-item">
-                    <div class="cv-when" data-i18n="m2.c3.when">2025 · 夏</div>
-                    <div class="cv-what" data-i18n="m2.c3.what">上线公益时数记录与公示机制</div>
-                    <div class="cv-note" data-i18n="m2.c3.note">统一工时口径与签到方式，让每位志愿者的服务时长可查询、可追溯。</div>
-                  </div>
-                  <div class="cv-item">
-                    <div class="cv-when" data-i18n="m2.c4.when">2026 · 至今</div>
-                    <div class="cv-what" data-i18n="m2.c4.what">副社长 · 项目统筹</div>
-                    <div class="cv-note" data-i18n="m2.c4.note">统筹六组排期与预算，把每场活动压缩成一份标准复盘模板。</div>
-                  </div>
-                </div>
-                <div class="cv-facts">
-                  <span class="cv-fact" data-i18n="m2.f1">累计服务 245 小时</span>
-                  <span class="cv-fact" data-i18n="m2.f2">预算与账目</span>
-                  <span class="cv-fact" data-i18n="m2.f3">数据记录</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </article>
-
-        <article class="member reveal d3">
-          <div class="member-top">
-            <div class="avatar">黄</div>
-            <div class="member-id">
-              <div class="member-name" data-i18n="m3.name">黄乐怡</div>
-              <div class="member-role" data-i18n="m3.role">社区关怀组 · 组长</div>
-              <div class="member-meta" data-i18n="m3.meta">G11 · ULC 英式课程 · 2024 年入社</div>
-            </div>
-          </div>
-          <p class="bio" data-i18n="m3.bio">负责长者探访与社区联络。她把每次探访的口述记录整理成小册子，交回给社区和长者的家人。</p>
-
-          <div class="cv">
-            <button class="cv-head" type="button" aria-expanded="false">
-              <span class="cv-label" data-i18n="ui.cv">查看履历</span>
-              <span class="cv-caret" aria-hidden="true"></span>
-            </button>
-            <div class="cv-body">
-              <div class="cv-inner">
-                <div class="cv-timeline">
-                  <div class="cv-item">
-                    <div class="cv-when" data-i18n="m3.c1.when">2024 · 秋</div>
-                    <div class="cv-what" data-i18n="m3.c1.what">加入社区关怀组</div>
-                    <div class="cv-note" data-i18n="m3.c1.note">参与南沙社区首批长者入户探访，学习粤语问候与探访礼仪。</div>
-                  </div>
-                  <div class="cv-item">
-                    <div class="cv-when" data-i18n="m3.c2.when">2025 · 春</div>
-                    <div class="cv-what" data-i18n="m3.c2.what">发起「口述故事」记录计划</div>
-                    <div class="cv-note" data-i18n="m3.c2.note">为 14 位长者整理口述回忆并做成手写册，作为社区档案留存。</div>
-                  </div>
-                  <div class="cv-item">
-                    <div class="cv-when" data-i18n="m3.c3.when">2025 · 秋</div>
-                    <div class="cv-what" data-i18n="m3.c3.what">负责新志愿者探访培训</div>
-                    <div class="cv-note" data-i18n="m3.c3.note">编写 8 页探访手册，把「先听懂再帮忙」变成可教的流程。</div>
-                  </div>
-                  <div class="cv-item">
-                    <div class="cv-when" data-i18n="m3.c4.when">2026 · 至今</div>
-                    <div class="cv-what" data-i18n="m3.c4.what">社区关怀组组长</div>
-                    <div class="cv-note" data-i18n="m3.c4.note">固定一月两次探访排期，与 3 个社区建立长期对接关系。</div>
-                  </div>
-                </div>
-                <div class="cv-facts">
-                  <span class="cv-fact" data-i18n="m3.f1">累计服务 210 小时</span>
-                  <span class="cv-fact" data-i18n="m3.f2">长者探访</span>
-                  <span class="cv-fact" data-i18n="m3.f3">粤语 / 普通话</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </article>
-
-        <article class="member reveal d1">
-          <div class="member-top">
-            <div class="avatar">苏</div>
-            <div class="member-id">
-              <div class="member-name" data-i18n="m4.name">苏文轩</div>
-              <div class="member-role" data-i18n="m4.role">环保行动组 · 组长</div>
-              <div class="member-meta" data-i18n="m4.meta">G10 · ULC 英式课程 · 2025 年入社</div>
-            </div>
-          </div>
-          <p class="bio" data-i18n="m4.bio">负责明珠湾净滩行动。坚持每次捡拾都称重、分类、记录来源，因为他相信「没有数据的环保只是心情」。</p>
-
-          <div class="cv">
-            <button class="cv-head" type="button" aria-expanded="false">
-              <span class="cv-label" data-i18n="ui.cv">查看履历</span>
-              <span class="cv-caret" aria-hidden="true"></span>
-            </button>
-            <div class="cv-body">
-              <div class="cv-inner">
-                <div class="cv-timeline">
-                  <div class="cv-item">
-                    <div class="cv-when" data-i18n="m4.c1.when">2025 · 春</div>
-                    <div class="cv-what" data-i18n="m4.c1.what">加入环保行动组</div>
-                    <div class="cv-note" data-i18n="m4.c1.note">首次参与明珠湾净滩，负责垃圾分类与称重记录。</div>
-                  </div>
-                  <div class="cv-item">
-                    <div class="cv-when" data-i18n="m4.c2.when">2025 · 秋</div>
-                    <div class="cv-what" data-i18n="m4.c2.what">设计净滩数据记录表</div>
-                    <div class="cv-note" data-i18n="m4.c2.note">按材质分类统计捡拾物重量与来源，为校园环保倡导提供依据。</div>
-                  </div>
-                  <div class="cv-item">
-                    <div class="cv-when" data-i18n="m4.c3.when">2026 · 春</div>
-                    <div class="cv-what" data-i18n="m4.c3.what">牵头校园减塑倡导周</div>
-                    <div class="cv-note" data-i18n="m4.c3.note">用净滩数据做成展板与宣讲，覆盖中高年级 12 个班级。</div>
-                  </div>
-                  <div class="cv-item">
-                    <div class="cv-when" data-i18n="m4.c4.when">2026 · 至今</div>
-                    <div class="cv-what" data-i18n="m4.c4.what">环保行动组组长</div>
-                    <div class="cv-note" data-i18n="m4.c4.note">把净滩固定为每季度一次，累计动员 210 人次参与。</div>
-                  </div>
-                </div>
-                <div class="cv-facts">
-                  <span class="cv-fact" data-i18n="m4.f1">累计服务 165 小时</span>
-                  <span class="cv-fact" data-i18n="m4.f2">净滩与分类</span>
-                  <span class="cv-fact" data-i18n="m4.f3">数据记录</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </article>
-
-        <article class="member reveal d2">
-          <div class="member-top">
-            <div class="avatar">何</div>
-            <div class="member-id">
-              <div class="member-name" data-i18n="m5.name">何静仪</div>
-              <div class="member-role" data-i18n="m5.role">宣传与记录组 · 组长</div>
-              <div class="member-meta" data-i18n="m5.meta">G11 · NCPA 美式课程 · 2024 年入社</div>
-            </div>
-          </div>
-          <p class="bio" data-i18n="m5.bio">负责影像记录、公众号与展板。她说照片要拍得真实，「让人看见事情本来的样子，而不是我们想被看见的样子」。</p>
-
-          <div class="cv">
-            <button class="cv-head" type="button" aria-expanded="false">
-              <span class="cv-label" data-i18n="ui.cv">查看履历</span>
-              <span class="cv-caret" aria-hidden="true"></span>
-            </button>
-            <div class="cv-body">
-              <div class="cv-inner">
-                <div class="cv-timeline">
-                  <div class="cv-item">
-                    <div class="cv-when" data-i18n="m5.c1.when">2024 · 秋</div>
-                    <div class="cv-what" data-i18n="m5.c1.what">加入宣传与记录组</div>
-                    <div class="cv-note" data-i18n="m5.c1.note">跟随义卖与探访活动拍摄，建立社团影像归档规则。</div>
-                  </div>
-                  <div class="cv-item">
-                    <div class="cv-when" data-i18n="m5.c2.when">2025 · 春</div>
-                    <div class="cv-what" data-i18n="m5.c2.what">建立服务影像档案</div>
-                    <div class="cv-note" data-i18n="m5.c2.note">按项目与学期归档照片，并制定涉及长者与儿童肖像的使用规范。</div>
-                  </div>
-                  <div class="cv-item">
-                    <div class="cv-when" data-i18n="m5.c3.when">2025 · 秋</div>
-                    <div class="cv-what" data-i18n="m5.c3.what">负责学年成果展</div>
-                    <div class="cv-note" data-i18n="m5.c3.note">策划并执行校园公益成果展，展出 80 余张工作照与数据展板。</div>
-                  </div>
-                  <div class="cv-item">
-                    <div class="cv-when" data-i18n="m5.c4.when">2026 · 至今</div>
-                    <div class="cv-what" data-i18n="m5.c4.what">宣传与记录组组长</div>
-                    <div class="cv-note" data-i18n="m5.c4.note">每场活动安排记录岗，做到「有人做、也有人记」。</div>
-                  </div>
-                </div>
-                <div class="cv-facts">
-                  <span class="cv-fact" data-i18n="m5.f1">累计服务 190 小时</span>
-                  <span class="cv-fact" data-i18n="m5.f2">影像与排版</span>
-                  <span class="cv-fact" data-i18n="m5.f3">展陈策划</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </article>
-
-        <article class="member reveal d3">
-          <div class="member-top">
-            <div class="avatar">张</div>
-            <div class="member-id">
-              <div class="member-name" data-i18n="m6.name">张亦驰</div>
-              <div class="member-role" data-i18n="m6.role">外联与合作组 · 组长</div>
-              <div class="member-meta" data-i18n="m6.meta">G12 · NCPA 美式课程 · 2023 年入社</div>
-            </div>
-          </div>
-          <p class="bio" data-i18n="m6.bio">负责与社区、公益机构及学校部门的对接。他的工作常常是打很多电话、写很多邮件，把「想做」变成「可以约上时间做」。</p>
-
-          <div class="cv">
-            <button class="cv-head" type="button" aria-expanded="false">
-              <span class="cv-label" data-i18n="ui.cv">查看履历</span>
-              <span class="cv-caret" aria-hidden="true"></span>
-            </button>
-            <div class="cv-body">
-              <div class="cv-inner">
-                <div class="cv-timeline">
-                  <div class="cv-item">
-                    <div class="cv-when" data-i18n="m6.c1.when">2023 · 秋</div>
-                    <div class="cv-what" data-i18n="m6.c1.what">加入义工社前身小组</div>
-                    <div class="cv-note" data-i18n="m6.c1.note">负责校内活动对接，是小组与学校部门之间的第一联系人。</div>
-                  </div>
-                  <div class="cv-item">
-                    <div class="cv-when" data-i18n="m6.c2.when">2024 · 秋</div>
-                    <div class="cv-what" data-i18n="m6.c2.what">建立首批校外合作渠道</div>
-                    <div class="cv-note" data-i18n="m6.c2.note">对接南沙街道社区中心与本地公益机构，落实长期服务点位。</div>
-                  </div>
-                  <div class="cv-item">
-                    <div class="cv-when" data-i18n="m6.c3.when">2025 · 全年</div>
-                    <div class="cv-what" data-i18n="m6.c3.what">推动暖冬衣物募集合作</div>
-                    <div class="cv-note" data-i18n="m6.c3.note">协调募集、运输与分拣环节，两季共募集衣物约 1,200 件。</div>
-                  </div>
-                  <div class="cv-item">
-                    <div class="cv-when" data-i18n="m6.c4.when">2026 · 至今</div>
-                    <div class="cv-what" data-i18n="m6.c4.what">外联与合作组组长</div>
-                    <div class="cv-note" data-i18n="m6.c4.note">维护 12 家长期合作社区与机构的对接人清单与年度沟通计划。</div>
-                  </div>
-                </div>
-                <div class="cv-facts">
-                  <span class="cv-fact" data-i18n="m6.f1">累计服务 280 小时</span>
-                  <span class="cv-fact" data-i18n="m6.f2">对外联络</span>
-                  <span class="cv-fact" data-i18n="m6.f3">中英双语</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </article>
-
+      <div id="lead-list" class="team-grid">
+        <!-- 由 assets/team.js 根据 window.GUIS_TEAM 渲染 -->
       </div>
     </div>
   </section>
@@ -862,6 +581,8 @@
 <script src="assets/cloud-config.js"></script>
 <script src="assets/cloud.js"></script>
 <script src="assets/i18n.js"></script>
+<script src="assets/team.js"></script>
+<script src="assets/team-render.js"></script>
 <script src="assets/queue.js"></script>
 <script src="assets/main.js"></script>
 <script>
