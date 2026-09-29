@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>后台管理 | GUIS 义工社</title>
-<meta name="description" content="GUIS 义工社后台管理：创建义工活动、查看报名名单、导出 Excel。" />
+<meta name="description" content="GUIS 义工组织后台管理：创建义工活动、查看报名名单、导出 Excel。" />
 <meta name="theme-color" content="#FFFFFF" />
 <meta name="robots" content="noindex, nofollow" />
 <link rel="icon" type="image/png" href="assets/logo/favicon.png" />
@@ -50,8 +50,8 @@
           <div style="text-align:center;margin-bottom:1.75rem;">
             <img src="assets/logo/guis-logo-v.png" alt="GUIS" style="width:130px;margin:0 auto 1rem;" />
             <p class="eyebrow">后台管理</p>
-            <h1 class="page-title">义工社执委会登录</h1>
-            <p class="page-lede" style="margin:0 auto;">用于创建义工活动、查看报名名单并导出 Excel。仅限执委会成员。</p>
+            <h1 class="page-title">义工组织内部人员登录</h1>
+            <p class="page-lede" style="margin:0 auto;">用于创建义工活动、查看报名名单并导出 Excel。仅限义工组织成员访问。</p>
           </div>
 
           <div class="panel">
@@ -189,7 +189,7 @@
                 <div class="form-grid">
                   <div class="field span-2">
                     <label for="a-title">活动名称 <span class="req">*</span></label>
-                    <input id="a-title" type="text" required placeholder="例如：周末课业辅导 · 春季学期" />
+                    <input id="a-title" type="text" required placeholder="例如：教务处考场布置" />
                   </div>
 
                   <div class="field span-2">
@@ -200,18 +200,17 @@
                   <div class="field">
                     <label for="a-category">所属板块</label>
                     <select id="a-category">
-                      <option value="社区关怀">社区关怀</option>
-                      <option value="环保行动">环保行动</option>
-                      <option value="教育支持">教育支持</option>
+                      <option value="学生事务处活动(SAO)">学生事务处活动(SAO)</option>
+                      <option value="教务处活动(AO)">教务处活动(AO)</option>
+                      <option value="升学指导办公室活动(CAS)">升学指导办公室活动(CAS)</option>
                       <option value="公益募捐">公益募捐</option>
-                      <option value="赛事会务">赛事会务</option>
-                      <option value="国际文化交流">国际文化交流</option>
+                      <option value="未被框定(NTCLASSIFIED)">未被框定(NTCLASSIFIED)</option>
                     </select>
                   </div>
 
                   <div class="field">
                     <label for="a-location">地点</label>
-                    <input id="a-location" type="text" placeholder="例如：南沙社区中心 / 校园图书馆" />
+                    <input id="a-location" type="text" placeholder="例如：SW-404 / 教务处办公室" />
                   </div>
 
                   <div class="field">
