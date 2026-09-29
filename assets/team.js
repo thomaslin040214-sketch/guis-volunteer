@@ -29,29 +29,29 @@ window.GUIS_TEAM = {
   departments: [
     {
       id: "pr",
-      name: "宣传及对外公关部",
+      name: "公关及对外宣传部",
       name_en: "Publicity & Public Relations",
       // —— 部长（架构图顶部，需要履历）——
       head: {
         avatar: "assets/photos/dep-pr-head.jpg",
-        name: "（在此填写部长姓名）",
-        name_en: "",
-        role: "部长",
-        role_en: "Department Head",
-        join: "（在此填写加入时间，如 2024-09）",
-        join_en: "",
+        name: "吴依颖",
+        name_en: "Ellie Wu",
+        role: "公关及对外宣传部长",
+        role_en: "Head of Publicity & PR Department",
+        join: "于2023年09月加入义工组织",
+        join_en: "Joined the organization in September 2023.",
         resume: [
           {
-            when: "（年份·学期，如 2024 · 秋）",
-            what: "（担任或参与的事件标题）",
-            note: "（具体说明，一两句话）",
-            when_en: "", what_en: "", note_en: ""
+            when: "2023年09月",
+            what: "加入义工组织并就职于人力资源部",
+            note: "担任部员及统计一职",
+            when_en: "September 2023", what_en: "Joined the GUIS-VA Human Resources Department", note_en: "Enrol as the member and data keeping role"
           },
           {
-            when: "（年份·学期）",
-            what: "（事件标题）",
-            note: "（具体说明）",
-            when_en: "", what_en: "", note_en: ""
+            when: "2024年2月",
+            what: "调人义工组织公关及对外宣传部",
+            note: "由于组织架构调整，将其调任于宣传部",
+            when_en: "February 2024", what_en: "Joined the Publicity & PR Department", note_en: "Due to adjustment of team structure"
           }
         ],
         facts: ["（亮点一，如 累计服务 200 小时）", "（亮点二，如 中英双语）"]
