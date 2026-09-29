@@ -37,8 +37,10 @@
     return '<div class="avatar">' + ini + "</div>";
   }
 
-  /* 一张带履历的成员卡（部长 / 管理层 / 管理层里的部长引用） */
-  function memberCard(person) {
+  /* 一张带履历的成员卡（部长 / 管理层 / 管理层里的部长引用）
+     isHead=true 时：渲染为部门架构图里的「牵头人」节点——加红边 + 右上角「部长」标签，
+     并省略行内 role（已由标签表达）。 */
+  function memberCard(person, isHead) {
     var items = (person.resume || []).map(function (it) {
       return '<div class="cv-item">' +
         '<div class="cv-when">' + esc(L(it, "when")) + "</div>" +
@@ -51,12 +53,21 @@
       ? '<div class="cv-facts">' + person.facts.map(function (f) { return '<span class="cv-fact">' + esc(f) + "</span>"; }).join("") + "</div>"
       : "";
 
-    return '<article class="member reveal">' +
+    var roleText = L(person, "role");
+    var roleHTML = (!isHead && roleText)
+      ? '<div class="member-role">' + esc(roleText) + "</div>"
+      : "";
+    var headBadge = isHead
+      ? '<span class="role-tag">' + esc(roleText || t("dept.headTag", "部长")) + "</span>"
+      : "";
+
+    return '<article class="member reveal' + (isHead ? " is-head" : "") + '">' +
+      headBadge +
       '<div class="member-top">' +
         avatarHTML(person) +
         '<div class="member-id">' +
           '<div class="member-name">' + esc(L(person, "name")) + "</div>" +
-          '<div class="member-role">' + esc(L(person, "role")) + "</div>" +
+          roleHTML +
           '<div class="member-meta">' + esc(L(person, "join")) + "</div>" +
         "</div>" +
       "</div>" +
@@ -94,17 +105,19 @@
     var leadRoot = document.getElementById("lead-list");
     if (!deptRoot || !leadRoot) return;
 
-    // 部门架构图
+    // 部门架构图：部长在上（高亮节点），部员在下（叶子），中间用树状连线连起来
     deptRoot.innerHTML = (data.departments || []).map(function (dep) {
       var head = dep.head || {};
-      var members = (dep.members || []).map(miniCard).join("");
+      var leaves = (dep.members || []).map(function (m) {
+        return '<div class="org-leaf">' + miniCard(m) + "</div>";
+      }).join("");
       return '<div class="dept">' +
         '<h4 class="dept-name">' + esc(L(dep, "name")) +
           ' <span class="dept-name-en">' + esc(L(dep, "name_en")) + "</span></h4>" +
         '<div class="org-chart">' +
-          '<div class="org-node org-head-wrap">' + memberCard(head) + "</div>" +
-          '<div class="org-connector" aria-hidden="true"></div>' +
-          '<div class="dept-members">' + members + "</div>" +
+          '<div class="org-head-wrap">' + memberCard(head, true) + "</div>" +
+          '<div class="org-rail" aria-hidden="true"></div>' +
+          '<div class="org-leaves">' + leaves + "</div>" +
         "</div>" +
       "</div>";
     }).join("");

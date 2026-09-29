@@ -103,6 +103,7 @@ window.SITE_I18N = {
     "dept.title": "三个部门，各有牵头人",
     "dept.lede": "每个部门架构相同：一位部长在上、部员在下。只有部长展示过往履历，部员只列头像、姓名与加入时间。所有头像、姓名、加入时间都在 assets/team.js 里编辑。",
     "dept.joinLabel": "加入时间",
+    "dept.headTag": "部长",
 
     "lead.eyebrow": "管理层",
     "lead.title": "执委会与部门负责人",
@@ -387,6 +388,7 @@ window.SITE_I18N = {
     "dept.title": "Three departments, each with a lead",
     "dept.lede": "Every department has the same shape: one head on top, members below. Only the head shows a background; members list only avatar, name and join date. All avatars, names and join dates are edited in assets/team.js.",
     "dept.joinLabel": "Joined",
+    "dept.headTag": "Head",
 
     "lead.eyebrow": "Leadership",
     "lead.title": "Executive committee & department heads",

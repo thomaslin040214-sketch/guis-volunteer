@@ -296,35 +296,75 @@ table.data .row-actions { display: flex; gap: 0.35rem; flex-wrap: wrap; }
   margin-left: 0.4rem; letter-spacing: 0;
 }
 
-/* 架构图：部长在上，部员在下 */
+/* 架构图：部长在上（高亮节点），部员在下（叶子），中间用树状连线 */
 .org-chart { display: flex; flex-direction: column; align-items: center; }
-.org-head-wrap { width: 100%; max-width: 460px; }
-.org-connector {
-  width: 2px; height: 26px; margin: 0.2rem 0;
-  background: linear-gradient(to bottom, var(--red-tint-2), var(--hairline));
+.org-head-wrap { width: 100%; max-width: 480px; }
+
+/* 部长节点：红边 + 浅红底 + 右上角「部长」标签，明显区别于部员 */
+.member.is-head {
+  position: relative;
+  border-color: rgba(156, 33, 38, 0.38);
+  background: linear-gradient(180deg, var(--red-tint), #fff 72%);
+  box-shadow: var(--shadow-md);
 }
-.dept-members {
-  display: flex; flex-wrap: wrap; gap: 0.9rem; justify-content: center;
-  width: 100%; margin-top: 0.4rem;
+.member.is-head .member-name { color: var(--red-deep); }
+
+.role-tag {
+  position: absolute; top: 1rem; right: 1.1rem; z-index: 2;
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em;
+  color: #fff; background: var(--red);
+  padding: 0.2rem 0.6rem; border-radius: 980px;
+  box-shadow: 0 3px 10px rgba(156, 33, 38, 0.28);
 }
 
-/* 部员小卡（无履历） */
+/* 部长 → 部员 的竖线（从部长底连到母线） */
+.org-rail {
+  width: 2px; height: 26px; flex: 0 0 auto;
+  background: linear-gradient(to bottom, var(--red), var(--red-tint-2));
+}
+
+/* 部员叶子区：inline-flex 收紧到内容宽度，母线才不会被拉到两端之外 */
+.org-leaves {
+  position: relative; display: inline-flex; flex-wrap: nowrap;
+  justify-content: center; align-items: stretch; gap: 0 1.5rem;
+  margin-top: 0;
+}
+/* 横向母线：连接部长与各部员 */
+.org-leaves::before {
+  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: var(--red-tint-2);
+}
+/* 每个部员头顶的一小段竖线，连到母线 */
+.org-leaf {
+  position: relative; flex: 0 1 200px; min-width: 0; max-width: 210px;
+  padding-top: 26px;
+}
+.org-leaf::before {
+  content: ""; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  width: 2px; height: 26px; background: var(--red-tint-2);
+}
+
+/* 部员小卡（无履历）：填满叶子宽度 */
 .mmini {
   background: #fff; border: 1px solid var(--card-border); border-radius: var(--radius-md);
-  padding: 0.85rem 1.1rem; box-shadow: var(--shadow-sm);
-  display: flex; align-items: center; gap: 0.7rem;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-  flex: 0 1 auto; min-width: 180px;
+  padding: 0.8rem 1rem; box-shadow: var(--shadow-sm);
+  display: flex; align-items: center; gap: 0.65rem;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+  width: 100%; min-width: 0;
 }
-.mmini:hover { border-color: var(--card-border-hover); box-shadow: var(--shadow-md); }
-.mmini .avatar { width: 42px; height: 42px; font-size: 0.92rem; }
-.mmini .member-name { font-size: 0.92rem; }
-.mmini .member-meta { font-size: 0.74rem; }
+.mmini:hover { border-color: var(--red); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.mmini .avatar { width: 40px; height: 40px; font-size: 0.9rem; flex: 0 0 auto; }
+.mmini .member-id { min-width: 0; }
+.mmini .member-name { font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mmini .member-meta { font-size: 0.72rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* 管理层网格（复用 .team-grid） */
-#lead-list.team-grid { margin-top: 1.6rem; }
+#lead-list.team-grid { margin-top: 1.4rem; }
 
-@media (max-width: 600px) {
-  .dept-members { gap: 0.6rem; }
-  .mmini { min-width: 140px; flex: 1 1 calc(50% - 0.6rem); }
+@media (max-width: 640px) {
+  .org-rail { height: 20px; }
+  .org-leaves { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; flex-wrap: initial; }
+  .org-leaves::before { display: none; }
+  .org-leaf { flex: initial; max-width: none; padding-top: 0; }
+  .org-leaf::before { display: none; }
 }
