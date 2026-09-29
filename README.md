@@ -27,7 +27,7 @@ python3 -m http.server 8080
 ```
 guis-volunteer/
 ├── index.html                  # 主页（全部板块）
-├── join.html                   # 招募信（对应原站的 welcome.html）
+├── join.html                   # 社长欢迎信（对应原站的 welcome.html）
 ├── README.md
 ├── signup.html                 # 学生报名页（选活动 → 填表 → 提交，无需登录）
 ├── admin.html                  # 后台门户（登录 / 建活动 / 审核报名 / 导出 Excel）
@@ -40,7 +40,7 @@ guis-volunteer/
     ├── i18n.js                 # 中英双语词典（中英一一对应）
     ├── logo/                   # 学校校徽（8 个原始版本已按用途命名）
     │   ├── guis-logo-h.png            红 · 横版组合标（含凤纹 + GUIS + 全称）→ 导航栏
-    │   ├── guis-logo-v.png            红 · 竖版组合标 → Hero 主视觉、招募信页头
+    │   ├── guis-logo-v.png            红 · 竖版组合标 → Hero 主视觉、欢迎信页头
     │   ├── guis-wordmark.png          红 · GUIS 字标 → 页脚
     │   ├── guis-emblem.png            红 · 凤纹徽章 → 背景水印
     │   ├── guis-logo-h-white.png      白 · 横版（深色底时使用）
