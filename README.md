@@ -63,7 +63,7 @@ guis-volunteer/
 | 3 | `#about` | 关于我们 | 左文右列表两栏 |
 | 4 | `#programs` | 服务项目 | 6 张卡片，各带标签芯片 |
 | 5 | `#gallery` | 志愿风采 · **工作照** | 8 张照片，瀑布式网格，点击开灯箱 |
-| 6 | `#team` | 团队成员 | 6 位成员，每位含**下拉履历**手风琴 |
+| 6 | `#team` | 部门成员 + 管理层 | 三个部门架构图（部长+部员）+ 管理层（社长/副社长/三部长），数据在 `assets/team.js` |
 | 7 | `#contribution` | 服务分布 | 6 条服务时长占比进度条 + 能力标签 |
 | 8 | `#roster` | 岗位一览 | 6 个常态化志愿岗位列表 |
 | 9 | `#projects` | 重点项目 | 4 个项目卡，各带「时间 / 规模 / 合作」三栏 |
@@ -158,51 +158,32 @@ HTML 里凡是可以替换的位置都留了 `<!-- EDIT: ... -->` 注释，用�
 > 建议导出时压缩到 300KB 以内（可用 [squoosh.app](https://squoosh.app)），页面会更轻快。
 > 图片下方的说明文字在 `index.html` 的 `data-i18n="s1.cap" … "s8.cap"` 两处（中文在 `index.html`，英文在 `assets/i18n.js`）。
 
-### 2. 团队成员与履历（`#team`）
+### 2. 部门成员与管理层（`#team`）
 
-当前 6 位成员（林昭阳、陈嘉懿、黄乐怡、苏文轩、何静仪、张亦驰）是**示例数据**，需要换成真实名单。
+`#team` 现在分成两块，全部由 **`assets/team.js`** 这一个文件驱动（这是你唯一需要编辑的地方）：
 
-每位成员的结构：
+- **部门成员**：三个部门（宣传及对外公关部 / 人力资源部 / 组织部），每个部门是一张「架构图」——
+  一位**部长**在顶部（含头像、姓名、加入时间、可展开的过往履历），其下是若干**部员**（只有头像、姓名、加入时间，没有履历）。
+- **管理层**：社长、副社长，以及三个部门的部长（三位部长用 `headRef` 引用部门数据，
+  与部门架构图共用同一份头像与履历，改一处即可同步）。管理层全员展示完整履历。
 
-```html
-<article class="member">
-  <div class="member-top">
-    <div class="avatar">林</div>               <!-- 头像：可放姓名首字，也可换成 <img src="..."> -->
-    <div class="member-id">
-      <div class="member-name" data-i18n="m1.name">林昭阳</div>
-      <div class="member-role" data-i18n="m1.role">社长 · 总负责</div>
-      <div class="member-meta" data-i18n="m1.meta">G12 · ULC 英式课程 · 2023 年入社</div>
-    </div>
-  </div>
-  <p class="bio" data-i18n="m1.bio">……简介……</p>
+`assets/team.js` 里每个字段都写了注释：
 
-  <div class="cv">
-    <button class="cv-head" type="button" aria-expanded="false">  <!-- ← 点击这里展开/收起履历 -->
-      <span class="cv-label" data-i18n="ui.cv">查看履历</span>
-      <span class="cv-caret" aria-hidden="true"></span>
-    </button>
-    <div class="cv-body">
-      <div class="cv-inner">
-        <div class="cv-timeline">
-          <div class="cv-item">
-            <div class="cv-when" data-i18n="m1.c1.when">2023 · 秋</div>
-            <div class="cv-what" data-i18n="m1.c1.what">发起义工社前身小组</div>
-            <div class="cv-note" data-i18n="m1.c1.note">……说明……</div>
-          </div>
-          <!-- 需要更多履历条目就复制 .cv-item -->
-        </div>
-        <div class="cv-facts">
-          <span class="cv-fact" data-i18n="m1.f1">累计服务 320 小时</span>
-        </div>
-      </div>
-    </div>
-  </div>
-</article>
+```js
+head: {
+  avatar: "assets/photos/dep-pr-head.jpg",  // 头像：放进 assets/photos/，文件名与这里一致即可；留空或图片缺失会自动显示姓名首字
+  name: "（在此填写部长姓名）",
+  role: "部长",
+  join: "（加入时间，如 2024-09）",
+  resume: [ { when, what, note }, … ],     // 只有部长和管理层需要
+  facts: ["（亮点一）", "（亮点二）"]
+},
+members: [ { avatar, name, join }, … ]     // 部员：只有头像/姓名/加入时间
 ```
 
-**增删成员 / 履历条目的注意点**：`data-i18n="m1.xxx"` 里的 `m1` 是这一组的编号。
-如果要加第 7 位成员，就把整块复制成 `m7.*`，并在 `assets/i18n.js` 的 `zh` 和 `en` 两个字典里
-分别补上 `m7.name`、`m7.role` … 这些键（中英都要有，否则切换语言时会留空）。
+- 渲染逻辑在 `assets/team-render.js`（自动处理中英双语、头像占位、履历折叠）。**不要改这个文件。**
+- 章节标题、按钮等文案在 `assets/i18n.js` 的 `team.* / dept.* / lead.*` 键里（zh + en）。
+- 改成员内容 → 只动 `assets/team.js`；改界面文字 → 才动 `assets/i18n.js`。
 
 ### 3. 其他数据
 
@@ -231,7 +212,7 @@ HTML 里凡是可以替换的位置都留了 `<!-- EDIT: ... -->` 注释，用�
    `data-i18n-attr="title:自定义键名"`。
 
 键值命名建议沿用现有前缀：`nav.` `hero.` `about.` `prog.` `g1..g6.` `gal.` `s1..s8.`
-`team.` `m1..m6.` `ct.` `ro.` `pj.` `jr.` `bd.` `co.` `footer.` `join.` `ui.`
+`team.` `dept.` `lead.` `ct.` `ro.` `pj.` `jr.` `bd.` `co.` `footer.` `join.` `ui.`
 
 > 默认语言是**中文**；用户切换过一次之后会记在 `localStorage`（键名 `guis-volunteer-lang`）。
 > 想要默认英文，把 `assets/main.js` 里 `var guess = "zh";` 改成 `"en"`。
