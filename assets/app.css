@@ -205,6 +205,59 @@ table.data .row-actions { display: flex; gap: 0.35rem; flex-wrap: wrap; }
   color: #2C7A4B; font-size: 1.6rem; line-height: 1;
 }
 
+/* ---------- 排队 / 等待 ---------- */
+.queue-mask {
+  position: fixed; inset: 0; z-index: 300;
+  display: grid; place-items: center; padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  opacity: 0; visibility: hidden;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+.queue-mask.is-on { opacity: 1; visibility: visible; }
+
+.queue-card {
+  width: min(430px, 100%); background: #fff;
+  border: 1px solid var(--card-border); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg); padding: 1.9rem 1.75rem; text-align: center;
+  transform: translateY(10px) scale(0.98);
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.queue-mask.is-on .queue-card { transform: none; }
+
+.queue-title { font-size: 1.05rem; font-weight: 650; letter-spacing: -0.015em; margin-bottom: 0.4rem; }
+.queue-sub { font-size: 0.85rem; color: var(--text-muted); line-height: 1.7; }
+
+.queue-bar {
+  height: 7px; border-radius: 999px; background: rgba(0, 0, 0, 0.07);
+  overflow: hidden; margin: 1.3rem 0 0.7rem;
+}
+.queue-bar span {
+  display: block; height: 100%; width: 0; border-radius: 999px;
+  background: linear-gradient(90deg, var(--red), #cf7a7e);
+  transition: width 0.12s linear;
+}
+/* 还不知道要等多久时的呼吸条 */
+.queue-mask.is-waiting .queue-bar span {
+  width: 45%;
+  animation: queue-breathe 1.5s ease-in-out infinite;
+}
+@keyframes queue-breathe {
+  0%, 100% { transform: translateX(-40%); }
+  50%      { transform: translateX(80%); }
+}
+
+.queue-meta { font-size: 0.78rem; color: var(--text-subtle); min-height: 1.2em; }
+.queue-cancel {
+  margin-top: 1.1rem; background: none; border: 0; cursor: pointer;
+  font: inherit; font-size: 0.82rem; color: var(--text-muted); text-decoration: underline;
+}
+.queue-cancel:hover { color: var(--red); }
+
+/* 接通后的完成态 */
+.queue-mask.is-done .queue-title { color: #2C7A4B; }
+.queue-mask.is-done .queue-bar span { background: linear-gradient(90deg, #2C7A4B, #5DA87B); }
+
 /* ---------- 响应式 ---------- */
 @media (max-width: 720px) {
   .form-grid { grid-template-columns: 1fr; }
@@ -217,4 +270,6 @@ table.data .row-actions { display: flex; gap: 0.35rem; flex-wrap: wrap; }
 
 @media (prefers-reduced-motion: reduce) {
   .loading { animation-duration: 0.01ms; }
+  .queue-mask.is-waiting .queue-bar span { animation: none; width: 60%; }
+  .queue-card { transition-duration: 0.01ms; }
 }

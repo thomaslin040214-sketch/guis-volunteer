@@ -188,6 +188,7 @@
 <script src="assets/cloud.js"></script>
 <script src="assets/i18n.js"></script>
 <script src="assets/main.js"></script>
+<script src="assets/queue.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   "use strict";
@@ -213,6 +214,12 @@ document.addEventListener("DOMContentLoaded", function () {
     alerts.innerHTML = '<div class="alert alert-' + kind + '">' + html + "</div>";
   }
   function clearAlert() { alerts.innerHTML = ""; }
+
+  /* 排队界面的重试倒计时，按当前语言渲染 */
+  function retryLine(attempt, max, seconds) {
+    return t("q.retry", "第 {a} / {m} 次尝试 · {s} 秒后自动重试")
+      .replace("{a}", attempt).replace("{m}", max).replace("{s}", seconds);
+  }
 
   function fmtDateTime(iso) {
     if (!iso) return "";
@@ -242,7 +249,14 @@ document.addEventListener("DOMContentLoaded", function () {
     pickList.hidden = true;
     pickEmpty.hidden = true;
 
-    C.listOpenActivities().then(function (res) {
+    window.GUISQueue.run(function () { return C.listOpenActivities(); }, {
+      title: t("sg.loading", "正在读取活动列表…"),
+      busyTitle: t("q.busy", "正在为你接通…"),
+      sub: t("q.sub", "访问的人有点多，我们正在排队处理，稍等一下就好。"),
+      doneText: t("q.done", "好了，进去了"),
+      cancelText: t("q.cancel", "稍后再来"),
+      retryText: retryLine
+    }).then(function (res) {
       var data = C.unwrap(res, "读取活动失败");
       activities = data || [];
       pickLoading.hidden = true;
@@ -322,7 +336,9 @@ document.addEventListener("DOMContentLoaded", function () {
     }).catch(function (err) {
       pickLoading.hidden = true;
       pickEmpty.hidden = false;
-      pickEmpty.textContent = t("sg.loadFail", "读取活动列表失败") + "：" + (err && err.message ? err.message : "");
+      pickEmpty.textContent = err && err.cancelled
+        ? t("q.cancelledLoad", "已取消加载，刷新页面可以重新读取。")
+        : t("sg.loadFail", "读取活动列表失败") + "：" + (err && err.message ? err.message : "");
       console.error("[GUIS] load activities failed", err && err.message);
     });
   }
@@ -372,7 +388,7 @@ document.addEventListener("DOMContentLoaded", function () {
     var original = btn.textContent;
     btn.textContent = t("f.submitting", "提交中…");
 
-    C.register({
+    var payload = {
       activity_id: selected.id,
       name: name,
       email: email,
@@ -383,8 +399,24 @@ document.addEventListener("DOMContentLoaded", function () {
       slot: $("f-slot").value.trim() || null,
       experience: $("f-experience").value.trim() || null,
       note: $("f-note").value.trim() || null
+    };
+
+    /* 提交走排队组件：请求慢或拥塞时自动排队重试；重复报名 / 无权限这类
+       确定性错误不重试，直接交给下面的提示处理。 */
+    window.GUISQueue.run(function () { return C.register(payload); }, {
+      title: t("f.submitting", "提交中…"),
+      busyTitle: t("q.busy", "正在为你接通…"),
+      sub: t("q.sub", "报名的人有点多，我们正在排队提交，不要关闭页面。"),
+      doneText: t("q.done", "好了，进去了"),
+      cancelText: t("q.cancel", "稍后再来"),
+      retryText: retryLine,
+      shouldRetry: function (e) {
+        return !(e && /^(23505|42501)$/.test(String(e.code)));
+      }
     }).then(function (res) {
       C.unwrap(res, "提交失败");
+      btn.disabled = false;
+      btn.textContent = original;
       pickPanel.hidden = true;
       formPanel.hidden = true;
       donePanel.hidden = false;
@@ -394,7 +426,9 @@ document.addEventListener("DOMContentLoaded", function () {
     }).catch(function (err) {
       btn.disabled = false;
       btn.textContent = original;
-      if (err && err.code === "23505") {
+      if (err && err.cancelled) {
+        showAlert("warn", t("q.cancelled", "已取消，可以稍后再试一次。"));
+      } else if (err && err.code === "23505") {
         showAlert("warn", t("msg.dup", "这个邮箱已经报名过该活动了，无需重复提交。"));
       } else if (err && err.code === "42501") {
         showAlert("error", t("msg.denied", "提交被拒绝：该活动可能已关闭报名。"));

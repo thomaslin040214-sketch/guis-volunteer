@@ -326,7 +326,16 @@ window.SITE_I18N = {
     "msg.badEmail": "邮箱格式看起来不太对，请检查一下。",
     "msg.dup": "这个邮箱已经报名过该活动了，无需重复提交。",
     "msg.denied": "提交被拒绝：该活动可能已关闭报名。",
-    "msg.fail": "提交失败，请稍后重试"
+    "msg.fail": "提交失败，请稍后重试",
+    "msg.cancelled": "已取消，表单里填的内容还在，随时可以再提交一次。",
+
+    "q.busy": "正在为你接通…",
+    "q.sub": "访问的人有点多，我们正在排队处理，稍等一下就好。",
+    "q.done": "好了，进去了",
+    "q.cancel": "稍后再来",
+    "q.cancelled": "已取消，需要的话可以再试一次。",
+    "q.cancelledLoad": "已取消加载，刷新页面可以重新读取。",
+    "q.retry": "第 {a} / {m} 次尝试 · {s} 秒后自动重试"
   },
 
   /* ---------------- English ---------------- */
@@ -650,6 +659,15 @@ window.SITE_I18N = {
     "msg.badEmail": "That email address doesn't look right — please check it.",
     "msg.dup": "This email has already signed up for that activity — no need to submit again.",
     "msg.denied": "Submission rejected: sign-up for this activity may have closed.",
-    "msg.fail": "Submission failed — please try again"
+    "msg.fail": "Submission failed — please try again",
+    "msg.cancelled": "Cancelled — what you typed is still in the form, so you can submit again any time.",
+
+    "q.busy": "Getting you through…",
+    "q.sub": "It's a bit busy right now — we're queuing your request, this should only take a moment.",
+    "q.done": "You're in",
+    "q.cancel": "Try later",
+    "q.cancelled": "Cancelled — you can try again whenever you like.",
+    "q.cancelledLoad": "Loading cancelled — refresh the page to try again.",
+    "q.retry": "Attempt {a} of {m} · retrying in {s}s"
   }
 };

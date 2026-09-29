@@ -862,6 +862,7 @@
 <script src="assets/cloud-config.js"></script>
 <script src="assets/cloud.js"></script>
 <script src="assets/i18n.js"></script>
+<script src="assets/queue.js"></script>
 <script src="assets/main.js"></script>
 <script>
 /* ---------- 首页「活动报名」板块：读取云端开放报名的活动 ---------- */
@@ -947,9 +948,28 @@ document.addEventListener("DOMContentLoaded", function () {
     list.hidden = false;
   }
 
+  /* 排队界面的重试倒计时，按当前语言渲染 */
+  function retryLine(attempt, max, seconds) {
+    return t("q.retry", "第 {a} / {m} 次尝试 · {s} 秒后自动重试")
+      .replace("{a}", attempt).replace("{m}", max).replace("{s}", seconds);
+  }
+
   function load() {
     loading.hidden = false;
-    C.listOpenActivities().then(function (res) {
+    /* 读取走排队组件：网络慢或拥塞时自动排队重试，平时瞬间返回、完全看不到 */
+    var runner = window.GUISQueue
+      ? window.GUISQueue.run(function () { return C.listOpenActivities(); }, {
+          title: t("su.loading", "正在读取活动列表…"),
+          busyTitle: t("q.busy", "正在为你接通…"),
+          sub: t("q.sub", "访问的人有点多，我们正在排队处理，稍等一下就好。"),
+          doneText: t("q.done", "好了，进去了"),
+          cancelText: t("q.cancel", "稍后再来"),
+          retryText: retryLine,
+          maxAttempts: 3
+        })
+      : C.listOpenActivities();
+
+    runner.then(function (res) {
       cached = C.unwrap(res, "读取失败") || [];
       render();
     }).catch(function () {
