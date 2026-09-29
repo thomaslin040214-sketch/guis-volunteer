@@ -16,6 +16,7 @@
 <meta property="og:image" content="assets/logo/guis-logo-h.png" />
 
 <link rel="stylesheet" href="assets/site.css" />
+<link rel="stylesheet" href="assets/app.css" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
@@ -43,6 +44,7 @@
     <a href="#gallery" data-i18n="nav.gallery">志愿风采</a>
     <a href="#team" data-i18n="nav.team">团队成员</a>
     <a href="#journey" data-i18n="nav.journey">发展历程</a>
+    <a href="#signup" data-i18n="nav.signup">活动报名</a>
     <a href="#contact" data-i18n="nav.contact">联系我们</a>
     <a href="join.html" data-i18n="nav.join">招募信</a>
     <div class="lang-switch" role="group" aria-label="Language / 语言">
@@ -776,6 +778,28 @@
 
   <hr class="hairline" />
 
+  <!-- ======================= SIGNUP (活动报名) ======================= -->
+  <section id="signup">
+    <div class="wrap">
+      <div class="reveal">
+        <p class="eyebrow" data-i18n="su.eyebrow">活动报名</p>
+        <h2 class="section-title" data-i18n="su.title">正在开放报名的活动</h2>
+        <p class="lede" data-i18n="su.lede">下面是可以报名的义工活动。选一个点进去，填一张表就好 —— 不需要经验，但需要守时。</p>
+      </div>
+
+      <!-- 活动由后台创建，这里自动读取云端数据 -->
+      <div id="su-loading" class="empty" style="margin-top:2.2rem;"><span class="loading"></span> <span data-i18n="su.loading">正在读取活动列表…</span></div>
+      <div id="su-empty" class="empty" style="margin-top:2.2rem;" hidden data-i18n="su.empty">目前没有开放报名的活动。可以写信告诉我们你想参加哪个板块。</div>
+      <div id="su-list" class="act-list" style="margin-top:2.2rem;" hidden></div>
+
+      <div style="margin-top:1.6rem;">
+        <a href="signup.html" class="btn btn-secondary" data-i18n="su.all">打开报名页</a>
+      </div>
+    </div>
+  </section>
+
+  <hr class="hairline" />
+
   <!-- ======================= CONTACT ======================= -->
   <section id="contact">
     <div class="wrap">
@@ -817,6 +841,7 @@
     <div class="footer-links">
       <a href="#home" data-i18n="footer.top">回到顶部</a>
       <a href="join.html" data-i18n="nav.join">招募信</a>
+      <a href="admin.html" data-i18n="nav.admin">后台管理</a>
     </div>
   </div>
 </footer>
@@ -832,7 +857,96 @@
   <button class="lightbox-nav next" type="button" aria-label="下一张" data-i18n-attr="aria-label:ui.next">›</button>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
+<script src="assets/cloud-config.js"></script>
+<script src="assets/cloud.js"></script>
 <script src="assets/i18n.js"></script>
 <script src="assets/main.js"></script>
+<script>
+/* ---------- 首页「活动报名」板块：读取云端开放报名的活动 ---------- */
+document.addEventListener("DOMContentLoaded", function () {
+  var C = window.GUISCloud;
+  if (!C) return;
+
+  var loading = document.getElementById("su-loading");
+  var emptyBox = document.getElementById("su-empty");
+  var list = document.getElementById("su-list");
+  if (!list) return;
+
+  function t(key, fallback) {
+    var lang = (document.documentElement.lang === "en") ? "en" : "zh";
+    var pack = (window.SITE_I18N && window.SITE_I18N[lang]) || {};
+    return pack[key] != null ? pack[key] : (fallback || key);
+  }
+  function pad(n) { return n < 10 ? "0" + n : "" + n; }
+  function fmtDT(iso) {
+    if (!iso) return "";
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
+  }
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  var cached = [];
+
+  function render() {
+    if (!cached.length) {
+      loading.hidden = true;
+      list.hidden = true;
+      emptyBox.hidden = false;
+      return;
+    }
+    loading.hidden = true;
+    emptyBox.hidden = true;
+
+    list.innerHTML = cached.map(function (a) {
+      var closed = a.signup_deadline && new Date(a.signup_deadline).getTime() < Date.now();
+      var bits = [];
+      if (a.starts_at) bits.push(fmtDT(a.starts_at));
+      if (a.location) bits.push(esc(a.location));
+      if (a.capacity) bits.push(a.capacity + " " + t("su.people", "人"));
+      if (a.signup_deadline) bits.push(t("su.deadline", "截止") + " " + fmtDT(a.signup_deadline));
+
+      return '<div class="act-item">' +
+        '<div class="act-main">' +
+          '<div class="act-title">' + esc(a.title) +
+            ' <span class="badge ' + (closed ? "badge-closed" : "badge-open") + '">' +
+            (closed ? t("su.closed", "已截止") : t("su.open", "报名中")) + "</span></div>" +
+          (a.summary ? '<div class="act-summary">' + esc(a.summary) + "</div>" : "") +
+          '<div class="act-meta">' + bits.map(function (b) { return "<span>" + b + "</span>"; }).join("") + "</div>" +
+        "</div>" +
+        '<div class="act-side">' +
+          (closed
+            ? '<span class="tbl-btn" style="text-align:center;opacity:.6;">' + t("su.closed", "已截止") + "</span>"
+            : '<a class="btn btn-primary" style="padding:0.55rem 1.2rem;font-size:0.85rem;" href="signup.html?activity=' + a.id + '">' + t("su.btn", "去报名") + "</a>") +
+        "</div>" +
+      "</div>";
+    }).join("");
+    list.hidden = false;
+  }
+
+  function load() {
+    loading.hidden = false;
+    C.listOpenActivities().then(function (res) {
+      cached = C.unwrap(res, "读取失败") || [];
+      render();
+    }).catch(function () {
+      cached = [];
+      render();
+    });
+  }
+
+  load();
+
+  /* 语言切换后重新渲染（文案跟着换） */
+  Array.prototype.forEach.call(document.querySelectorAll(".lang-btn"), function (b) {
+    b.addEventListener("click", function () { setTimeout(render, 60); });
+  });
+});
+</script>
 </body>
 </html>

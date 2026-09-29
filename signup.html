@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-title="doc.signup.title">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>活动报名 | GUIS 义工社</title>
+<meta name="description" content="GUIS 义工社义工活动报名 —— 广州优联国际学校学生志愿服务组织。" />
+<meta name="theme-color" content="#FFFFFF" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png" />
+<link rel="apple-touch-icon" href="assets/logo/favicon.png" />
+<link rel="stylesheet" href="assets/site.css" />
+<link rel="stylesheet" href="assets/app.css" />
+<script>document.documentElement.classList.add("js");</script>
+</head>
+<body>
+
+<div class="bg" aria-hidden="true">
+  <div class="bg-mesh"></div>
+  <div class="bg-blob blob-a"></div>
+  <div class="bg-blob blob-b"></div>
+  <div class="bg-blob blob-c"></div>
+  <img class="bg-emblem" src="assets/logo/guis-emblem.png" alt="" />
+</div>
+<div class="spotlight" id="spotlight"></div>
+
+<nav>
+  <a href="index.html" class="nav-logo">
+    <img class="logo-img" src="assets/logo/guis-logo-h.png" alt="Guangzhou Ulink International School" />
+    <span class="logo-div"></span>
+    <span class="org" data-i18n="nav.org">义工社</span>
+  </a>
+  <div class="nav-links">
+    <a href="index.html" data-i18n="nav.home">回到主页</a>
+    <a href="index.html#signup" class="is-active" data-i18n="nav.signup">活动报名</a>
+    <a href="index.html#contact" data-i18n="nav.contact">联系我们</a>
+    <a href="admin.html" data-i18n="nav.admin">后台管理</a>
+    <div class="lang-switch" role="group" aria-label="Language / 语言">
+      <button class="lang-btn is-active" data-lang="zh" aria-pressed="true">中文</button>
+      <button class="lang-btn" data-lang="en" aria-pressed="false">EN</button>
+    </div>
+  </div>
+</nav>
+
+<main class="page-head">
+  <section style="padding-top:0;">
+    <div class="wrap">
+
+      <div class="reveal" style="margin-bottom:2rem;">
+        <p class="eyebrow" data-i18n="sg.eyebrow">活动报名</p>
+        <h1 class="page-title" data-i18n="sg.title">报名成为下一次行动的志愿者</h1>
+        <p class="page-lede" data-i18n="sg.lede">选一个你愿意固定参加的板块，填完下面这张表就可以了。不需要经验，也不需要提前准备什么 —— 但需要守时。</p>
+      </div>
+
+      <!-- 选择活动 -->
+      <div class="panel reveal d1" id="pick-panel">
+        <div class="panel-head">
+          <div>
+            <h2 data-i18n="sg.pickTitle">第一步 · 选择活动</h2>
+            <div class="sub" data-i18n="sg.pickHint">点击下方任一活动即可选中，然后再填写报名信息。</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div id="pick-loading" class="empty"><span class="loading"></span> <span data-i18n="sg.loading">正在读取活动列表…</span></div>
+          <div id="pick-list" class="act-list" hidden></div>
+          <div id="pick-empty" class="empty" hidden data-i18n="sg.empty">目前没有开放报名的活动，请稍后再来，或写信告诉我们你想参加哪个板块。</div>
+        </div>
+      </div>
+
+      <!-- 报名表单 -->
+      <div class="panel reveal d2" id="form-panel" hidden>
+        <div class="panel-head">
+          <div>
+            <h2 data-i18n="sg.formTitle">第二步 · 填写报名信息</h2>
+            <div class="sub" id="form-activity-name"></div>
+          </div>
+          <button type="button" class="link-btn" id="change-activity" data-i18n="sg.change">换个活动</button>
+        </div>
+        <div class="panel-body">
+          <div id="form-alerts"></div>
+
+          <form id="signup-form" novalidate>
+            <div class="form-grid">
+              <div class="field">
+                <label for="f-name" data-i18n="f.name">姓名 <span class="req">*</span></label>
+                <input id="f-name" name="name" type="text" required autocomplete="name" />
+              </div>
+
+              <div class="field">
+                <label for="f-email" data-i18n="f.email">邮箱 <span class="req">*</span></label>
+                <input id="f-email" name="email" type="email" required autocomplete="email" />
+                <span class="hint" data-i18n="f.emailHint">同一个邮箱对同一活动只能报名一次</span>
+              </div>
+
+              <div class="field">
+                <label for="f-phone" data-i18n="f.phone">手机号</label>
+                <input id="f-phone" name="phone" type="tel" autocomplete="tel" />
+              </div>
+
+              <div class="field">
+                <label for="f-grade" data-i18n="f.grade">年级</label>
+                <select id="f-grade" name="grade">
+                  <option value="" data-i18n="f.choose">请选择</option>
+                  <option value="G10">G10</option>
+                  <option value="G11">G11</option>
+                  <option value="G12">G12</option>
+                  <option value="other" data-i18n="f.other">其他</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="f-programme" data-i18n="f.programme">课程体系</label>
+                <select id="f-programme" name="programme">
+                  <option value="" data-i18n="f.choose">请选择</option>
+                  <option value="ULC" data-i18n="f.ulc">ULC 英式课程</option>
+                  <option value="NCPA" data-i18n="f.ncpa">NCPA 美式课程</option>
+                  <option value="other" data-i18n="f.other">其他</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="f-student-id" data-i18n="f.studentId">学号</label>
+                <input id="f-student-id" name="student_id" type="text" />
+              </div>
+
+              <div class="field span-2">
+                <label for="f-slot" data-i18n="f.slot">希望参与的岗位或时段</label>
+                <input id="f-slot" name="slot" type="text" />
+                <span class="hint" data-i18n="f.slotHint">例如：周六上午课业辅导 / 净滩称重记录 / 摊位收银</span>
+              </div>
+
+              <div class="field span-2">
+                <label for="f-experience" data-i18n="f.exp">相关经验</label>
+                <textarea id="f-experience" name="experience" data-i18n-attr="placeholder:f.expPh"></textarea>
+              </div>
+
+              <div class="field span-2">
+                <label for="f-note" data-i18n="f.note">备注</label>
+                <textarea id="f-note" name="note" data-i18n-attr="placeholder:f.notePh"></textarea>
+              </div>
+            </div>
+
+            <p class="hint" style="margin-top:1.1rem;" data-i18n="f.privacy">这些信息只用于本次活动的联络与排班，由义工社执委会保管，不会对外公开。</p>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary" id="submit-btn" data-i18n="f.submit">提交报名</button>
+              <a href="index.html" class="btn btn-secondary" data-i18n="sg.backHome">返回首页</a>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- 提交成功 -->
+      <div class="panel reveal" id="done-panel" hidden>
+        <div class="panel-body">
+          <div class="done-wrap">
+            <div class="done-mark">✓</div>
+            <h2 class="page-title" data-i18n="sg.doneTitle">报名成功</h2>
+            <p class="page-lede" style="margin:0 auto;" id="done-detail"></p>
+            <div class="form-actions" style="justify-content:center;">
+              <a href="index.html" class="btn btn-primary" data-i18n="sg.backHome">返回首页</a>
+              <a href="signup.html" class="btn btn-secondary" data-i18n="sg.signupMore">再报一个活动</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap footer-inner">
+    <div class="footer-brand">
+      <img src="assets/logo/guis-wordmark.png" alt="GUIS" />
+      <span class="footer-org" data-i18n="footer.org">广州优联国际学校义工社<br />Guangzhou Ulink International School Volunteer Service</span>
+    </div>
+    <span data-i18n="footer.text">© 2026 GUIS 义工社 · 学生自主运营 · 服务记录公开可查。</span>
+    <div class="footer-links">
+      <a href="index.html" data-i18n="nav.home">回到主页</a>
+      <a href="index.html#contact" data-i18n="nav.contact">联系我们</a>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
+<script src="assets/cloud-config.js"></script>
+<script src="assets/cloud.js"></script>
+<script src="assets/i18n.js"></script>
+<script src="assets/main.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  "use strict";
+
+  var C = window.GUISCloud;
+  var $ = function (id) { return document.getElementById(id); };
+
+  var pickPanel = $("pick-panel"), formPanel = $("form-panel"), donePanel = $("done-panel");
+  var pickLoading = $("pick-loading"), pickList = $("pick-list"), pickEmpty = $("pick-empty");
+  var alerts = $("form-alerts"), formName = $("form-activity-name");
+
+  var activities = [];
+  var selected = null;
+
+  /* ---------- 工具 ---------- */
+  function t(key, fallback) {
+    var lang = (document.documentElement.lang === "en") ? "en" : "zh";
+    var pack = (window.SITE_I18N && window.SITE_I18N[lang]) || {};
+    return pack[key] != null ? pack[key] : (fallback || key);
+  }
+
+  function showAlert(kind, html) {
+    alerts.innerHTML = '<div class="alert alert-' + kind + '">' + html + "</div>";
+  }
+  function clearAlert() { alerts.innerHTML = ""; }
+
+  function fmtDateTime(iso) {
+    if (!iso) return "";
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    var pad = function (n) { return n < 10 ? "0" + n : "" + n; };
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) +
+           " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
+  }
+
+  function metaLine(a) {
+    var bits = [];
+    if (a.starts_at) bits.push("🕘 " + fmtDateTime(a.starts_at));
+    if (a.location) bits.push("📍 " + a.location);
+    if (a.capacity) bits.push("👥 " + a.capacity + " " + t("sg.people", "人"));
+    if (a.signup_deadline) bits.push("⏳ " + t("sg.deadline", "截止") + " " + fmtDateTime(a.signup_deadline));
+    return bits;
+  }
+
+  function isClosed(a) {
+    return a.signup_deadline && new Date(a.signup_deadline).getTime() < Date.now();
+  }
+
+  /* ---------- 载入活动 ---------- */
+  function loadActivities() {
+    pickLoading.hidden = false;
+    pickList.hidden = true;
+    pickEmpty.hidden = true;
+
+    C.listOpenActivities().then(function (res) {
+      var data = C.unwrap(res, "读取活动失败");
+      activities = data || [];
+      pickLoading.hidden = true;
+
+      if (!activities.length) { pickEmpty.hidden = false; return; }
+
+      pickList.innerHTML = "";
+      activities.forEach(function (a) {
+        var closed = isClosed(a);
+
+        var item = document.createElement("label");
+        item.className = "act-pick";
+        item.setAttribute("for", "act-" + a.id);
+
+        var left = document.createElement("div");
+        left.style.minWidth = "0";
+        var title = document.createElement("div");
+        title.className = "t";
+        title.textContent = a.title;
+        var meta = document.createElement("div");
+        meta.className = "d";
+        meta.textContent = metaLine(a).join(" · ");
+        left.appendChild(title);
+        if (a.summary) {
+          var sum = document.createElement("div");
+          sum.className = "d";
+          sum.style.marginTop = "0.3rem";
+          sum.textContent = a.summary;
+          left.appendChild(sum);
+        }
+        left.appendChild(meta);
+
+        var right = document.createElement("div");
+        right.style.flex = "0 0 auto";
+        right.style.display = "flex";
+        right.style.alignItems = "center";
+        right.style.gap = "0.6rem";
+
+        var badge = document.createElement("span");
+        badge.className = "badge " + (closed ? "badge-closed" : "badge-open");
+        badge.textContent = closed ? t("sg.closed", "已截止") : t("sg.open", "报名中");
+        right.appendChild(badge);
+
+        var radio = document.createElement("input");
+        radio.type = "radio";
+        radio.name = "activity";
+        radio.id = "act-" + a.id;
+        radio.value = a.id;
+        if (closed) radio.disabled = true;
+        right.appendChild(radio);
+
+        item.appendChild(left);
+        item.appendChild(right);
+
+        radio.addEventListener("change", function () {
+          Array.prototype.forEach.call(pickList.querySelectorAll(".act-pick"), function (el) {
+            el.classList.remove("is-on");
+          });
+          item.classList.add("is-on");
+          selectActivity(a);
+        });
+
+        pickList.appendChild(item);
+      });
+
+      pickList.hidden = false;
+
+      /* URL 里指定了活动就自动选中 */
+      var want = new URLSearchParams(window.location.search).get("activity");
+      if (want) {
+        var hit = activities.filter(function (a) { return String(a.id) === String(want); })[0];
+        if (hit) {
+          var r = document.getElementById("act-" + hit.id);
+          if (r && !r.disabled) { r.checked = true; r.dispatchEvent(new Event("change")); }
+        }
+      }
+    }).catch(function (err) {
+      pickLoading.hidden = true;
+      pickEmpty.hidden = false;
+      pickEmpty.textContent = t("sg.loadFail", "读取活动列表失败") + "：" + (err && err.message ? err.message : "");
+      console.error("[GUIS] load activities failed", err && err.message);
+    });
+  }
+
+  function selectActivity(a) {
+    selected = a;
+    formName.textContent = a.title + (a.starts_at ? " · " + fmtDateTime(a.starts_at) : "");
+    formPanel.hidden = false;
+    clearAlert();
+    formPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  $("change-activity").addEventListener("click", function () {
+    selected = null;
+    formPanel.hidden = true;
+    pickPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  /* ---------- 提交 ---------- */
+  $("signup-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    clearAlert();
+
+    if (!selected) {
+      showAlert("error", t("msg.pickFirst", "请先选择一个活动"));
+      return;
+    }
+    if (isClosed(selected)) {
+      showAlert("warn", t("msg.closed", "这个活动已经截止报名了。"));
+      return;
+    }
+
+    var name = $("f-name").value.trim();
+    var email = $("f-email").value.trim();
+
+    if (!name || !email) {
+      showAlert("error", t("msg.required", "姓名和邮箱是必填的。"));
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showAlert("error", t("msg.badEmail", "邮箱格式看起来不太对，请检查一下。"));
+      return;
+    }
+
+    var btn = $("submit-btn");
+    btn.disabled = true;
+    var original = btn.textContent;
+    btn.textContent = t("f.submitting", "提交中…");
+
+    C.register({
+      activity_id: selected.id,
+      name: name,
+      email: email,
+      phone: $("f-phone").value.trim() || null,
+      grade: $("f-grade").value || null,
+      programme: $("f-programme").value || null,
+      student_id: $("f-student-id").value.trim() || null,
+      slot: $("f-slot").value.trim() || null,
+      experience: $("f-experience").value.trim() || null,
+      note: $("f-note").value.trim() || null
+    }).then(function (res) {
+      C.unwrap(res, "提交失败");
+      pickPanel.hidden = true;
+      formPanel.hidden = true;
+      donePanel.hidden = false;
+      $("done-detail").textContent =
+        t("sg.doneLead", "我们已收到你对") + "「" + selected.title + "」" + t("sg.doneTail", "的报名，执委会会在活动前通过邮件与你确认排班。");
+      donePanel.scrollIntoView({ behavior: "smooth", block: "start" });
+    }).catch(function (err) {
+      btn.disabled = false;
+      btn.textContent = original;
+      if (err && err.code === "23505") {
+        showAlert("warn", t("msg.dup", "这个邮箱已经报名过该活动了，无需重复提交。"));
+      } else if (err && err.code === "42501") {
+        showAlert("error", t("msg.denied", "提交被拒绝：该活动可能已关闭报名。"));
+      } else {
+        showAlert("error", t("msg.fail", "提交失败，请稍后重试") + (err && err.message ? "（" + err.message + "）" : ""));
+      }
+      console.error("[GUIS] register failed", err && err.code);
+    });
+  });
+
+  loadActivities();
+});
+</script>
+</body>
+</html>

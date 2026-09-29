@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>后台管理 | GUIS 义工社</title>
+<meta name="description" content="GUIS 义工社后台管理：创建义工活动、查看报名名单、导出 Excel。" />
+<meta name="theme-color" content="#FFFFFF" />
+<meta name="robots" content="noindex, nofollow" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png" />
+<link rel="stylesheet" href="assets/site.css" />
+<link rel="stylesheet" href="assets/app.css" />
+<script>document.documentElement.classList.add("js");</script>
+</head>
+<body>
+
+<div class="bg" aria-hidden="true">
+  <div class="bg-mesh"></div>
+  <div class="bg-blob blob-a"></div>
+  <div class="bg-blob blob-b"></div>
+</div>
+
+<nav>
+  <a href="index.html" class="nav-logo">
+    <img class="logo-img" src="assets/logo/guis-logo-h.png" alt="Guangzhou Ulink International School" />
+    <span class="logo-div"></span>
+    <span class="org">义工社 · 后台</span>
+  </a>
+  <div class="nav-links">
+    <a href="index.html">回到主页</a>
+    <a href="signup.html">报名页面</a>
+    <a href="admin.html" class="is-active">后台管理</a>
+  </div>
+</nav>
+
+<main class="page-head">
+  <section style="padding-top:0;">
+    <div class="wrap">
+
+      <!-- 域名绑定提示 -->
+      <div class="origin-banner" id="origin-banner" hidden>
+        <b>当前访问地址未绑定到云服务。</b>
+        登录与数据读写只在应用的正式域名上生效。请改用
+        <a id="origin-link" href="#"></a> 访问本页。
+      </div>
+
+      <!-- ============ 登录 ============ -->
+      <div id="login-view" hidden>
+        <div class="login-wrap">
+          <div style="text-align:center;margin-bottom:1.75rem;">
+            <img src="assets/logo/guis-logo-v.png" alt="GUIS" style="width:130px;margin:0 auto 1rem;" />
+            <p class="eyebrow">后台管理</p>
+            <h1 class="page-title">义工社执委会登录</h1>
+            <p class="page-lede" style="margin:0 auto;">用于创建义工活动、查看报名名单并导出 Excel。仅限执委会成员。</p>
+          </div>
+
+          <div class="panel">
+            <div class="panel-body">
+              <div class="seg" id="auth-seg">
+                <button type="button" class="is-on" data-mode="password">密码登录</button>
+                <button type="button" data-mode="otp">验证码登录</button>
+                <button type="button" data-mode="signup">注册</button>
+              </div>
+
+              <div id="auth-alerts"></div>
+
+              <!-- 密码登录 -->
+              <form id="form-password" novalidate>
+                <div class="form-grid">
+                  <div class="field span-2">
+                    <label for="pw-email">邮箱</label>
+                    <input id="pw-email" type="email" autocomplete="username" required />
+                  </div>
+                  <div class="field span-2">
+                    <label for="pw-pass">密码</label>
+                    <input id="pw-pass" type="password" autocomplete="current-password" required />
+                  </div>
+                </div>
+                <div class="form-actions">
+                  <button type="submit" class="btn btn-primary" id="pw-submit">登录</button>
+                  <button type="button" class="link-btn" id="goto-reset" style="align-self:center;">忘记密码？</button>
+                </div>
+              </form>
+
+              <!-- 验证码登录 -->
+              <form id="form-otp" novalidate hidden>
+                <div class="form-grid">
+                  <div class="field span-2">
+                    <label for="otp-email">邮箱</label>
+                    <input id="otp-email" type="email" autocomplete="username" required />
+                  </div>
+                  <div class="field span-2">
+                    <label for="otp-code">验证码</label>
+                    <input id="otp-code" type="text" inputmode="numeric" placeholder="邮箱收到的 6 位验证码" />
+                    <span class="hint" id="otp-hint">先点「获取验证码」，再把邮箱里的验证码填进来。</span>
+                  </div>
+                </div>
+                <div class="form-actions">
+                  <button type="button" class="btn btn-secondary" id="otp-send">获取验证码</button>
+                  <button type="submit" class="btn btn-primary" id="otp-submit">登录</button>
+                </div>
+              </form>
+
+              <!-- 注册 -->
+              <form id="form-signup" novalidate hidden>
+                <div class="form-grid">
+                  <div class="field span-2">
+                    <label for="su-email">邮箱</label>
+                    <input id="su-email" type="email" autocomplete="username" required />
+                  </div>
+                  <div class="field span-2">
+                    <label for="su-pass">设置密码</label>
+                    <input id="su-pass" type="password" autocomplete="new-password" required />
+                    <span class="hint">注册后即可用邮箱 + 密码登录。</span>
+                  </div>
+                  <div class="field span-2">
+                    <label for="su-code">验证码</label>
+                    <input id="su-code" type="text" inputmode="numeric" placeholder="邮箱收到的 6 位验证码" />
+                  </div>
+                </div>
+                <div class="form-actions">
+                  <button type="button" class="btn btn-secondary" id="su-send">获取验证码</button>
+                  <button type="submit" class="btn btn-primary" id="su-submit">注册并登录</button>
+                </div>
+              </form>
+
+              <!-- 重置密码 -->
+              <form id="form-reset" novalidate hidden>
+                <div class="form-grid">
+                  <div class="field span-2">
+                    <label for="rs-email">邮箱</label>
+                    <input id="rs-email" type="email" autocomplete="username" required />
+                  </div>
+                  <div class="field span-2">
+                    <label for="rs-code">验证码</label>
+                    <input id="rs-code" type="text" inputmode="numeric" placeholder="邮箱收到的验证码" />
+                  </div>
+                  <div class="field span-2">
+                    <label for="rs-pass">新密码</label>
+                    <input id="rs-pass" type="password" autocomplete="new-password" required />
+                  </div>
+                </div>
+                <div class="form-actions">
+                  <button type="button" class="btn btn-secondary" id="rs-send">获取验证码</button>
+                  <button type="submit" class="btn btn-primary" id="rs-submit">重置密码</button>
+                  <button type="button" class="link-btn" id="back-login" style="align-self:center;">返回登录</button>
+                </div>
+              </form>
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ 已登录 ============ -->
+      <div id="app-view" hidden>
+
+        <div class="admin-bar">
+          <div class="who">已登录：<b id="who-email"></b></div>
+          <div style="display:flex;gap:0.7rem;align-items:center;flex-wrap:wrap;">
+            <a href="signup.html" class="btn btn-secondary" style="padding:0.5rem 1rem;font-size:0.82rem;">查看报名页</a>
+            <button type="button" class="btn btn-secondary" id="logout-btn" style="padding:0.5rem 1rem;font-size:0.82rem;">退出登录</button>
+          </div>
+        </div>
+
+        <div class="tabs" style="margin-bottom:1.25rem;">
+          <button type="button" class="tab-btn is-on" data-tab="acts">活动管理</button>
+          <button type="button" class="tab-btn" data-tab="regs">报名名单</button>
+        </div>
+
+        <!-- ---------- 活动管理 ---------- -->
+        <div id="tab-acts">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h2 id="act-form-title">新建义工活动</h2>
+                <div class="sub">创建后学生即可在报名页看到并报名。</div>
+              </div>
+              <button type="button" class="link-btn" id="act-reset" hidden>取消编辑</button>
+            </div>
+            <div class="panel-body">
+              <div id="act-alerts"></div>
+              <form id="act-form" novalidate>
+                <div class="form-grid">
+                  <div class="field span-2">
+                    <label for="a-title">活动名称 <span class="req">*</span></label>
+                    <input id="a-title" type="text" required placeholder="例如：周末课业辅导 · 春季学期" />
+                  </div>
+
+                  <div class="field span-2">
+                    <label for="a-summary">一句话简介</label>
+                    <input id="a-summary" type="text" placeholder="会显示在报名列表里" />
+                  </div>
+
+                  <div class="field">
+                    <label for="a-category">所属板块</label>
+                    <select id="a-category">
+                      <option value="社区关怀">社区关怀</option>
+                      <option value="环保行动">环保行动</option>
+                      <option value="教育支持">教育支持</option>
+                      <option value="公益募捐">公益募捐</option>
+                      <option value="赛事会务">赛事会务</option>
+                      <option value="国际文化交流">国际文化交流</option>
+                    </select>
+                  </div>
+
+                  <div class="field">
+                    <label for="a-location">地点</label>
+                    <input id="a-location" type="text" placeholder="例如：南沙社区中心 / 校园图书馆" />
+                  </div>
+
+                  <div class="field">
+                    <label for="a-starts">开始时间</label>
+                    <input id="a-starts" type="datetime-local" />
+                  </div>
+
+                  <div class="field">
+                    <label for="a-ends">结束时间</label>
+                    <input id="a-ends" type="datetime-local" />
+                  </div>
+
+                  <div class="field">
+                    <label for="a-deadline">报名截止时间</label>
+                    <input id="a-deadline" type="datetime-local" />
+                    <span class="hint">到点后学生侧会自动显示「已截止」。</span>
+                  </div>
+
+                  <div class="field">
+                    <label for="a-capacity">计划招募人数</label>
+                    <input id="a-capacity" type="number" min="1" value="30" />
+                  </div>
+
+                  <div class="field">
+                    <label for="a-contact">负责人联系方式</label>
+                    <input id="a-contact" type="text" placeholder="仅执委会可见" />
+                  </div>
+
+                  <div class="field">
+                    <label for="a-status">状态</label>
+                    <select id="a-status">
+                      <option value="open">开放报名</option>
+                      <option value="closed">停止报名</option>
+                      <option value="draft">草稿（学生不可见）</option>
+                    </select>
+                  </div>
+
+                  <div class="field span-2">
+                    <label for="a-notes">备注（排班说明、集合地点等）</label>
+                    <textarea id="a-notes" placeholder="会显示在后台，学生看不到"></textarea>
+                  </div>
+                </div>
+
+                <div class="form-actions">
+                  <button type="submit" class="btn btn-primary" id="act-submit">创建活动</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>我创建的活动</h2>
+                <div class="sub">只有你自己创建的活动会出现在这里。</div>
+              </div>
+              <button type="button" class="link-btn" id="act-refresh">刷新</button>
+            </div>
+            <div class="panel-body">
+              <div id="act-list-loading" class="empty"><span class="loading"></span> 正在读取…</div>
+              <div id="act-list" class="act-list" hidden></div>
+              <div id="act-list-empty" class="empty" hidden>还没有创建任何活动。用上面的表单建一个吧。</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ---------- 报名名单 ---------- -->
+        <div id="tab-regs" hidden>
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>报名名单</h2>
+                <div class="sub">选择活动后可查看、审核报名并导出 Excel。</div>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="toolbar">
+                <div class="grow">
+                  <select id="reg-activity"><option value="">选择活动…</option></select>
+                </div>
+                <input type="search" id="reg-search" placeholder="搜索姓名 / 邮箱 / 学号…" style="max-width:280px;" />
+                <select id="reg-status-filter">
+                  <option value="">全部状态</option>
+                  <option value="pending">待确认</option>
+                  <option value="approved">已通过</option>
+                  <option value="rejected">未通过</option>
+                </select>
+                <button type="button" class="btn btn-primary" id="export-btn">导出 Excel</button>
+              </div>
+
+              <div id="reg-alerts"></div>
+
+              <div id="reg-loading" class="empty" hidden><span class="loading"></span> 正在读取报名…</div>
+              <div id="reg-empty" class="empty" hidden></div>
+              <div class="table-scroll" id="reg-table-wrap" hidden>
+                <table class="data">
+                  <thead>
+                    <tr>
+                      <th style="width:44px;">#</th>
+                      <th>姓名</th>
+                      <th>邮箱</th>
+                      <th>手机号</th>
+                      <th>年级</th>
+                      <th>课程</th>
+                      <th>学号</th>
+                      <th>岗位 / 时段</th>
+                      <th>相关经验</th>
+                      <th>备注</th>
+                      <th>状态</th>
+                      <th>报名时间</th>
+                      <th style="width:150px;">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="reg-body"></tbody>
+                </table>
+              </div>
+
+              <p class="hint" id="reg-count" style="margin-top:0.85rem;"></p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap footer-inner">
+    <div class="footer-brand">
+      <img src="assets/logo/guis-wordmark.png" alt="GUIS" />
+      <span class="footer-org">广州优联国际学校义工社<br />后台管理</span>
+    </div>
+    <span>© 2026 GUIS 义工社 · 后台仅限执委会成员访问</span>
+    <div class="footer-links">
+      <a href="index.html">回到主页</a>
+      <a href="signup.html">报名页面</a>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="assets/cloud-config.js"></script>
+<script src="assets/cloud.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  "use strict";
+
+  var C = window.GUISCloud;
+  var $ = function (id) { return document.getElementById(id); };
+
+  /* ---------------- 域名提示 ---------------- */
+  (function () {
+    var host = location.origin;
+    if (host && C.endpoint && host.replace(/\/+$/, "") !== C.endpoint.replace(/\/+$/, "")) {
+      var b = $("origin-banner");
+      $("origin-link").textContent = C.endpoint;
+      $("origin-link").href = C.endpoint + "/admin.html";
+      b.hidden = false;
+    }
+  })();
+
+  /* ---------------- 通用工具 ---------------- */
+  function alertIn(el, kind, msg) {
+    el.innerHTML = '<div class="alert alert-' + kind + '">' + msg + "</div>";
+  }
+  function clear(el) { el.innerHTML = ""; }
+
+  function pad(n) { return n < 10 ? "0" + n : "" + n; }
+  function fmtDT(iso) {
+    if (!iso) return "";
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
+  }
+  function toLocalInput(iso) {
+    if (!iso) return "";
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return "";
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) + "T" + pad(d.getHours()) + ":" + pad(d.getMinutes());
+  }
+  function fromLocalInput(v) {
+    if (!v) return null;
+    var d = new Date(v);
+    return isNaN(d.getTime()) ? null : d.toISOString();
+  }
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function statusLabel(s) {
+    return s === "approved" ? "已通过" : s === "rejected" ? "未通过" : "待确认";
+  }
+  function statusClass(s) {
+    return s === "approved" ? "st-approved" : s === "rejected" ? "st-rejected" : "st-pending";
+  }
+
+  /* ---------------- 登录态 ---------------- */
+  var loginView = $("login-view"), appView = $("app-view");
+
+  function showSignedIn(email) {
+    $("who-email").textContent = email || "";
+    loginView.hidden = true;
+    appView.hidden = false;
+    loadActivities();
+    loadActivityOptions();
+  }
+
+  function showLogin() {
+    appView.hidden = true;
+    loginView.hidden = false;
+  }
+
+  C.getSession().then(function (res) {
+    var s = res && res.data;
+    if (s && s.user && s.user.email) showSignedIn(s.user.email);
+    else if (s && s.user) showSignedIn("");
+    else showLogin();
+  }).catch(showLogin);
+
+  $("logout-btn").addEventListener("click", function () {
+    C.auth.signOut().then(showLogin).catch(showLogin);
+  });
+
+  /* ---------------- 登录表单切换 ---------------- */
+  var forms = {
+    password: $("form-password"),
+    otp: $("form-otp"),
+    signup: $("form-signup"),
+    reset: $("form-reset")
+  };
+  function showForm(name) {
+    Object.keys(forms).forEach(function (k) { forms[k].hidden = k !== name; });
+    Array.prototype.forEach.call($("auth-seg").children, function (b) {
+      b.classList.toggle("is-on", b.getAttribute("data-mode") === name);
+    });
+    clear($("auth-alerts"));
+  }
+  Array.prototype.forEach.call($("auth-seg").children, function (b) {
+    b.addEventListener("click", function () { showForm(b.getAttribute("data-mode")); });
+  });
+  $("goto-reset").addEventListener("click", function () { showForm("reset"); });
+  $("back-login").addEventListener("click", function () { showForm("password"); });
+
+  /* ---------------- 密码登录 ---------------- */
+  $("form-password").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var btn = $("pw-submit"), email = $("pw-email").value.trim(), pass = $("pw-pass").value;
+    if (!email || !pass) { alertIn($("auth-alerts"), "error", "请填写邮箱和密码。"); return; }
+    btn.disabled = true; btn.textContent = "登录中…";
+    C.auth.signInWithPassword({ email: email, password: pass }).then(function (r) {
+      if (r.error) { btn.disabled = false; btn.textContent = "登录"; alertIn($("auth-alerts"), "error", "邮箱或密码不正确。"); return; }
+      showSignedIn(email);
+    }).catch(function () {
+      btn.disabled = false; btn.textContent = "登录";
+      alertIn($("auth-alerts"), "error", "登录失败，请稍后重试。");
+    });
+  });
+
+  /* ---------------- OTP 登录 ---------------- */
+  var pendingOtp = null;
+
+  function sendCode(email, onDone) {
+    if (!email) { alertIn($("auth-alerts"), "error", "请先填写邮箱。"); return; }
+    C.auth.sendOtp({ email: email }).then(function (r) {
+      if (r.error) { alertIn($("auth-alerts"), "error", "验证码发送失败：" + (r.error.message || "请稍后重试")); return; }
+      pendingOtp = { email: email, verificationId: r.data.verificationId, isExistingUser: r.data.isExistingUser };
+      onDone();
+    }).catch(function () {
+      alertIn($("auth-alerts"), "error", "验证码发送失败，请稍后重试。");
+    });
+  }
+
+  $("otp-send").addEventListener("click", function () {
+    sendCode($("otp-email").value.trim(), function () {
+      alertIn($("auth-alerts"), "ok", "验证码已发送，请查收邮箱（含垃圾邮件）。");
+    });
+  });
+
+  $("form-otp").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var email = $("otp-email").value.trim(), code = $("otp-code").value.trim();
+    if (!pendingOtp || pendingOtp.email !== email) {
+      alertIn($("auth-alerts"), "error", "请先为当前邮箱获取验证码。");
+      return;
+    }
+    if (!code) { alertIn($("auth-alerts"), "error", "请填写验证码。"); return; }
+    $("otp-submit").disabled = true; $("otp-submit").textContent = "验证中…";
+    C.auth.verifyOtp({
+      email: pendingOtp.email,
+      verificationId: pendingOtp.verificationId,
+      isExistingUser: pendingOtp.isExistingUser,
+      token: code
+    }).then(function (r) {
+      $("otp-submit").disabled = false; $("otp-submit").textContent = "登录";
+      if (r.error) { alertIn($("auth-alerts"), "error", "验证码不正确或已过期。"); return; }
+      pendingOtp = null;
+      showSignedIn(email);
+    }).catch(function () {
+      $("otp-submit").disabled = false; $("otp-submit").textContent = "登录";
+      alertIn($("auth-alerts"), "error", "验证失败，请重试。");
+    });
+  });
+
+  /* ---------------- 注册 ---------------- */
+  $("su-send").addEventListener("click", function () {
+    sendCode($("su-email").value.trim(), function () {
+      alertIn($("auth-alerts"), "ok", "验证码已发送，请查收邮箱后再设置密码。");
+    });
+  });
+
+  $("form-signup").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var email = $("su-email").value.trim(), pass = $("su-pass").value, code = $("su-code").value.trim();
+    if (!pendingOtp || pendingOtp.email !== email) {
+      alertIn($("auth-alerts"), "error", "请先为当前邮箱获取验证码。"); return;
+    }
+    if (!pass) { alertIn($("auth-alerts"), "error", "请设置密码。"); return; }
+    if (!code) { alertIn($("auth-alerts"), "error", "请填写验证码。"); return; }
+
+    $("su-submit").disabled = true; $("su-submit").textContent = "注册中…";
+    C.auth.verifyOtp({
+      email: pendingOtp.email,
+      verificationId: pendingOtp.verificationId,
+      isExistingUser: pendingOtp.isExistingUser,
+      token: code,
+      password: pendingOtp.isExistingUser ? undefined : pass
+    }).then(function (r) {
+      $("su-submit").disabled = false; $("su-submit").textContent = "注册并登录";
+      if (r.error) { alertIn($("auth-alerts"), "error", "注册失败：" + (r.error.message || "请重试")); return; }
+      pendingOtp = null;
+      showSignedIn(email);
+    }).catch(function () {
+      $("su-submit").disabled = false; $("su-submit").textContent = "注册并登录";
+      alertIn($("auth-alerts"), "error", "注册失败，请重试。");
+    });
+  });
+
+  /* ---------------- 忘记密码 ---------------- */
+  var pendingReset = null;
+  $("rs-send").addEventListener("click", function () {
+    var email = $("rs-email").value.trim();
+    if (!email) { alertIn($("auth-alerts"), "error", "请先填写邮箱。"); return; }
+    C.auth.resetPasswordForEmail(email).then(function (r) {
+      if (r.error) { alertIn($("auth-alerts"), "error", "发送失败：" + (r.error.message || "请稍后重试")); return; }
+      pendingReset = { email: email, handle: r.data };
+      alertIn($("auth-alerts"), "ok", "验证码已发送，请查收邮箱。");
+    }).catch(function () {
+      alertIn($("auth-alerts"), "error", "发送失败，请稍后重试。");
+    });
+  });
+
+  $("form-reset").addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (!pendingReset) { alertIn($("auth-alerts"), "error", "请先获取验证码。"); return; }
+    var code = $("rs-code").value.trim(), pass = $("rs-pass").value;
+    if (!code || !pass) { alertIn($("auth-alerts"), "error", "请填写验证码和新密码。"); return; }
+    pendingReset.handle.updateUser({ nonce: code, password: pass }).then(function (r) {
+      if (r.error) { alertIn($("auth-alerts"), "error", "重置失败：" + (r.error.message || "请重试")); return; }
+      alertIn($("auth-alerts"), "ok", "密码已重置，正在为你登录…");
+      setTimeout(function () { showSignedIn($("rs-email").value.trim()); }, 600);
+    }).catch(function () {
+      alertIn($("auth-alerts"), "error", "重置失败，请重试。");
+    });
+  });
+
+  /* ---------------- Tab 切换 ---------------- */
+  Array.prototype.forEach.call(document.querySelectorAll(".tab-btn"), function (b) {
+    b.addEventListener("click", function () {
+      Array.prototype.forEach.call(document.querySelectorAll(".tab-btn"), function (x) { x.classList.remove("is-on"); });
+      b.classList.add("is-on");
+      var which = b.getAttribute("data-tab");
+      $("tab-acts").hidden = which !== "acts";
+      $("tab-regs").hidden = which !== "regs";
+    });
+  });
+
+  /* ================= 活动管理 ================= */
+  var editingId = null;
+  var myActivities = [];
+
+  function loadActivities() {
+    $("act-list-loading").hidden = false;
+    $("act-list").hidden = true;
+    $("act-list-empty").hidden = true;
+
+    C.listMyActivities().then(function (res) {
+      var rows = C.unwrap(res, "读取失败") || [];
+      myActivities = rows;
+      $("act-list-loading").hidden = true;
+
+      if (!rows.length) { $("act-list-empty").hidden = false; return; }
+
+      var html = "";
+      rows.forEach(function (a) {
+        var badgeCls = a.status === "open" ? "badge-open" : a.status === "closed" ? "badge-closed" : "badge-draft";
+        var badgeTxt = a.status === "open" ? "开放报名" : a.status === "closed" ? "停止报名" : "草稿";
+        var when = a.starts_at ? fmtDT(a.starts_at) : "待定";
+        var meta = [];
+        if (a.category) meta.push(esc(a.category));
+        if (a.location) meta.push(esc(a.location));
+        if (a.capacity) meta.push("计划 " + a.capacity + " 人");
+        if (a.signup_deadline) meta.push("截止 " + fmtDT(a.signup_deadline));
+
+        html += '<div class="act-item">' +
+          '<div class="act-main">' +
+            '<div class="act-title">' + esc(a.title) + ' <span class="badge ' + badgeCls + '">' + badgeTxt + '</span></div>' +
+            (a.summary ? '<div class="act-summary">' + esc(a.summary) + '</div>' : '') +
+            '<div class="act-meta"><span>' + when + '</span>' +
+              meta.map(function (m) { return '<span>' + m + '</span>'; }).join("") +
+            '</div>' +
+          '</div>' +
+          '<div class="act-side">' +
+            '<div class="row-actions">' +
+              '<button type="button" class="tbl-btn" data-edit="' + a.id + '">编辑</button>' +
+              '<button type="button" class="tbl-btn" data-toggle="' + a.id + '">' + (a.status === "open" ? "停止报名" : "开放报名") + '</button>' +
+              '<button type="button" class="tbl-btn danger" data-del="' + a.id + '">删除</button>' +
+            '</div>' +
+            '<a class="tbl-btn" style="text-align:center;" href="signup.html?activity=' + a.id + '">查看报名页</a>' +
+          '</div>' +
+        '</div>';
+      });
+      $("act-list").innerHTML = html;
+      $("act-list").hidden = false;
+    }).catch(function (err) {
+      $("act-list-loading").hidden = true;
+      $("act-list-empty").hidden = false;
+      $("act-list-empty").textContent = "读取失败：" + (err && err.message ? err.message : "");
+    });
+  }
+
+  $("act-refresh").addEventListener("click", loadActivities);
+
+  $("act-list").addEventListener("click", function (e) {
+    var t = e.target;
+    if (t.tagName !== "BUTTON") return;
+    var editId = t.getAttribute("data-edit");
+    var toggleId = t.getAttribute("data-toggle");
+    var delId = t.getAttribute("data-del");
+
+    if (editId) {
+      var a = myActivities.filter(function (x) { return String(x.id) === String(editId); })[0];
+      if (!a) return;
+      editingId = a.id;
+      $("act-form-title").textContent = "编辑活动";
+      $("act-submit").textContent = "保存修改";
+      $("act-reset").hidden = false;
+      $("a-title").value = a.title || "";
+      $("a-summary").value = a.summary || "";
+      $("a-category").value = a.category || "社区关怀";
+      $("a-location").value = a.location || "";
+      $("a-starts").value = toLocalInput(a.starts_at);
+      $("a-ends").value = toLocalInput(a.ends_at);
+      $("a-deadline").value = toLocalInput(a.signup_deadline);
+      $("a-capacity").value = a.capacity || 30;
+      $("a-contact").value = a.contact || "";
+      $("a-status").value = a.status || "open";
+      $("a-notes").value = a.notes || "";
+      clear($("act-alerts"));
+      $("act-form").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    if (toggleId) {
+      var cur = myActivities.filter(function (x) { return String(x.id) === String(toggleId); })[0];
+      if (!cur) return;
+      var next = cur.status === "open" ? "closed" : "open";
+      C.updateActivity(toggleId, { status: next }).then(function (res) {
+        var affected = C.unwrap(res, "更新失败") || [];
+        if (!affected.length) { alertIn($("act-alerts"), "error", "没有改动 —— 该活动可能不是你创建的。"); return; }
+        loadActivities();
+        loadActivityOptions();
+      }).catch(function (err) {
+        alertIn($("act-alerts"), "error", "更新失败：" + (err && err.message ? err.message : ""));
+      });
+    }
+
+    if (delId) {
+      var target = myActivities.filter(function (x) { return String(x.id) === String(delId); })[0];
+      if (!target) return;
+      if (!window.confirm("确定删除活动「" + target.title + "」吗？\n该活动下的所有报名记录也会一并删除，且无法恢复。")) return;
+      C.deleteActivity(delId).then(function (res) {
+        var removed = C.unwrap(res, "删除失败") || [];
+        if (!removed.length) { alertIn($("act-alerts"), "error", "删除失败 —— 该活动可能不是你创建的。"); return; }
+        if (editingId === Number(delId)) resetForm();
+        loadActivities();
+        loadActivityOptions();
+      }).catch(function (err) {
+        alertIn($("act-alerts"), "error", "删除失败：" + (err && err.message ? err.message : ""));
+      });
+    }
+  });
+
+  function resetForm() {
+    editingId = null;
+    $("act-form-title").textContent = "新建义工活动";
+    $("act-submit").textContent = "创建活动";
+    $("act-reset").hidden = true;
+    $("act-form").reset();
+    $("a-capacity").value = 30;
+    $("a-status").value = "open";
+    clear($("act-alerts"));
+  }
+  $("act-reset").addEventListener("click", resetForm);
+
+  $("act-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var title = $("a-title").value.trim();
+    if (!title) { alertIn($("act-alerts"), "error", "活动名称是必填的。"); return; }
+
+    var payload = {
+      title: title,
+      summary: $("a-summary").value.trim() || null,
+      category: $("a-category").value,
+      location: $("a-location").value.trim() || null,
+      starts_at: fromLocalInput($("a-starts").value),
+      ends_at: fromLocalInput($("a-ends").value),
+      signup_deadline: fromLocalInput($("a-deadline").value),
+      capacity: parseInt($("a-capacity").value, 10) || null,
+      contact: $("a-contact").value.trim() || null,
+      notes: $("a-notes").value.trim() || null,
+      status: $("a-status").value
+    };
+
+    var btn = $("act-submit");
+    btn.disabled = true;
+    var label = btn.textContent;
+    btn.textContent = "保存中…";
+
+    var req = editingId ? C.updateActivity(editingId, payload) : C.createActivity(payload);
+
+    req.then(function (res) {
+      var out = C.unwrap(res, "保存失败") || [];
+      btn.disabled = false; btn.textContent = label;
+      if (!out.length) { alertIn($("act-alerts"), "error", "没有改动 —— 该活动可能不是你创建的。"); return; }
+      alertIn($("act-alerts"), "ok", editingId ? "已保存修改。" : "活动已创建，学生现在可以在报名页看到它。");
+      resetForm();
+      loadActivities();
+      loadActivityOptions();
+    }).catch(function (err) {
+      btn.disabled = false; btn.textContent = label;
+      alertIn($("act-alerts"), "error", "保存失败：" + (err && err.message ? err.message : ""));
+    });
+  });
+
+  /* ================= 报名名单 ================= */
+  var regRows = [];
+
+  function loadActivityOptions() {
+    var sel = $("reg-activity");
+    var keep = sel.value;
+    sel.innerHTML = '<option value="">选择活动…</option>';
+    myActivities.forEach(function (a) {
+      var o = document.createElement("option");
+      o.value = a.id;
+      o.textContent = a.title + (a.status === "open" ? "" : "（" + (a.status === "draft" ? "草稿" : "已停止报名") + "）");
+      sel.appendChild(o);
+    });
+    if (keep) sel.value = keep;
+  }
+
+  function currentFilter() {
+    var q = $("reg-search").value.trim().toLowerCase();
+    var st = $("reg-status-filter").value;
+    return regRows.filter(function (r) {
+      if (st && r.status !== st) return false;
+      if (!q) return true;
+      return [r.name, r.email, r.student_id, r.phone].join(" ").toLowerCase().indexOf(q) >= 0;
+    });
+  }
+
+  function renderRegs() {
+    var rows = currentFilter();
+    var body = $("reg-body");
+    if (!rows.length) {
+      $("reg-table-wrap").hidden = true;
+      $("reg-empty").hidden = false;
+      $("reg-empty").textContent = regRows.length ? "没有符合筛选条件的报名记录。" : "这个活动还没有人报名。";
+      $("reg-count").textContent = regRows.length ? "共 " + regRows.length + " 条记录" : "";
+      return;
+    }
+    $("reg-empty").hidden = true;
+    $("reg-table-wrap").hidden = false;
+
+    body.innerHTML = rows.map(function (r, i) {
+      return "<tr>" +
+        '<td class="num">' + (i + 1) + "</td>" +
+        "<td>" + esc(r.name) + "</td>" +
+        "<td>" + esc(r.email) + "</td>" +
+        "<td>" + esc(r.phone) + "</td>" +
+        "<td>" + esc(r.grade) + "</td>" +
+        "<td>" + esc(r.programme) + "</td>" +
+        "<td>" + esc(r.student_id) + "</td>" +
+        "<td>" + esc(r.slot) + "</td>" +
+        "<td>" + esc(r.experience) + "</td>" +
+        "<td>" + esc(r.note) + "</td>" +
+        '<td><span class="badge ' + statusClass(r.status) + '">' + statusLabel(r.status) + "</span></td>" +
+        "<td>" + fmtDT(r.created_at) + "</td>" +
+        '<td><div class="row-actions">' +
+          '<button type="button" class="tbl-btn ok" data-approve="' + r.id + '">通过</button>' +
+          '<button type="button" class="tbl-btn" data-reject="' + r.id + '">不通过</button>' +
+          '<button type="button" class="tbl-btn danger" data-delreg="' + r.id + '">删除</button>' +
+        "</div></td>" +
+      "</tr>";
+    }).join("");
+
+    var n = { pending: 0, approved: 0, rejected: 0 };
+    regRows.forEach(function (r) { n[r.status] = (n[r.status] || 0) + 1; });
+    $("reg-count").textContent = "共 " + regRows.length + " 条记录 · 待确认 " + n.pending + " · 已通过 " + n.approved + " · 未通过 " + n.rejected;
+  }
+
+  function loadRegs() {
+    var id = $("reg-activity").value;
+    regRows = [];
+    $("reg-table-wrap").hidden = true;
+    $("reg-empty").hidden = true;
+    clear($("reg-alerts"));
+
+    if (!id) {
+      $("reg-empty").hidden = false;
+      $("reg-empty").textContent = "请先在上方选择一个活动。";
+      $("reg-count").textContent = "";
+      return;
+    }
+
+    $("reg-loading").hidden = false;
+    C.listRegistrations(id).then(function (res) {
+      regRows = C.unwrap(res, "读取失败") || [];
+      $("reg-loading").hidden = true;
+      renderRegs();
+    }).catch(function (err) {
+      $("reg-loading").hidden = true;
+      $("reg-empty").hidden = false;
+      $("reg-empty").textContent = "读取失败：" + (err && err.message ? err.message : "");
+    });
+  }
+
+  $("reg-activity").addEventListener("change", loadRegs);
+  $("reg-search").addEventListener("input", renderRegs);
+  $("reg-status-filter").addEventListener("change", renderRegs);
+
+  $("reg-body").addEventListener("click", function (e) {
+    var t = e.target;
+    if (t.tagName !== "BUTTON") return;
+
+    var approve = t.getAttribute("data-approve");
+    var reject = t.getAttribute("data-reject");
+    var del = t.getAttribute("data-delreg");
+
+    function setStatus(id, st) {
+      C.setRegistrationStatus(id, st).then(function (res) {
+        var out = C.unwrap(res, "更新失败") || [];
+        if (!out.length) { alertIn($("reg-alerts"), "error", "没有改动 —— 这条记录可能不属于你创建的活动。"); return; }
+        loadRegs();
+      }).catch(function (err) {
+        alertIn($("reg-alerts"), "error", "更新失败：" + (err && err.message ? err.message : ""));
+      });
+    }
+
+    if (approve) setStatus(approve, "approved");
+    if (reject) setStatus(reject, "rejected");
+
+    if (del) {
+      if (!window.confirm("确定删除这条报名记录吗？该操作无法撤销。")) return;
+      C.deleteRegistration(del).then(function (res) {
+        var out = C.unwrap(res, "删除失败") || [];
+        if (!out.length) { alertIn($("reg-alerts"), "error", "删除失败 —— 这条记录可能不属于你创建的活动。"); return; }
+        loadRegs();
+      }).catch(function (err) {
+        alertIn($("reg-alerts"), "error", "删除失败：" + (err && err.message ? err.message : ""));
+      });
+    }
+  });
+
+  /* ================= 导出 Excel ================= */
+  function safeName(s) {
+    return String(s || "报名名单").replace(/[\\/:*?"<>|]/g, "_").slice(0, 60);
+  }
+  function currentActivityTitle() {
+    var id = $("reg-activity").value;
+    var a = myActivities.filter(function (x) { return String(x.id) === String(id); })[0];
+    return a ? a.title : "";
+  }
+  function toRows() {
+    var rows = currentFilter();
+    return rows.map(function (r, i) {
+      return {
+        "序号": i + 1,
+        "姓名": r.name || "",
+        "邮箱": r.email || "",
+        "手机号": r.phone || "",
+        "年级": r.grade || "",
+        "课程体系": r.programme || "",
+        "学号": r.student_id || "",
+        "岗位/时段": r.slot || "",
+        "相关经验": r.experience || "",
+        "备注": r.note || "",
+        "状态": statusLabel(r.status),
+        "报名时间": fmtDT(r.created_at)
+      };
+    });
+  }
+
+  $("export-btn").addEventListener("click", function () {
+    var rows = toRows();
+    if (!rows.length) { alertIn($("reg-alerts"), "warn", "当前没有可导出的记录。"); return; }
+
+    var base = safeName("报名名单_" + currentActivityTitle() + "_" + fmtDT(new Date().toISOString()).replace(/[: ]/g, "-"));
+
+    if (window.XLSX) {
+      var ws = XLSX.utils.json_to_sheet(rows);
+      ws["!cols"] = [
+        { wch: 6 }, { wch: 12 }, { wch: 26 }, { wch: 16 }, { wch: 8 },
+        { wch: 12 }, { wch: 12 }, { wch: 22 }, { wch: 26 }, { wch: 24 }, { wch: 10 }, { wch: 18 }
+      ];
+      var wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "报名名单");
+      XLSX.writeFile(wb, base + ".xlsx");
+      alertIn($("reg-alerts"), "ok", "已导出 " + rows.length + " 条记录到 Excel。");
+      return;
+    }
+
+    /* SheetJS 没加载成功时退化为 CSV（Excel 可直接打开） */
+    var header = Object.keys(rows[0]);
+    var csv = [header.join(",")].concat(rows.map(function (r) {
+      return header.map(function (h) {
+        return '"' + String(r[h] == null ? "" : r[h]).replace(/"/g, '""') + '"';
+      }).join(",");
+    })).join("\r\n");
+    var blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = base + ".csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    alertIn($("reg-alerts"), "warn", "Excel 组件未加载，已改用 CSV 导出（Excel 可直接打开）。");
+  });
+});
+</script>
+</body>
+</html>
