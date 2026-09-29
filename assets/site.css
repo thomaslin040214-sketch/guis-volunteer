@@ -132,6 +132,8 @@ nav {
 .nav-logo .logo-img { height: 26px; width: auto; }
 .nav-logo .logo-div { width: 1px; height: 20px; background: var(--hairline-strong); }
 .nav-logo .org { color: var(--text-main); }
+/* 义工社 VA 标志：与 GUIS 校徽并置，组成「GUIS | 义工社」联合标志 */
+.nav-logo .logo-va { height: 30px; width: auto; }
 
 .nav-links { display: flex; align-items: center; gap: clamp(0.85rem, 1.8vw, 1.75rem); }
 
@@ -199,6 +201,18 @@ section { position: relative; z-index: 2; padding: clamp(4rem, 9vw, 7rem) 0; scr
 }
 
 .hero-logo { width: clamp(150px, 17vw, 208px); margin-bottom: 1.9rem; }
+
+/* 页头联合标志：GUIS 竖版校徽 | 义工社 VA 标志 */
+.hero-brand {
+  display: flex; align-items: center; justify-content: center;
+  gap: clamp(0.9rem, 2.2vw, 1.5rem); margin-bottom: 1.9rem;
+}
+.hero-brand .hero-logo { width: clamp(118px, 13vw, 158px); margin-bottom: 0; }
+.hero-brand .hero-div {
+  flex: 0 0 auto; width: 1px; height: clamp(74px, 8.6vw, 96px);
+  background: var(--hairline-strong);
+}
+.hero-brand .hero-va { height: clamp(96px, 10.8vw, 120px); width: auto; }
 
 .hero-badge {
   display: inline-flex; align-items: center; gap: 0.55rem;
@@ -600,6 +614,7 @@ footer {
 .footer-inner { display: flex; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; align-items: center; }
 .footer-brand { display: flex; align-items: center; gap: 0.9rem; }
 .footer-brand img { height: 26px; width: auto; opacity: 0.9; }
+.footer-brand img.footer-va { height: 36px; opacity: 1; }
 .footer-brand .footer-org { font-size: 0.82rem; color: var(--text-muted); line-height: 1.5; }
 .footer-links { display: flex; gap: 1.25rem; }
 .footer-links a:hover { color: var(--red); }
