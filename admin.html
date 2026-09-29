@@ -8,8 +8,35 @@
 <meta name="theme-color" content="#FFFFFF" />
 <meta name="robots" content="noindex, nofollow" />
 <link rel="icon" type="image/png" href="assets/logo/favicon.png" />
-<link rel="stylesheet" href="assets/site.css" />
-<link rel="stylesheet" href="assets/app.css" />
+<!-- 品牌标志兜底样式（内联，随 HTML 一起下发）。
+     即使 assets/site.css 被浏览器缓存成旧版本，标志也不会按图片原始尺寸撑破布局。
+     这里只设尺寸上限（max-*），正常加载 site.css 时这些上限都不会生效。 -->
+<style>
+.nav-logo{display:flex;align-items:center;gap:.5rem}
+.hero-brand{display:flex;align-items:center;justify-content:center;gap:.9rem}
+.footer-brand{display:flex;align-items:center;gap:.9rem}
+.letter-brand{display:flex;justify-content:center}
+.nav-logo .logo-img,.nav-logo .logo-va{max-height:34px;width:auto}
+.hero-brand .hero-logo{max-width:126px;height:auto}
+.hero-brand .hero-va{max-height:96px;width:auto}
+.footer-brand img{max-height:34px;width:auto}
+.letter-brand img{max-width:210px;height:auto}
+@media (max-width:640px){
+  .nav-logo .logo-img,.nav-logo .logo-va{max-height:26px}
+  .hero-brand .hero-logo{max-width:76px}
+  .hero-brand .hero-va{max-height:48px}
+  .footer-brand img{max-height:26px}
+  .letter-brand img{max-width:116px}
+}
+@media (max-width:480px){
+  .nav-logo .logo-img,.nav-logo .logo-va{max-height:24px}
+  .hero-brand .hero-logo{max-width:66px}
+  .hero-brand .hero-va{max-height:40px}
+  .letter-brand img{max-width:100px}
+}
+</style>
+<link rel="stylesheet" href="assets/site.css?v=20260930" />
+<link rel="stylesheet" href="assets/app.css?v=20260930" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
@@ -400,8 +427,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="assets/cloud-config.js"></script>
-<script src="assets/cloud.js"></script>
+<script src="assets/cloud-config.js?v=20260930"></script>
+<script src="assets/cloud.js?v=20260930"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   "use strict";
