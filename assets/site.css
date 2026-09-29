@@ -647,11 +647,34 @@ html.js .reveal.is-in { opacity: 1; transform: none; }
   .shot.wide { grid-column: span 2; }
   .letter-header { align-items: flex-start; }
 }
+/* 手机端：联合标志整体收小，VA 标志不再喧宾夺主 */
+@media (max-width: 640px) {
+  .hero-brand { gap: 0.7rem; margin-bottom: 1.4rem; }
+  .hero-brand .hero-logo { width: 76px; }
+  .hero-brand .hero-div { height: 52px; }
+  .hero-brand .hero-va { height: 40px; }
+  .nav-logo { gap: 0.5rem; }
+  .nav-logo .logo-img { height: 22px; }
+  .nav-logo .logo-div { height: 16px; }
+  .nav-logo .logo-va { height: 20px; }
+  .footer-brand { gap: 0.7rem; }
+  .footer-brand img { height: 22px; }
+  .footer-brand img.footer-va { height: 22px; }
+  .letter-brand { margin-bottom: 1.6rem; }
+  .letter-brand img { width: 116px; }
+}
 @media (max-width: 480px) {
   .stats { grid-template-columns: 1fr; }
   .card { padding: 1.4rem; }
   .gallery { grid-template-columns: 1fr; grid-auto-rows: 200px; }
   .shot.wide, .shot.tall { grid-column: span 1; grid-row: span 1; }
+  /* 小屏再收一档 */
+  .hero-brand .hero-logo { width: 66px; }
+  .hero-brand .hero-div { height: 44px; }
+  .hero-brand .hero-va { height: 34px; }
+  .nav-logo .logo-img { height: 20px; }
+  .nav-logo .logo-va { height: 18px; }
+  .letter-brand img { width: 100px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

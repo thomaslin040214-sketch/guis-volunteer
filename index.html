@@ -42,10 +42,10 @@
   <div class="nav-links">
     <a href="#about" data-i18n="nav.about">关于我们</a>
     <a href="#programs" data-i18n="nav.programs">服务项目</a>
+    <a href="#signup" data-i18n="nav.signup">活动报名</a>
     <a href="#gallery" data-i18n="nav.gallery">志愿风采</a>
     <a href="#team" data-i18n="nav.team">团队成员</a>
     <a href="#journey" data-i18n="nav.journey">发展历程</a>
-    <a href="#signup" data-i18n="nav.signup">活动报名</a>
     <a href="#contact" data-i18n="nav.contact">联系我们</a>
     <a href="join.html" data-i18n="nav.join">社长欢迎信</a>
     <div class="lang-switch" role="group" aria-label="Language / 语言">
@@ -206,6 +206,29 @@
             <span class="chip" data-i18n="g6.k3">文化工作坊</span>
           </div>
         </article>
+      </div>
+    </div>
+  </section>
+
+  <hr class="hairline" />
+
+  <!-- ======================= SIGNUP (活动报名) ======================= -->
+  <section id="signup">
+    <div class="wrap">
+      <div class="reveal">
+        <p class="eyebrow" data-i18n="su.eyebrow">活动报名</p>
+        <h2 class="section-title" data-i18n="su.title">正在开放报名的活动</h2>
+        <p class="lede" data-i18n="su.lede">下面是可以报名的义工活动。选一个点进去，填一张表就好 —— 不需要经验，但需要守时。</p>
+      </div>
+
+      <!-- 活动由后台创建，这里自动读取云端数据 -->
+      <div id="su-origin" hidden></div>
+      <div id="su-loading" class="empty" style="margin-top:2.2rem;"><span class="loading"></span> <span data-i18n="su.loading">正在读取活动列表…</span></div>
+      <div id="su-empty" class="empty" style="margin-top:2.2rem;" hidden data-i18n="su.empty">目前没有开放报名的活动。可以写信告诉我们你想参加哪个板块。</div>
+      <div id="su-list" class="act-list" style="margin-top:2.2rem;" hidden></div>
+
+      <div style="margin-top:1.6rem;">
+        <a href="signup.html" class="btn btn-secondary" data-i18n="su.all">打开报名页</a>
       </div>
     </div>
   </section>
@@ -496,29 +519,6 @@
             <p data-i18n="b3.desc">成员来自不同的课程体系与文化背景，工作语言在中英之间自然切换，这也是我们服务国际社区的方式。</p>
           </article>
         </div>
-      </div>
-    </div>
-  </section>
-
-  <hr class="hairline" />
-
-  <!-- ======================= SIGNUP (活动报名) ======================= -->
-  <section id="signup">
-    <div class="wrap">
-      <div class="reveal">
-        <p class="eyebrow" data-i18n="su.eyebrow">活动报名</p>
-        <h2 class="section-title" data-i18n="su.title">正在开放报名的活动</h2>
-        <p class="lede" data-i18n="su.lede">下面是可以报名的义工活动。选一个点进去，填一张表就好 —— 不需要经验，但需要守时。</p>
-      </div>
-
-      <!-- 活动由后台创建，这里自动读取云端数据 -->
-      <div id="su-origin" hidden></div>
-      <div id="su-loading" class="empty" style="margin-top:2.2rem;"><span class="loading"></span> <span data-i18n="su.loading">正在读取活动列表…</span></div>
-      <div id="su-empty" class="empty" style="margin-top:2.2rem;" hidden data-i18n="su.empty">目前没有开放报名的活动。可以写信告诉我们你想参加哪个板块。</div>
-      <div id="su-list" class="act-list" style="margin-top:2.2rem;" hidden></div>
-
-      <div style="margin-top:1.6rem;">
-        <a href="signup.html" class="btn btn-secondary" data-i18n="su.all">打开报名页</a>
       </div>
     </div>
   </section>
