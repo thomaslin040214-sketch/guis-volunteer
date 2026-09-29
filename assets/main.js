@@ -56,7 +56,6 @@
     });
 
     store(lang);
-    refreshAccordions();
   }
 
   function initLang() {
@@ -219,54 +218,6 @@
     Object.keys(map).forEach(function (id) { io.observe(document.getElementById(id)); });
   }
 
-  /* ---------- Accordion: 下拉履历 ---------- */
-  var accordions = [];
-
-  function syncAccordion(item) {
-    var body = item.querySelector(".cv-body");
-    if (!body) return;
-    if (item.classList.contains("is-open")) {
-      body.style.maxHeight = body.scrollHeight + "px";
-    } else {
-      body.style.maxHeight = "0px";
-    }
-  }
-
-  function refreshAccordions() {
-    // Called after a language change so the panel height matches the new copy
-    window.requestAnimationFrame(function () {
-      accordions.forEach(function (a) { if (a.classList.contains("is-open")) syncAccordion(a); });
-    });
-  }
-
-  function initAccordions() {
-    document.querySelectorAll(".member").forEach(function (item) {
-      var head = item.querySelector(".cv-head");
-      var body = item.querySelector(".cv-body");
-      if (!head || !body) return;
-      accordions.push(item);
-
-      head.addEventListener("click", function () {
-        var willOpen = !item.classList.contains("is-open");
-        item.classList.toggle("is-open", willOpen);
-        head.setAttribute("aria-expanded", willOpen ? "true" : "false");
-        syncAccordion(item);
-      });
-
-      // Re-measure once the panel finishes opening (fonts / images can shift it)
-      body.addEventListener("transitionend", function (e) {
-        if (e.propertyName !== "max-height") return;
-        if (item.classList.contains("is-open")) body.style.maxHeight = body.scrollHeight + "px";
-      });
-    });
-
-    var resizeTimer = null;
-    window.addEventListener("resize", function () {
-      window.clearTimeout(resizeTimer);
-      resizeTimer = window.setTimeout(refreshAccordions, 160);
-    });
-  }
-
   /* ---------- Gallery lightbox ---------- */
   function initLightbox() {
     var lb = document.getElementById("lightbox");
@@ -335,7 +286,6 @@
     initCounters();
     initBars();
     initNavState();
-    initAccordions();
     initLightbox();
     initEnterEngine();
   });

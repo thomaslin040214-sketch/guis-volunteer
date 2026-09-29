@@ -157,9 +157,8 @@
         if (open) {
           body.style.maxHeight = body.scrollHeight + "px";
           body.addEventListener("transitionend", function te(e) {
-            if (e.propertyName === "max-height" && item.classList.contains("is-open")) {
-              body.style.maxHeight = "none";
-            }
+            if (e.propertyName !== "max-height") return;
+            if (item.classList.contains("is-open")) body.style.maxHeight = "none";
             body.removeEventListener("transitionend", te);
           });
         } else {
