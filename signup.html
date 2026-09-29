@@ -60,6 +60,7 @@
           </div>
         </div>
         <div class="panel-body">
+          <div id="sg-origin" hidden></div>
           <div id="pick-loading" class="empty"><span class="loading"></span> <span data-i18n="sg.loading">正在读取活动列表…</span></div>
           <div id="pick-list" class="act-list" hidden></div>
           <div id="pick-empty" class="empty" hidden data-i18n="sg.empty">目前没有开放报名的活动，请稍后再来，或写信告诉我们你想参加哪个板块。</div>
@@ -403,6 +404,22 @@ document.addEventListener("DOMContentLoaded", function () {
       console.error("[GUIS] register failed", err && err.code);
     });
   });
+
+  /* 域名与云端点不一致（静态镜像站点）时，云服务会拒绝请求 —— 给出明确指引，
+     而不是显示一个看起来像「没有活动」的空状态。 */
+  var hostOK = location.origin.replace(/\/+$/, "") === C.endpoint.replace(/\/+$/, "");
+  if (!hostOK) {
+    var box = document.getElementById("sg-origin");
+    if (box) {
+      box.innerHTML =
+        '<div class="origin-banner"><b>当前站点是静态镜像，读不到报名数据。</b>' +
+        "请在正式地址上报名：" +
+        '<a href="' + C.endpoint + '/signup.html"><b>' + C.endpoint + "/signup.html</b></a></div>";
+      box.hidden = false;
+    }
+    pickLoading.hidden = true;
+    return;
+  }
 
   loadActivities();
 });

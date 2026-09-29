@@ -788,6 +788,7 @@
       </div>
 
       <!-- 活动由后台创建，这里自动读取云端数据 -->
+      <div id="su-origin" hidden></div>
       <div id="su-loading" class="empty" style="margin-top:2.2rem;"><span class="loading"></span> <span data-i18n="su.loading">正在读取活动列表…</span></div>
       <div id="su-empty" class="empty" style="margin-top:2.2rem;" hidden data-i18n="su.empty">目前没有开放报名的活动。可以写信告诉我们你想参加哪个板块。</div>
       <div id="su-list" class="act-list" style="margin-top:2.2rem;" hidden></div>
@@ -893,6 +894,23 @@ document.addEventListener("DOMContentLoaded", function () {
 
   var cached = [];
 
+  /* 站点域名与云端点不一致时（例如 GitHub Pages 镜像），云服务会拒绝请求。
+     与其显示一个误导性的空列表，不如直接告诉同学去正式的报名地址。 */
+  function hostMatches() {
+    return location.origin.replace(/\/+$/, "") === C.endpoint.replace(/\/+$/, "");
+  }
+  function showOriginNotice() {
+    var box = document.getElementById("su-origin");
+    if (!box) return;
+    box.innerHTML =
+      '<div class="origin-banner"><b>当前站点是静态镜像，读不到报名数据。</b>' +
+      "请前往正式报名地址查看并报名：" +
+      '<a href="' + C.endpoint + '/signup.html"><b>' + C.endpoint + "/signup.html</b></a></div>";
+    box.hidden = false;
+    loading.hidden = true;
+    emptyBox.hidden = true;
+  }
+
   function render() {
     if (!cached.length) {
       loading.hidden = true;
@@ -940,7 +958,8 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  load();
+  if (hostMatches()) load();
+  else showOriginNotice();
 
   /* 语言切换后重新渲染（文案跟着换） */
   Array.prototype.forEach.call(document.querySelectorAll(".lang-btn"), function (b) {
