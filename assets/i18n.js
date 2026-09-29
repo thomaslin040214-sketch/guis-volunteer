@@ -29,8 +29,8 @@ window.SITE_I18N = {
     "ui.next": "下一张",
 
     "hero.badge": "广州优联国际学校 · 学生志愿服务组织",
-    "hero.title": "让每一份善意，都<span class=\"grad\">落到实地</span>。",
-    "hero.sub": "GUIS 义工社由学生自主运营。我们在校园与南沙社区之间，把想法变成有回响的行动 —— 一次探访、一场净滩、一间被重新点亮的图书角。",
+    "hero.title": "同一颗地球，<span class=\"grad\">同一种爱</span>。",
+    "hero.sub": "GUIS 义工组织由学生自主运营。我们在校园与南沙社区之间，把想法变成有回响的行动 —— 一次探访、一场活动、一次成功举办的义卖。",
     "hero.cta1": "阅读招募信",
     "hero.cta2": "加入我们",
     "hero.scroll": "向下浏览",
@@ -314,8 +314,8 @@ window.SITE_I18N = {
     "ui.next": "Next",
 
     "hero.badge": "Guangzhou Ulink International School · Student-led service",
-    "hero.title": "Making goodwill <span class=\"grad\">land somewhere real</span>.",
-    "hero.sub": "GUIS Volunteer Service is run by students. Between our campus and the Nansha community, we turn good intentions into things that actually happen — a visit, a beach clean-up, a reading corner lit up again.",
+    "hero.title": "One Earth, <span class=\"grad\">one love</span>.",
+    "hero.sub": "GUIS Volunteer Service is run by students. Between our campus and the Nansha community, we turn good intentions into things that actually happen — a visit, an event, a charity sale that came together.",
     "hero.cta1": "Read the letter to join",
     "hero.cta2": "Get involved",
     "hero.scroll": "Scroll",
