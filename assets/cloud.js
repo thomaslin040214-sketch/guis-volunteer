@@ -94,6 +94,26 @@
 
     deleteRegistration: function (id) {
       return db.from("registrations").delete().eq("id", id).select();
+    },
+
+    /* ---------- 后台白名单 ----------
+       allowed_admins 是一张「仅服务端可见」的表（RLS 开启但没给任何人读权限），
+       只能通过 is_allowed_admin() 这个 SECURITY DEFINER 函数间接判断。
+       登录后先调 isAllowedAdmin()，不在名单里就立刻退出登录。 */
+    isAllowedAdmin: function () {
+      return db.rpc("is_allowed_admin");
+    },
+
+    listAdmins: function () {
+      return db.from("allowed_admins").select("email, note, created_at").order("created_at", { ascending: true });
+    },
+
+    addAdmin: function (email, note) {
+      return db.from("allowed_admins").insert({ email: email, note: note || null });
+    },
+
+    removeAdmin: function (email) {
+      return db.from("allowed_admins").delete().eq("email", email);
     }
   };
 

@@ -59,8 +59,12 @@
               <div class="seg" id="auth-seg">
                 <button type="button" class="is-on" data-mode="password">密码登录</button>
                 <button type="button" data-mode="otp">验证码登录</button>
-                <button type="button" data-mode="signup">注册</button>
+                <button type="button" data-mode="setup" id="seg-setup" hidden>开通账号</button>
               </div>
+
+              <p class="hint" style="margin:-0.55rem 0 1.25rem;text-align:center;">
+                后台为邀请制 —— 只有已加入白名单的邮箱才能登录，不开放公开注册。
+              </p>
 
               <div id="auth-alerts"></div>
 
@@ -120,7 +124,7 @@
                 </div>
                 <div class="form-actions">
                   <button type="button" class="btn btn-secondary" id="su-send">获取验证码</button>
-                  <button type="submit" class="btn btn-primary" id="su-submit">注册并登录</button>
+                  <button type="submit" class="btn btn-primary" id="su-submit">开通账号并登录</button>
                 </div>
               </form>
 
@@ -166,6 +170,7 @@
         <div class="tabs" style="margin-bottom:1.25rem;">
           <button type="button" class="tab-btn is-on" data-tab="acts">活动管理</button>
           <button type="button" class="tab-btn" data-tab="regs">报名名单</button>
+          <button type="button" class="tab-btn" data-tab="admins">白名单</button>
         </div>
 
         <!-- ---------- 活动管理 ---------- -->
@@ -329,6 +334,49 @@
           </div>
         </div>
 
+        <!-- ---------- 白名单 ---------- -->
+        <div id="tab-admins" hidden>
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>后台白名单</h2>
+                <div class="sub">只有列表里的邮箱能登录后台、创建活动并查看报名名单。</div>
+              </div>
+              <button type="button" class="link-btn" id="adm-refresh">刷新</button>
+            </div>
+            <div class="panel-body">
+              <div id="adm-alerts"></div>
+
+              <form id="adm-form" novalidate style="margin-bottom:1.5rem;">
+                <div class="form-grid">
+                  <div class="field">
+                    <label for="adm-email">邮箱 <span class="req">*</span></label>
+                    <input id="adm-email" type="email" placeholder="name@guiscn.com" required />
+                  </div>
+                  <div class="field">
+                    <label for="adm-note">备注</label>
+                    <input id="adm-note" type="text" placeholder="例如：社区关怀组组长" />
+                  </div>
+                </div>
+                <div class="form-actions" style="margin-top:1rem;">
+                  <button type="submit" class="btn btn-primary" id="adm-submit">加入白名单</button>
+                  <span class="hint" style="align-self:center;">加入后，对方需访问 <b>admin.html?setup=1</b> 开通账号。</span>
+                </div>
+              </form>
+
+              <div class="table-scroll">
+                <table class="data" style="min-width:520px;">
+                  <thead>
+                    <tr><th>邮箱</th><th>备注</th><th>加入时间</th><th style="width:90px;">操作</th></tr>
+                  </thead>
+                  <tbody id="adm-body"></tbody>
+                </table>
+              </div>
+              <p class="hint" id="adm-count" style="margin-top:0.85rem;"></p>
+            </div>
+          </div>
+        </div>
+
       </div>
 
     </div>
@@ -423,10 +471,33 @@ document.addEventListener("DOMContentLoaded", function () {
     loginView.hidden = false;
   }
 
+  /* 白名单校验：邮箱不在 allowed_admins 里就立刻退出登录。
+     这是服务端判断（is_allowed_admin() 是 SECURITY DEFINER 函数），
+     前端拦只是为了让用户马上看到原因，真正的权限在数据库策略里。 */
+  function enterOrReject(email) {
+    return C.isAllowedAdmin().then(function (r) {
+      var ok = !r.error && r.data === true;
+      if (!ok) {
+        C.auth.signOut();
+        showLogin();
+        alertIn($("auth-alerts"), "error",
+          "该邮箱（" + esc(email) + "）还没有加入后台白名单，请联系义工社执委会先把邮箱加进来。");
+        return false;
+      }
+      showSignedIn(email);
+      return true;
+    }).catch(function () {
+      C.auth.signOut();
+      showLogin();
+      alertIn($("auth-alerts"), "error", "权限校验失败，请重试。");
+      return false;
+    });
+  }
+
   C.getSession().then(function (res) {
     var s = res && res.data;
-    if (s && s.user && s.user.email) showSignedIn(s.user.email);
-    else if (s && s.user) showSignedIn("");
+    if (s && s.user && s.user.email) enterOrReject(s.user.email);
+    else if (s && s.user) enterOrReject("");
     else showLogin();
   }).catch(showLogin);
 
@@ -435,10 +506,14 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   /* ---------------- 登录表单切换 ---------------- */
+  /* ?setup=1 才会露出「开通账号」—— 白名单邮箱首次开通用，平时入口不存在 */
+  var SETUP = new URLSearchParams(window.location.search).get("setup") === "1";
+  if (SETUP) $("seg-setup").hidden = false;
+
   var forms = {
     password: $("form-password"),
     otp: $("form-otp"),
-    signup: $("form-signup"),
+    setup: $("form-signup"),
     reset: $("form-reset")
   };
   function showForm(name) {
@@ -462,7 +537,7 @@ document.addEventListener("DOMContentLoaded", function () {
     btn.disabled = true; btn.textContent = "登录中…";
     C.auth.signInWithPassword({ email: email, password: pass }).then(function (r) {
       if (r.error) { btn.disabled = false; btn.textContent = "登录"; alertIn($("auth-alerts"), "error", "邮箱或密码不正确。"); return; }
-      showSignedIn(email);
+      enterOrReject(email);
     }).catch(function () {
       btn.disabled = false; btn.textContent = "登录";
       alertIn($("auth-alerts"), "error", "登录失败，请稍后重试。");
@@ -507,7 +582,7 @@ document.addEventListener("DOMContentLoaded", function () {
       $("otp-submit").disabled = false; $("otp-submit").textContent = "登录";
       if (r.error) { alertIn($("auth-alerts"), "error", "验证码不正确或已过期。"); return; }
       pendingOtp = null;
-      showSignedIn(email);
+      enterOrReject(email);
     }).catch(function () {
       $("otp-submit").disabled = false; $("otp-submit").textContent = "登录";
       alertIn($("auth-alerts"), "error", "验证失败，请重试。");
@@ -538,12 +613,12 @@ document.addEventListener("DOMContentLoaded", function () {
       token: code,
       password: pendingOtp.isExistingUser ? undefined : pass
     }).then(function (r) {
-      $("su-submit").disabled = false; $("su-submit").textContent = "注册并登录";
-      if (r.error) { alertIn($("auth-alerts"), "error", "注册失败：" + (r.error.message || "请重试")); return; }
+      $("su-submit").disabled = false; $("su-submit").textContent = "开通账号并登录";
+      if (r.error) { alertIn($("auth-alerts"), "error", "开通失败：" + (r.error.message || "请重试")); return; }
       pendingOtp = null;
-      showSignedIn(email);
+      enterOrReject(email);
     }).catch(function () {
-      $("su-submit").disabled = false; $("su-submit").textContent = "注册并登录";
+      $("su-submit").disabled = false; $("su-submit").textContent = "开通账号并登录";
       alertIn($("auth-alerts"), "error", "注册失败，请重试。");
     });
   });
@@ -570,7 +645,7 @@ document.addEventListener("DOMContentLoaded", function () {
     pendingReset.handle.updateUser({ nonce: code, password: pass }).then(function (r) {
       if (r.error) { alertIn($("auth-alerts"), "error", "重置失败：" + (r.error.message || "请重试")); return; }
       alertIn($("auth-alerts"), "ok", "密码已重置，正在为你登录…");
-      setTimeout(function () { showSignedIn($("rs-email").value.trim()); }, 600);
+      setTimeout(function () { enterOrReject($("rs-email").value.trim()); }, 600);
     }).catch(function () {
       alertIn($("auth-alerts"), "error", "重置失败，请重试。");
     });
@@ -584,6 +659,8 @@ document.addEventListener("DOMContentLoaded", function () {
       var which = b.getAttribute("data-tab");
       $("tab-acts").hidden = which !== "acts";
       $("tab-regs").hidden = which !== "regs";
+      $("tab-admins").hidden = which !== "admins";
+      if (which === "admins") loadAdmins();
     });
   });
 
@@ -881,6 +958,84 @@ document.addEventListener("DOMContentLoaded", function () {
         alertIn($("reg-alerts"), "error", "删除失败：" + (err && err.message ? err.message : ""));
       });
     }
+  });
+
+  /* ================= 白名单 ================= */
+  function loadAdmins() {
+    clear($("adm-alerts"));
+    $("adm-body").innerHTML =
+      '<tr><td colspan="4" style="text-align:center;color:var(--text-subtle);"><span class="loading"></span> 读取中…</td></tr>';
+
+    C.listAdmins().then(function (res) {
+      var rows = C.unwrap(res, "读取失败") || [];
+      if (!rows.length) {
+        $("adm-body").innerHTML =
+          '<tr><td colspan="4" style="text-align:center;color:var(--text-subtle);">白名单为空。</td></tr>';
+        $("adm-count").textContent = "";
+        return;
+      }
+      var me = String($("who-email").textContent || "").toLowerCase();
+      $("adm-body").innerHTML = rows.map(function (r) {
+        var isMe = String(r.email).toLowerCase() === me;
+        return "<tr>" +
+          "<td>" + esc(r.email) + "</td>" +
+          "<td>" + esc(r.note) + "</td>" +
+          "<td>" + fmtDT(r.created_at) + "</td>" +
+          '<td><div class="row-actions">' +
+            (isMe
+              ? '<span class="tbl-btn" style="opacity:.5;">当前账号</span>'
+              : '<button type="button" class="tbl-btn danger" data-deladmin="' + esc(r.email) + '">移除</button>') +
+          "</div></td>" +
+        "</tr>";
+      }).join("");
+      $("adm-count").textContent = "共 " + rows.length + " 个已授权邮箱";
+    }).catch(function (err) {
+      $("adm-body").innerHTML = "";
+      alertIn($("adm-alerts"), "error", "读取失败：" + (err && err.message ? err.message : ""));
+    });
+  }
+
+  $("adm-refresh").addEventListener("click", loadAdmins);
+
+  $("adm-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var email = $("adm-email").value.trim().toLowerCase();
+    if (!email) { alertIn($("adm-alerts"), "error", "请填写邮箱。"); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { alertIn($("adm-alerts"), "error", "邮箱格式看起来不对。"); return; }
+
+    var btn = $("adm-submit");
+    btn.disabled = true;
+
+    C.addAdmin(email, $("adm-note").value.trim()).then(function (res) {
+      C.unwrap(res, "添加失败");
+      btn.disabled = false;
+      $("adm-email").value = "";
+      $("adm-note").value = "";
+      alertIn($("adm-alerts"), "ok", "已加入白名单：" + esc(email) + "。对方需访问 <b>admin.html?setup=1</b> 开通账号。");
+      loadAdmins();
+    }).catch(function (err) {
+      btn.disabled = false;
+      if (err && err.code === "23505") {
+        alertIn($("adm-alerts"), "warn", "这个邮箱已经在白名单里了。");
+      } else {
+        alertIn($("adm-alerts"), "error", "添加失败：" + (err && err.message ? err.message : ""));
+      }
+    });
+  });
+
+  $("adm-body").addEventListener("click", function (e) {
+    var t = e.target;
+    if (t.tagName !== "BUTTON") return;
+    var mail = t.getAttribute("data-deladmin");
+    if (!mail) return;
+    if (!window.confirm("确定把 " + mail + " 移出白名单吗？\n\n移除后对方会立刻失去后台访问权限（其已创建的活动与报名数据不会被删除）。")) return;
+
+    C.removeAdmin(mail).then(function () {
+      alertIn($("adm-alerts"), "ok", "已移出白名单。");
+      loadAdmins();
+    }).catch(function (err) {
+      alertIn($("adm-alerts"), "error", "移除失败：" + (err && err.message ? err.message : ""));
+    });
   });
 
   /* ================= 导出 Excel ================= */
