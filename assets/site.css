@@ -932,3 +932,41 @@ html.js .reveal.is-in { opacity: 1; transform: none; }
 }
 .cal-item-actions { margin-top: .7rem; display: flex; gap: .5rem; flex-wrap: wrap; }
 #cal-admin-new { margin-top: 1rem; }
+
+/* ---------------- 日历：当日时间轴（每 2 小时一档） ---------------- */
+.cal-timeline {
+  border: 1px solid rgba(15, 23, 42, .1); border-radius: .8rem;
+  overflow: hidden; background: #fff; margin-bottom: 1rem;
+}
+.cal-slot { display: flex; align-items: stretch; border-top: 1px solid rgba(15, 23, 42, .07); }
+.cal-slot:first-child { border-top: 0; }
+.cal-slot-time {
+  flex: 0 0 4.2rem; padding: .5rem .5rem .5rem .8rem;
+  font-size: .78rem; font-weight: 700; color: #144C90;
+  font-variant-numeric: tabular-nums;
+}
+.cal-slot-body {
+  flex: 1 1 auto; padding: .4rem .8rem .4rem .2rem;
+  display: flex; flex-direction: column; gap: .3rem; min-height: 2.4rem;
+}
+.cal-slot.is-empty .cal-slot-body { justify-content: center; }
+.cal-slot-none { color: rgba(15, 23, 42, .22); font-size: .9rem; }
+.cal-chip {
+  display: flex; align-items: baseline; gap: .5rem; flex-wrap: wrap;
+  background: rgba(20, 76, 144, .08); border-left: 3px solid #144C90;
+  border-radius: .4rem; padding: .3rem .55rem;
+}
+.cal-chip-time { font-size: .76rem; font-weight: 700; color: #144C90; font-variant-numeric: tabular-nums; }
+.cal-chip-title { font-size: .86rem; font-weight: 600; }
+
+/* 同一天既是活动日又是报名开始/截止日时，条目上的小徽标 */
+.cal-phase {
+  font-size: .72rem; font-weight: 700; padding: .1rem .45rem;
+  border-radius: 999px; white-space: nowrap;
+}
+.cal-phase-open  { background: rgba(20, 76, 144, .12);  color: #144C90; }
+.cal-phase-close { background: rgba(209, 57, 47, .12);  color: #B02D26; }
+
+@media (max-width: 560px) {
+  .cal-slot-time { flex-basis: 3.4rem; font-size: .72rem; padding-left: .6rem; }
+}

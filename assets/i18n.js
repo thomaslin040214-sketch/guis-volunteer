@@ -314,6 +314,11 @@ window.SITE_I18N = {
     "cal.newOn": "在这一天新建活动",
     "cal.needStarts": "请先填开始时间",
     "cal.pickFirst": "先在日历上选一天",
+    "cal.opens": "报名开始",
+    "cal.opensNow": "建好即开放",
+    "cal.phaseOpen": "开始报名",
+    "cal.phaseClose": "报名截止",
+    "cal.timeline": "当日时间轴",
 
     /* ---------- 国庆（节日限定，assets/national.js 控制显示窗口）---------- */
     "nd.bar": "庆祝中华人民共和国成立 <span id=\"nd-anniv\">77</span> 周年",
@@ -693,6 +698,11 @@ window.SITE_I18N = {
     "cal.newOn": "New activity on this day",
     "cal.needStarts": "Please set a start time first",
     "cal.pickFirst": "Pick a day on the calendar first",
+    "cal.opens": "Sign-up opens",
+    "cal.opensNow": "Open as soon as it is created",
+    "cal.phaseOpen": "Sign-up opens",
+    "cal.phaseClose": "Sign-up closes",
+    "cal.timeline": "Timeline for the day",
 
     /* ---------- National Day (shown only around 1 Oct) ---------- */
     "nd.bar": "Celebrating <span id=\"nd-anniv\">77</span> years of the People's Republic of China",

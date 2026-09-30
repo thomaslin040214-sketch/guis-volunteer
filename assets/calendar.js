@@ -93,6 +93,78 @@
     return pad(d.getHours()) + ":" + pad(d.getMinutes());
   }
 
+  function phaseText(phase) {
+    if (phase === "open") return t("cal.phaseOpen", "开始报名");
+    if (phase === "close") return t("cal.phaseClose", "报名截止");
+    return "";
+  }
+
+  /* 当日进程：每 2 小时一档的时间轴
+     只排「活动当天真的在进行」的那些（phase = run），报名日不占时间格。
+     时间范围由当天活动的起止推出，并向两端各扩到偶数整点，最少 4 档。 */
+  var SLOT_HOURS = 2;
+  function dayTimelineHTML(list, ymd) {
+    var runs = (list || []).filter(function (it) {
+      return it.phase === "run" && it.a.starts_at;
+    });
+    if (!runs.length) return "";
+
+    var minH = 24, maxH = 0, any = false;
+    runs.forEach(function (it) {
+      var s = new Date(it.a.starts_at);
+      var e = it.a.ends_at ? new Date(it.a.ends_at) : s;
+      if (isNaN(s.getTime())) return;
+      if (isNaN(e.getTime())) e = s;
+      any = true;
+      minH = Math.min(minH, s.getHours());
+      /* 结束时间落在整点上时不额外占下一档（10:00-11:00 归到 10 点档） */
+      var endH = e.getHours() + (e.getMinutes() > 0 ? 1 : 0);
+      maxH = Math.max(maxH, endH);
+    });
+    if (!any) return "";
+
+    /* 向偶数整点对齐：开始向下取偶，结束向上取偶 */
+    var from = Math.max(0, Math.floor(minH / SLOT_HOURS) * SLOT_HOURS);
+    var to = Math.min(24, Math.ceil(maxH / SLOT_HOURS) * SLOT_HOURS);
+    if (to - from < SLOT_HOURS * 4) {          /* 至少给 4 档，太短不好看 */
+      var mid = Math.round((from + to) / 2 / SLOT_HOURS) * SLOT_HOURS;
+      from = Math.max(0, mid - SLOT_HOURS * 2);
+      to = Math.min(24, from + SLOT_HOURS * 4);
+      if (to - from < SLOT_HOURS * 4) from = Math.max(0, to - SLOT_HOURS * 4);
+    }
+
+    var html = '<div class="cal-timeline" role="list" aria-label="' +
+      esc(t("cal.timeline", "当日时间轴")) + '">';
+    for (var h = from; h < to; h += SLOT_HOURS) {
+      var s0 = h * 60, e0 = s0 + SLOT_HOURS * 60;      /* 档位的分钟区间 */
+      var chips = runs.filter(function (it) {
+        var s = new Date(it.a.starts_at);
+        var e = it.a.ends_at ? new Date(it.a.ends_at) : s;
+        if (isNaN(e.getTime())) e = s;
+        var a0 = s.getHours() * 60 + s.getMinutes();
+        var a1 = e.getHours() * 60 + e.getMinutes();
+        if (a1 <= a0) a1 = a0 + 30;                    /* 没填结束时间就画一小段 */
+        return a0 < e0 && a1 > s0;                     /* 与该档有交集 */
+      }).map(function (it) {
+        var s = new Date(it.a.starts_at);
+        var e = it.a.ends_at ? new Date(it.a.ends_at) : null;
+        return '<div class="cal-chip" role="listitem">' +
+          '<span class="cal-chip-time">' + esc(fmtHM(it.a.starts_at)) +
+            (e ? "–" + esc(fmtHM(it.a.ends_at)) : "") + "</span>" +
+          '<span class="cal-chip-title">' + esc(it.a.title || "") + "</span>" +
+        "</div>";
+      }).join("");
+
+      html += '<div class="cal-slot' + (chips ? "" : " is-empty") + '">' +
+        '<span class="cal-slot-time">' + pad(h) + ":00</span>" +
+        '<div class="cal-slot-body">' + chips +
+          (chips ? "" : '<span class="cal-slot-none">·</span>') +
+        "</div>" +
+      "</div>";
+    }
+    return html + "</div>";
+  }
+
   function create(root, opts) {
     opts = opts || {};
     if (!root) throw new Error("GUISCalendar.create 需要一个容器元素");
@@ -124,22 +196,50 @@
     var elGrid = root.querySelector("#cal-grid");
     var elDay = root.querySelector("#cal-day");
 
+    /* 一天里的一条记录：a = 活动本体，phase 说明这天为什么出现在日历上
+         run   = 活动本身在这天进行（跨天活动会在覆盖的每一天出现）
+         open  = 这一天开始报名
+         close = 这一天报名截止
+       同一天同时是「活动日」和「截止日」时，run 优先。 */
+    function addDay(k, a, phase) {
+      var arr = (byDay[k] = byDay[k] || []);
+      for (var i = 0; i < arr.length; i++) {
+        if (arr[i].a === a) { if (phase === "run") arr[i].phase = "run"; return; }
+      }
+      arr.push({ a: a, phase: phase });
+    }
+
     function index() {
       byDay = {};
       (state.data || []).forEach(function (a) {
-        if (!a.starts_at) return;
-        var ds = new Date(a.starts_at);
-        if (isNaN(ds.getTime())) return;
-        var de = a.ends_at ? new Date(a.ends_at) : null;
-        var cur = new Date(ds.getFullYear(), ds.getMonth(), ds.getDate());
-        var last = de && !isNaN(de.getTime())
-          ? new Date(de.getFullYear(), de.getMonth(), de.getDate())
-          : cur;
-        var guard = 0;
-        while (cur <= last && guard++ < 400) {
-          var k = dayKey(cur);
-          (byDay[k] = byDay[k] || []).push(a);
-          cur = new Date(cur.getFullYear(), cur.getMonth(), cur.getDate() + 1);
+        /* ① 活动进行的每一天 */
+        if (a.starts_at) {
+          var ds = new Date(a.starts_at);
+          if (!isNaN(ds.getTime())) {
+            var de = a.ends_at ? new Date(a.ends_at) : null;
+            var cur = new Date(ds.getFullYear(), ds.getMonth(), ds.getDate());
+            var last = de && !isNaN(de.getTime())
+              ? new Date(de.getFullYear(), de.getMonth(), de.getDate())
+              : cur;
+            var guard = 0;
+            while (cur <= last && guard++ < 400) {
+              addDay(dayKey(cur), a, "run");
+              cur = new Date(cur.getFullYear(), cur.getMonth(), cur.getDate() + 1);
+            }
+          }
+        }
+        /* ② 报名开始日 / 报名截止日也标进日历 */
+        if (a.signup_opens_at) {
+          var os = new Date(a.signup_opens_at);
+          if (!isNaN(os.getTime())) {
+            addDay(dayKey(os), a, "open");
+          }
+        }
+        if (a.signup_deadline) {
+          var dl = new Date(a.signup_deadline);
+          if (!isNaN(dl.getTime())) {
+            addDay(dayKey(dl), a, "close");
+          }
         }
       });
     }
@@ -183,8 +283,8 @@
           ' aria-label="' + esc(key + (list.length ? " · " + list.length + " " + t("cal.count", "个活动") : "")) + '">' +
           '<span class="cal-num">' + d + "</span>" +
           (list.length
-            ? '<span class="cal-dots">' + list.slice(0, 3).map(function (a) {
-                return dot(lightOf(a), a.title || "");
+            ? '<span class="cal-dots">' + list.slice(0, 3).map(function (it) {
+                return dot(lightOf(it.a), (it.a.title || "") + phaseText(it.phase));
               }).join("") + "</span>"
             : "") +
         "</button>";
@@ -214,24 +314,30 @@
       if (!list.length) {
         return head + '<div class="empty">' + esc(t("cal.none", "这一天没有安排活动。")) + "</div>";
       }
-      return head + '<div class="cal-day-list">' + list.map(function (a) {
-        var open = !window.GUISBoard || window.GUISBoard.isOpen(a);
-        return '<div class="cal-item">' +
-          '<div class="cal-item-top">' +
-            '<span class="cal-item-title">' + esc(a.title || "") + "</span>" +
-            lamp(a) +
-          "</div>" +
-          '<div class="cal-item-meta">' +
-            "<span>" + esc(t("cal.start", "开始")) + "：" + esc(fmtDT(a.starts_at) || t("cal.tbd", "待定")) + "</span>" +
-            "<span>" + esc(t("cal.end", "结束")) + "：" + esc(a.ends_at ? fmtHM(a.ends_at) : "—") + "</span>" +
-            "<span>" + esc(t("cal.deadline", "报名截止")) + "：" + esc(a.signup_deadline ? fmtDT(a.signup_deadline) : "—") + "</span>" +
-            (a.location ? "<span>" + esc(t("cal.place", "地点")) + "：" + esc(a.location) + "</span>" : "") +
-          "</div>" +
-          /* 报名页认的是 ?activity=<id>（见 signup.html 内联脚本），不是 ?a= */
-          (open ? '<a class="btn btn-primary btn-sm" href="' + (opts.signupHref || "signup.html?activity=") +
-                   encodeURIComponent(a.id) + '">' + esc(t("cal.goSignup", "去报名")) + "</a>" : "") +
-        "</div>";
-      }).join("") + "</div>";
+      return head +
+        dayTimelineHTML(list, key) +
+        '<div class="cal-day-list">' + list.map(function (it) {
+          var a = it.a;
+          var open = !window.GUISBoard || window.GUISBoard.isOpen(a);
+          return '<div class="cal-item">' +
+            '<div class="cal-item-top">' +
+              '<span class="cal-item-title">' + esc(a.title || "") + "</span>" +
+              (it.phase !== "run" ? '<span class="cal-phase cal-phase-' + it.phase + '">' +
+                esc(phaseText(it.phase)) + "</span>" : "") +
+              lamp(a) +
+            "</div>" +
+            '<div class="cal-item-meta">' +
+              "<span>" + esc(t("cal.start", "开始")) + "：" + esc(fmtDT(a.starts_at) || t("cal.tbd", "待定")) + "</span>" +
+              "<span>" + esc(t("cal.end", "结束")) + "：" + esc(a.ends_at ? fmtHM(a.ends_at) : "—") + "</span>" +
+              "<span>" + esc(t("cal.opens", "报名开始")) + "：" + esc(a.signup_opens_at ? fmtDT(a.signup_opens_at) : t("cal.opensNow", "建好即开放")) + "</span>" +
+              "<span>" + esc(t("cal.deadline", "报名截止")) + "：" + esc(a.signup_deadline ? fmtDT(a.signup_deadline) : "—") + "</span>" +
+              (a.location ? "<span>" + esc(t("cal.place", "地点")) + "：" + esc(a.location) + "</span>" : "") +
+            "</div>" +
+            /* 报名页认的是 ?activity=<id>（见 signup.html 内联脚本），不是 ?a= */
+            (open ? '<a class="btn btn-primary btn-sm" href="' + (opts.signupHref || "signup.html?activity=") +
+                     encodeURIComponent(a.id) + '">' + esc(t("cal.goSignup", "去报名")) + "</a>" : "") +
+          "</div>";
+        }).join("") + "</div>";
     }
 
     function render() {
@@ -295,5 +401,9 @@
     return api;
   }
 
-  window.GUISCalendar = { create: create, dayKey: dayKey, fmtDT: fmtDT, fmtHM: fmtHM, fmtRange: fmtRange, lamp: lamp, dot: dot, esc: esc, t: t };
+  window.GUISCalendar = {
+    create: create, dayKey: dayKey, fmtDT: fmtDT, fmtHM: fmtHM, fmtRange: fmtRange,
+    lamp: lamp, dot: dot, esc: esc, t: t,
+    dayTimelineHTML: dayTimelineHTML, phaseText: phaseText
+  };
 })();

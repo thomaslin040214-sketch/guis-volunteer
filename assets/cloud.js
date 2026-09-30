@@ -83,7 +83,7 @@
     listOpenActivities: function () {
       return db
         .from("activities")
-        .select("id, title, summary, category, location, starts_at, ends_at, signup_deadline, capacity, status, notified_at, manager_email, hours, created_at")
+        .select("id, title, summary, category, location, starts_at, ends_at, signup_opens_at, signup_deadline, capacity, status, notified_at, manager_email, hours, created_at")
         .eq("status", "open")
         .order("starts_at", { ascending: true, nullsFirst: false });
     },
@@ -94,14 +94,14 @@
     listCalendarActivities: function () {
       return db
         .from("activities")
-        .select("id, title, summary, category, location, starts_at, ends_at, signup_deadline, capacity, status, notified_at, archived, manager_email, hours, created_at")
+        .select("id, title, summary, category, location, starts_at, ends_at, signup_opens_at, signup_deadline, capacity, status, notified_at, archived, manager_email, hours, created_at")
         .order("starts_at", { ascending: true, nullsFirst: false });
     },
 
     listMyActivities: function () {
       return db
         .from("activities")
-        .select("id, title, summary, category, location, starts_at, ends_at, signup_deadline, capacity, contact, notes, status, notified_at, recap_html, archived, archived_at, manager_email, hours, created_at")
+        .select("id, title, summary, category, location, starts_at, ends_at, signup_opens_at, signup_deadline, capacity, contact, notes, status, notified_at, recap_html, archived, archived_at, manager_email, hours, created_at")
         .order("created_at", { ascending: false });
     },
 
@@ -236,7 +236,7 @@
     listArchivedActivities: function () {
       return db
         .from("activities")
-        .select("id, title, summary, category, location, starts_at, ends_at, signup_deadline, capacity, contact, notes, status, notified_at, recap_html, archived, archived_at, manager_email, hours, created_at")
+        .select("id, title, summary, category, location, starts_at, ends_at, signup_opens_at, signup_deadline, capacity, contact, notes, status, notified_at, recap_html, archived, archived_at, manager_email, hours, created_at")
         .eq("archived", true)
         .order("starts_at", { ascending: false, nullsFirst: false });
     },
@@ -244,7 +244,7 @@
     getActivity: function (id) {
       return db
         .from("activities")
-        .select("id, title, summary, category, location, starts_at, ends_at, signup_deadline, capacity, contact, notes, status, notified_at, recap_html, archived, archived_at, manager_email, hours, created_at")
+        .select("id, title, summary, category, location, starts_at, ends_at, signup_opens_at, signup_deadline, capacity, contact, notes, status, notified_at, recap_html, archived, archived_at, manager_email, hours, created_at")
         .eq("id", id)
         .limit(1);
     },

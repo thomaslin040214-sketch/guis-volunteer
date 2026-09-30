@@ -503,6 +503,7 @@ document.addEventListener("DOMContentLoaded", function () {
       $("a-location").value = a.location || "";
       $("a-starts").value = toLocalInput(a.starts_at);
       $("a-ends").value = toLocalInput(a.ends_at);
+      $("a-opens").value = toLocalInput(a.signup_opens_at);
       $("a-deadline").value = toLocalInput(a.signup_deadline);
       $("a-capacity").value = a.capacity || 30;
       $("a-contact").value = a.contact || "";
@@ -599,6 +600,7 @@ document.addEventListener("DOMContentLoaded", function () {
       location: $("a-location").value.trim() || null,
       starts_at: fromLocalInput($("a-starts").value),
       ends_at: fromLocalInput($("a-ends").value),
+      signup_opens_at: fromLocalInput($("a-opens").value),
       signup_deadline: fromLocalInput($("a-deadline").value),
       capacity: parseInt($("a-capacity").value, 10) || null,
       contact: $("a-contact").value.trim() || null,
@@ -668,7 +670,11 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!host) return;
     host.hidden = false;
 
-    if (!list.length) {
+    /* 日历模块给的是 {a, phase} 结构（同一天可能既是活动日又是截止日），这里取本体 */
+    var acts = list.map(function (x) { return x.a || x; });
+    var timeline = window.GUISCalendar ? window.GUISCalendar.dayTimelineHTML(list, ymd) : "";
+
+    if (!acts.length) {
       host.innerHTML =
         '<div class="cal-day-head">' + esc(ymd) + "</div>" +
         '<div class="empty">这一天没有活动。</div>' +
@@ -679,16 +685,18 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     host.innerHTML =
-      '<div class="cal-day-head">' + esc(ymd) + " · " + list.length + " 个活动</div>" +
-      '<div class="cal-day-list">' + list.map(function (a) {
+      '<div class="cal-day-head">' + esc(ymd) + " · " + acts.length + " 个活动</div>" +
+      timeline +
+      '<div class="cal-day-list">' + acts.map(function (a) {
         return '<div class="cal-item" data-id="' + a.id + '">' +
           '<div class="cal-item-top">' +
             '<span class="cal-item-title">' + esc(a.title || "") + "</span>" +
             (window.GUISBoard ? window.GUISBoard.lampOf(a) : "") +
           "</div>" +
           '<div class="cal-edit-grid">' +
-            "<label>开始<input type=\"datetime-local\" data-f=\"starts_at\" value=\"" + esc(toLocalInput(a.starts_at)) + "\" /></label>" +
-            "<label>结束<input type=\"datetime-local\" data-f=\"ends_at\" value=\"" + esc(toLocalInput(a.ends_at)) + "\" /></label>" +
+            "<label>活动开始<input type=\"datetime-local\" data-f=\"starts_at\" value=\"" + esc(toLocalInput(a.starts_at)) + "\" /></label>" +
+            "<label>活动结束<input type=\"datetime-local\" data-f=\"ends_at\" value=\"" + esc(toLocalInput(a.ends_at)) + "\" /></label>" +
+            "<label>报名开始<input type=\"datetime-local\" data-f=\"signup_opens_at\" value=\"" + esc(toLocalInput(a.signup_opens_at)) + "\" /></label>" +
             "<label>报名截止<input type=\"datetime-local\" data-f=\"signup_deadline\" value=\"" + esc(toLocalInput(a.signup_deadline)) + "\" /></label>" +
           "</div>" +
           '<div class="cal-item-actions">' +
@@ -722,7 +730,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!item) return;
 
     var patch = {};
-    ["starts_at", "ends_at", "signup_deadline"].forEach(function (f) {
+    ["starts_at", "ends_at", "signup_opens_at", "signup_deadline"].forEach(function (f) {
       var input = item.querySelector('[data-f="' + f + '"]');
       patch[f] = fromLocalInput(input ? input.value : "");
     });
