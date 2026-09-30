@@ -29,7 +29,7 @@ window.SITE_I18N = {
     "ui.next": "下一张",
 
     "hero.badge": "广州优联国际学校 · 学生志愿服务组织",
-    "hero.title": "同一颗地球，<span class=\"grad\">同一种爱</span>。",
+    "hero.title": "同一个世界，<span class=\"grad\">同一种爱</span>。",
     "hero.sub": "GUIS 义工组织由学生自主运营。我们在校园与南沙社区之间，把想法变成有回响的行动 —— 一次探访、一场活动、一次成功举办的义卖。",
     "hero.cta1": "阅读社长欢迎信",
     "hero.cta2": "加入我们",
