@@ -98,8 +98,9 @@ document.addEventListener("DOMContentLoaded", function () {
   var ME = { email: "", role: "teacher", isStudent: false, mustChange: false };
   function isOwner() { return ME.role === "owner"; }
 
-  /* 只有执委会能进的页签；负责老师一律看不到。 */
-  var OWNER_ONLY_TABS = ["acts", "journal", "announce", "people", "students"];
+  /* 只有执委会能进的页签；负责老师一律看不到。
+     「活动日历」也在里面 —— 它能改活动的开始 / 结束 / 报名截止，属于写操作。 */
+  var OWNER_ONLY_TABS = ["acts", "calendar", "journal", "announce", "people", "students"];
 
   function applyRoleUI() {
     var owner = isOwner();
@@ -373,8 +374,9 @@ document.addEventListener("DOMContentLoaded", function () {
   /* ---------------- Tab 切换 ----------------
      每个页签进场时要做的第一件事写在 onEnter 里（拉数据、启动轮询等），
      离开实时报名时要停掉定时器，否则它会一直在后台刷新。 */
-  var TAB_IDS = ["acts", "regs", "live", "archive", "journal", "announce", "people", "students"];
+  var TAB_IDS = ["acts", "calendar", "regs", "live", "archive", "journal", "announce", "people", "students"];
   var TAB_ENTER = {
+    calendar: function () { if (isOwner()) loadAdminCalendar(true); },
     people: function () { if (isOwner()) { loadPeople(); loadCategoryManagers(); } },
     students: function () { if (isOwner()) loadStudents(); },
     live: function () { loadLive(true); },
@@ -627,6 +629,143 @@ document.addEventListener("DOMContentLoaded", function () {
       alertIn($("act-alerts"), "error", failMsg(err, "保存失败"));
     });
   });
+
+  /* ================= 活动日历（只有执委会能改） =================
+     日历本身由 assets/calendar.js 画；这里只负责「选中某天后把那一天的活动
+     列出来，让你改开始 / 结束 / 报名截止」，以及「在这一天新建活动」。
+     写操作仍然走 C.updateActivity()，服务端用 is_owner() 兜底，前端藏按钮只是 UX。 */
+  var adminCal = null;
+  var adminCalRows = [];
+
+  function loadAdminCalendar(force) {
+    var root = $("cal-admin-root");
+    if (!root) return;
+    if (!isOwner()) return;
+    if (adminCal && !force) { adminCal.refresh(); return; }
+
+    $("cal-admin-loading").hidden = false;
+    root.hidden = true;
+
+    C.listMyActivities().then(function (res) {
+      adminCalRows = C.unwrap(res, "读取失败") || [];
+      $("cal-admin-loading").hidden = true;
+
+      adminCal = window.GUISCalendar.create(root, {
+        /* 后台不要「去报名」按钮，改成渲染可编辑的时间表单 */
+        renderDay: function (list, ymd) { renderAdminDay(list, ymd); return ""; }
+      });
+      adminCal.setData(adminCalRows);
+      root.hidden = false;
+    }).catch(function (err) {
+      $("cal-admin-loading").hidden = true;
+      alertIn($("cal-admin-alerts"), "error", failMsg(err, "读取活动失败"));
+    });
+  }
+
+  /* 选中某天后的编辑区：每条活动给三个 datetime-local 输入 + 保存 */
+  function renderAdminDay(list, ymd) {
+    var host = $("cal-admin-day");
+    if (!host) return;
+    host.hidden = false;
+
+    if (!list.length) {
+      host.innerHTML =
+        '<div class="cal-day-head">' + esc(ymd) + "</div>" +
+        '<div class="empty">这一天没有活动。</div>' +
+        '<button type="button" class="btn btn-secondary" id="cal-admin-new" data-day="' + esc(ymd) + '">' +
+          "在这一天新建活动</button>";
+      wireAdminDayButtons();
+      return;
+    }
+
+    host.innerHTML =
+      '<div class="cal-day-head">' + esc(ymd) + " · " + list.length + " 个活动</div>" +
+      '<div class="cal-day-list">' + list.map(function (a) {
+        return '<div class="cal-item" data-id="' + a.id + '">' +
+          '<div class="cal-item-top">' +
+            '<span class="cal-item-title">' + esc(a.title || "") + "</span>" +
+            (window.GUISBoard ? window.GUISBoard.lampOf(a) : "") +
+          "</div>" +
+          '<div class="cal-edit-grid">' +
+            "<label>开始<input type=\"datetime-local\" data-f=\"starts_at\" value=\"" + esc(toLocalInput(a.starts_at)) + "\" /></label>" +
+            "<label>结束<input type=\"datetime-local\" data-f=\"ends_at\" value=\"" + esc(toLocalInput(a.ends_at)) + "\" /></label>" +
+            "<label>报名截止<input type=\"datetime-local\" data-f=\"signup_deadline\" value=\"" + esc(toLocalInput(a.signup_deadline)) + "\" /></label>" +
+          "</div>" +
+          '<div class="cal-item-actions">' +
+            '<button type="button" class="btn btn-primary btn-sm" data-save="' + a.id + '">保存</button>' +
+          "</div>" +
+        "</div>";
+      }).join("") + "</div>" +
+      '<button type="button" class="btn btn-secondary" id="cal-admin-new" data-day="' + esc(ymd) + '">' +
+        "在这一天新建活动</button>";
+
+    wireAdminDayButtons();
+  }
+
+  function wireAdminDayButtons() {
+    var host = $("cal-admin-day");
+    if (!host || host.dataset.bound) return;
+    host.dataset.bound = "1";
+
+    host.addEventListener("click", function (e) {
+      var saveBtn = e.target.closest ? e.target.closest("[data-save]") : null;
+      if (saveBtn) { saveActivityDates(saveBtn); return; }
+
+      var newBtn = e.target.closest ? e.target.closest("#cal-admin-new") : null;
+      if (newBtn) { newActivityOn(newBtn.getAttribute("data-day")); return; }
+    });
+  }
+
+  function saveActivityDates(btn) {
+    var id = btn.getAttribute("data-save");
+    var item = btn.closest(".cal-item");
+    if (!item) return;
+
+    var patch = {};
+    ["starts_at", "ends_at", "signup_deadline"].forEach(function (f) {
+      var input = item.querySelector('[data-f="' + f + '"]');
+      patch[f] = fromLocalInput(input ? input.value : "");
+    });
+
+    clear($("cal-admin-alerts"));
+    busyOn(btn, "保存中…");
+    C.updateActivity(id, patch).then(function (res) {
+      var rows = C.unwrap(res, "保存失败") || [];
+      busyOff(btn);
+      if (!rows.length) {
+        alertIn($("cal-admin-alerts"), "error", "没有改动 —— 服务端没有更新任何一行，请刷新后重试。");
+        return;
+      }
+      alertIn($("cal-admin-alerts"), "ok", "已保存。");
+      /* 活动列表和活动下拉也要跟着变 */
+      loadActivities();
+      loadActivityOptions();
+      loadAdminCalendar(true);
+    }).catch(function (err) {
+      busyOff(btn);
+      alertIn($("cal-admin-alerts"), "error", failMsg(err, "保存失败"));
+    });
+  }
+
+  /* 在选中的这天新建活动：把开始时间填进「活动管理」的表单并切过去 */
+  function newActivityOn(ymd) {
+    if (!isOwner()) return;
+    showTab("acts");
+    Array.prototype.forEach.call(document.querySelectorAll(".tab-btn"), function (x) {
+      x.classList.toggle("is-on", x.getAttribute("data-tab") === "acts");
+    });
+    var starts = $("a-starts");
+    if (starts) {
+      starts.value = ymd ? ymd + "T09:00" : "";
+      var ends = $("a-ends");
+      if (ends) ends.value = ymd ? ymd + "T11:00" : "";
+      var formPanel = $("act-form-panel");
+      if (formPanel) formPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+      starts.focus();
+    }
+  }
+
+  $("cal-refresh").addEventListener("click", function () { loadAdminCalendar(true); });
 
   /* ================= 报名名单 ================= */
   var regRows = [];

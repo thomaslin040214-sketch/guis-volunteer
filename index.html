@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-ver="20260930v" data-page-title="doc.title">
+<html lang="zh-CN" data-ver="20260930w" data-page-title="doc.title">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,7 +10,7 @@
    于是点站内链接（全是裸路径）进去时整页退回旧设计。
    这里比对 <html data-ver>：不是当前版本就带查询串重拉一次（查询串必定回源）。 */
 (function () {
-  var VER = "20260930v";
+  var VER = "20260930w";
   try {
     var el = document.documentElement;
     var healed = /[?&]_v=/.test(location.search);
@@ -32,8 +32,8 @@
 <title>GUIS 义工社 | 广州优联国际学校学生志愿服务组织</title>
 <meta name="description" content="广州优联国际学校（GUIS）义工社 —— 由学生自主运营的志愿服务组织。社区关怀、环保行动、教育支持、公益募捐、赛事会务与文化交流。" />
 <meta name="theme-color" content="#FFFFFF" />
-<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20260930v" />
-<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20260930v" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20260930w" />
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20260930w" />
 
 <!-- Open Graph -->
 <meta property="og:type" content="website" />
@@ -64,8 +64,8 @@
   .hero-brand .hero-va{max-height:40px}
 }
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20260930v" />
-<link rel="stylesheet" href="assets/app.css?v=20260930v" />
+<link rel="stylesheet" href="assets/site.css?v=20260930w" />
+<link rel="stylesheet" href="assets/app.css?v=20260930w" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
@@ -100,8 +100,8 @@
         <span data-i18n="nav.about">关于我们</span><span class="nav-caret" aria-hidden="true"></span>
       </button>
       <div class="nav-drop-menu">
-        <a href="#team" data-i18n="nav.team">部门成员</a>
-        <a href="#journey" data-i18n="nav.journey">发展历程</a>
+        <a href="team.html" data-i18n="nav.team">部门成员</a>
+        <a href="journey.html" data-i18n="nav.journey">发展历程</a>
         <a href="#contact" data-i18n="nav.contact">联系我们</a>
       </div>
     </div>
@@ -110,7 +110,6 @@
     <a href="signup.html" data-i18n="nav.signup">活动报名</a>
     <a href="announcements.html" data-i18n="nav.news">公告</a>
     <a href="#journal" data-i18n="nav.journal">刊物</a>
-    <a href="#gallery" data-i18n="nav.gallery">志愿风采</a>
 
     <div class="lang-switch" role="group" aria-label="Language / 语言">
       <button class="lang-btn is-active" data-lang="zh" aria-pressed="true">中文</button>
@@ -152,8 +151,8 @@
   <p class="hero-sub" data-i18n="hero.sub">GUIS 义工组织由学生自主运营。我们在校园与南沙社区之间，把想法变成有回响的行动 —— 一次探访、一场活动、一次成功举办的义卖。</p>
 
   <div class="hero-actions">
-    <a href="programs.html" class="btn btn-primary" data-i18n="hero.cta1">浏览服务项目</a>
-    <a href="#contact" class="btn btn-secondary" data-i18n="hero.cta2">加入我们</a>
+    <a href="join.html" class="btn btn-primary" data-i18n="hero.cta1">阅读社长欢迎信</a>
+    <a href="programs.html" class="btn btn-secondary" data-i18n="hero.cta2">浏览服务项目</a>
   </div>
 
   <div class="scroll-hint"><span data-i18n="hero.scroll">向下浏览</span><span class="line"></span></div>
@@ -383,91 +382,7 @@
 
   <hr class="hairline" />
 
-  <!-- ======================= GALLERY (工作照) ======================= -->
-  <section id="gallery">
-    <div class="wrap">
-      <div class="reveal">
-        <p class="eyebrow" data-i18n="gal.eyebrow">志愿风采</p>
-        <h2 class="section-title" data-i18n="gal.title">工作照</h2>
-        <p class="lede" data-i18n="gal.lede">每一次出勤都有人负责记录。这些照片来自过去一个学年的日常，点开可以看完整画面。</p>
-      </div>
 
-      <!-- EDIT: 把 assets/photos/shot-01.jpg ~ shot-08.jpg 换成真实工作照（保持文件名即可自动替换） -->
-      <div class="gallery reveal d1" id="gallery-grid">
-        <figure class="shot wide" data-caption-key="s1.cap">
-          <img src="assets/photos/shot-01.jpg" alt="" loading="lazy" />
-          <figcaption class="shot-cap" data-i18n="s1.cap">长者探访 · 南沙社区</figcaption>
-        </figure>
-        <figure class="shot tall" data-caption-key="s2.cap">
-          <img src="assets/photos/shot-02.jpg" alt="" loading="lazy" />
-          <figcaption class="shot-cap" data-i18n="s2.cap">明珠湾净滩 · 岸线清理</figcaption>
-        </figure>
-        <figure class="shot" data-caption-key="s3.cap">
-          <img src="assets/photos/shot-03.jpg" alt="" loading="lazy" />
-          <figcaption class="shot-cap" data-i18n="s3.cap">周末课业辅导 · 校内</figcaption>
-        </figure>
-        <figure class="shot" data-caption-key="s4.cap">
-          <img src="assets/photos/shot-04.jpg" alt="" loading="lazy" />
-          <figcaption class="shot-cap" data-i18n="s4.cap">慈善义卖市集 · 校园广场</figcaption>
-        </figure>
-        <figure class="shot" data-caption-key="s5.cap">
-          <img src="assets/photos/shot-05.jpg" alt="" loading="lazy" />
-          <figcaption class="shot-cap" data-i18n="s5.cap">暖冬衣物募集 · 分拣现场</figcaption>
-        </figure>
-        <figure class="shot wide" data-caption-key="s6.cap">
-          <img src="assets/photos/shot-06.jpg" alt="" loading="lazy" />
-          <figcaption class="shot-cap" data-i18n="s6.cap">校运会志愿岗 · 田径场</figcaption>
-        </figure>
-        <figure class="shot" data-caption-key="s7.cap">
-          <img src="assets/photos/shot-07.jpg" alt="" loading="lazy" />
-          <figcaption class="shot-cap" data-i18n="s7.cap">社区图书角整理 · 南沙</figcaption>
-        </figure>
-        <figure class="shot" data-caption-key="s8.cap">
-          <img src="assets/photos/shot-08.jpg" alt="" loading="lazy" />
-          <figcaption class="shot-cap" data-i18n="s8.cap">文化交流日 · 校园中庭</figcaption>
-        </figure>
-      </div>
-    </div>
-  </section>
-
-  <hr class="hairline" />
-
-  <!-- ======================= TEAM + 下拉履历 ======================= -->
-  <section id="team">
-    <div class="wrap">
-      <div class="reveal">
-        <p class="eyebrow" data-i18n="team.eyebrow">成员架构</p>
-        <h2 class="section-title" data-i18n="team.title">谁在把这件事往前推</h2>
-        <p class="lede" data-i18n="team.lede">义工组织按办公室下设三个部门，每个部门由一位部长牵头、部员协作；另有执委会（社长、副社长）统筹全局。点开每位部长与执委下方的小三角，可以看到他／她的过往履历。</p>
-      </div>
-
-      <!-- 管理层 -->
-      <div class="reveal">
-        <p class="eyebrow" data-i18n="lead.eyebrow">管理层</p>
-        <h3 class="block-title" data-i18n="lead.title">执委会与部门负责人</h3>
-        <p class="lede" data-i18n="lead.lede">社长、副社长与三个部门的部长，他们是组织的管理层，均展示完整履历。社长、副社长的信息在 assets/team.js 的 leadership 数组里编辑，三位部长的履历与其部门头像共用同一份数据。</p>
-      </div>
-
-      <div id="lead-list" class="team-grid">
-        <!-- 由 assets/team.js 根据 window.GUIS_TEAM 渲染 -->
-      </div>
-
-      <hr class="hairline" />
-
-      <!-- 部门成员 -->
-      <div class="reveal">
-        <p class="eyebrow" data-i18n="dept.eyebrow">部门成员</p>
-        <h3 class="block-title" data-i18n="dept.title">三个部门，各有牵头人</h3>
-        <p class="lede" data-i18n="dept.lede">每个部门架构相同：一位部长在上、部员在下。只有部长展示过往履历，部员只列头像、姓名与加入时间。所有头像、姓名、加入时间都在 assets/team.js 里编辑。</p>
-      </div>
-
-      <div id="dept-list" class="dept-list">
-        <!-- 由 assets/team.js 根据 window.GUIS_TEAM 渲染 -->
-      </div>
-    </div>
-  </section>
-
-  <hr class="hairline" />
 
   <!-- ======================= JOURNAL (刊物) ======================= -->
   <section id="journal">
@@ -489,133 +404,7 @@
 
   <!-- 过往活动已并进「活动报名」页（signup.html#archive），这里不再重复一份 -->
 
-  <!-- ======================= PROJECTS ======================= -->
-  <section id="projects">
-    <div class="wrap">
-      <div class="reveal">
-        <p class="eyebrow" data-i18n="pj.eyebrow">重点项目</p>
-        <h2 class="section-title" data-i18n="pj.title">四个做得比较久的项目</h2>
-        <p class="lede" data-i18n="pj.lede">它们都不是一次性的活动，而是有固定周期、固定负责人、固定记录方式的长期项目。</p>
-      </div>
 
-      <div class="grid">
-        <article class="card project reveal d1">
-          <div class="card-tag" data-i18n="pj1.tag">社区关怀</div>
-          <h3 data-i18n="pj1.title">「一平米书房」社区阅读角改造</h3>
-          <p data-i18n="pj1.desc">把社区里闲置的一角改造成儿童阅读空间：墙面翻新、书架自建、图书分类上架，并排定每周的伴读值班表。</p>
-          <div class="metrics">
-            <div class="metric"><div class="m-label" data-i18n="ui.when">时间</div><div class="m-value" data-i18n="pj1.a">2025 年秋起 · 长期</div></div>
-            <div class="metric"><div class="m-label" data-i18n="ui.scale">规模</div><div class="m-value" data-i18n="pj1.b">32 名志愿者 · 3 个阅读角</div></div>
-            <div class="metric"><div class="m-label" data-i18n="ui.partner">合作</div><div class="m-value" data-i18n="pj1.c">南沙街道社区中心</div></div>
-          </div>
-        </article>
-
-        <article class="card project reveal d2">
-          <div class="card-tag" data-i18n="pj2.tag">环保行动</div>
-          <h3 data-i18n="pj2.title">明珠湾净滩系列行动</h3>
-          <p data-i18n="pj2.desc">沿明珠湾岸线周期性清理垃圾，按材质分类称重并记录来源，再把数据转化成校园减塑倡导的展板与宣讲内容。</p>
-          <div class="metrics">
-            <div class="metric"><div class="m-label" data-i18n="ui.when">时间</div><div class="m-value" data-i18n="pj2.a">每季度一次</div></div>
-            <div class="metric"><div class="m-label" data-i18n="ui.scale">规模</div><div class="m-value" data-i18n="pj2.b">累计 210 人次</div></div>
-            <div class="metric"><div class="m-label" data-i18n="ui.partner">合作</div><div class="m-value" data-i18n="pj2.c">明珠湾生态志愿队</div></div>
-          </div>
-        </article>
-
-        <article class="card project reveal d3">
-          <div class="card-tag" data-i18n="pj3.tag">公益募捐</div>
-          <h3 data-i18n="pj3.title">「暖冬」衣物募集与分拣</h3>
-          <p data-i18n="pj3.desc">面向全校征集冬季衣物，按尺码与季节分类、清洗检查、打包贴标，再交由本地公益仓统一配送。全程公示流向。</p>
-          <div class="metrics">
-            <div class="metric"><div class="m-label" data-i18n="ui.when">时间</div><div class="m-value" data-i18n="pj3.a">每年 11–12 月</div></div>
-            <div class="metric"><div class="m-label" data-i18n="ui.scale">规模</div><div class="m-value" data-i18n="pj3.b">募集衣物约 1,200 件</div></div>
-            <div class="metric"><div class="m-label" data-i18n="ui.partner">合作</div><div class="m-value" data-i18n="pj3.c">本地公益仓</div></div>
-          </div>
-        </article>
-
-        <article class="card project reveal d4">
-          <div class="card-tag" data-i18n="pj4.tag">赛事会务</div>
-          <h3 data-i18n="pj4.title">校运会与校园开放日志愿岗</h3>
-          <p data-i18n="pj4.desc">为校运会与开放日提供签到、引导、计时、广播与后勤岗位，也是每年新成员最集中的一次实战练兵。</p>
-          <div class="metrics">
-            <div class="metric"><div class="m-label" data-i18n="ui.when">时间</div><div class="m-value" data-i18n="pj4.a">每学年 · 春秋各一次</div></div>
-            <div class="metric"><div class="m-label" data-i18n="ui.scale">规模</div><div class="m-value" data-i18n="pj4.b">90+ 个志愿岗位</div></div>
-            <div class="metric"><div class="m-label" data-i18n="ui.partner">合作</div><div class="m-value" data-i18n="pj4.c">学校学生事务处</div></div>
-          </div>
-        </article>
-      </div>
-    </div>
-  </section>
-
-  <hr class="hairline" />
-
-  <!-- ======================= JOURNEY ======================= -->
-  <section id="journey">
-    <div class="wrap">
-      <div class="reveal">
-        <p class="eyebrow" data-i18n="jr.eyebrow">发展历程</p>
-        <h2 class="section-title" data-i18n="jr.title">从十几个人开始</h2>
-        <p class="lede" data-i18n="jr.lede">义工社不是一天长成现在这样的。下面是几个我们自己觉得还算重要的节点。</p>
-      </div>
-
-      <!-- EDIT: 换成义工社真实的里程碑 -->
-      <div class="timeline">
-        <div class="tl-item reveal d1">
-          <div class="tl-year" data-i18n="t1.year">2023</div>
-          <div class="tl-title" data-i18n="t1.title">义工社前身小组成立</div>
-          <div class="tl-desc" data-i18n="t1.desc">由十余名同学发起，从校园图书整理与活动支持做起，第一学期完成 6 场小型服务。</div>
-        </div>
-        <div class="tl-item reveal d2">
-          <div class="tl-year" data-i18n="t2.year">2024</div>
-          <div class="tl-title" data-i18n="t2.title">正式挂靠学生事务处</div>
-          <div class="tl-desc" data-i18n="t2.desc">建立招募、培训与工时记录三项制度，服务范围从校园扩展到南沙社区。</div>
-        </div>
-        <div class="tl-item reveal d3">
-          <div class="tl-year" data-i18n="t3.year">2025</div>
-          <div class="tl-title" data-i18n="t3.title">首个长期项目落地</div>
-          <div class="tl-desc" data-i18n="t3.desc">「一平米书房」社区阅读角改造启动，形成固定的项目组与轮值机制。</div>
-        </div>
-        <div class="tl-item reveal d4">
-          <div class="tl-year" data-i18n="t4.year">2025</div>
-          <div class="tl-title" data-i18n="t4.title">公益时数上云并公示</div>
-          <div class="tl-desc" data-i18n="t4.desc">统一工时口径与签到方式，每位志愿者的服务时长可查询、可追溯。</div>
-        </div>
-        <div class="tl-item reveal d5">
-          <div class="tl-year" data-i18n="t5.year">2026</div>
-          <div class="tl-title" data-i18n="t5.title">六组并行的组织架构</div>
-          <div class="tl-desc" data-i18n="t5.desc">社区关怀、环保、教育、募捐、会务、交流六个板块独立运作，也经常联合行动。</div>
-        </div>
-        <div class="tl-item reveal d6">
-          <div class="tl-year" data-i18n="t6.year">下一步</div>
-          <div class="tl-title" data-i18n="t6.title">把可复制的模式带到更多社区</div>
-          <div class="tl-desc" data-i18n="t6.desc">整理项目手册与培训材料，让下一届同学接手时不用从零开始。</div>
-        </div>
-      </div>
-
-      <!-- ======================= BEYOND ======================= -->
-      <div style="margin-top:clamp(3rem,7vw,5rem);">
-        <div class="reveal">
-          <p class="eyebrow" data-i18n="bd.eyebrow">社团文化</p>
-          <h2 class="section-title" data-i18n="bd.title">除了做活动，我们还做这些</h2>
-        </div>
-        <div class="grid">
-          <article class="card reveal d1">
-            <h3 data-i18n="b1.title">学生自主运营</h3>
-            <p data-i18n="b1.desc">从需求调研到现场执行都由学生完成，老师只在安全与预算环节提供指导。做错了就复盘，这是我们的成长方式。</p>
-          </article>
-          <article class="card reveal d2">
-            <h3 data-i18n="b2.title">可追溯的服务记录</h3>
-            <p data-i18n="b2.desc">每一场活动都有签到、工时与影像留痕，物资与款项按学期公示，家长与学校随时可以查。</p>
-          </article>
-          <article class="card reveal d3">
-            <h3 data-i18n="b3.title">多元与双语</h3>
-            <p data-i18n="b3.desc">成员来自不同的课程体系与文化背景，工作语言在中英之间自然切换，这也是我们服务国际社区的方式。</p>
-          </article>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <hr class="hairline" />
 
   <!-- ======================= CONTACT ======================= -->
   <section id="contact">
@@ -665,16 +454,7 @@
   </div>
 </footer>
 
-<!-- Lightbox -->
-<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="图片查看">
-  <button class="lightbox-close" type="button" aria-label="关闭" data-i18n-attr="aria-label:ui.close">✕</button>
-  <button class="lightbox-nav prev" type="button" aria-label="上一张" data-i18n-attr="aria-label:ui.prev">‹</button>
-  <figure>
-    <img id="lightbox-img" src="" alt="" />
-    <figcaption id="lightbox-cap"></figcaption>
-  </figure>
-  <button class="lightbox-nav next" type="button" aria-label="下一张" data-i18n-attr="aria-label:ui.next">›</button>
-</div>
+<!-- 工作照（#gallery）已整块删除，灯箱只服务那一块的 .shot，一起删掉 -->
 
 <!-- 国庆专区用的国旗：图案只定义一次，上面三面旗用 <use> 复用。
      #nd-wave 是「布料起伏」滤镜：feTurbulence 生成噪声，feDisplacementMap 拿它去推移图形，
@@ -704,19 +484,18 @@
 </svg>
 
 <script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
-<script src="assets/cloud-config.js?v=20260930v"></script>
-<script src="assets/cloud.js?v=20260930v"></script>
-<script src="assets/i18n.js?v=20260930v"></script>
-<script src="assets/board.js?v=20260930v"></script>
-<script src="assets/editor.js?v=20260930v"></script>
-<script src="assets/feed.js?v=20260930v"></script>
-<script src="assets/team.js?v=20260930v"></script>
-<script src="assets/team-render.js?v=20260930v"></script>
-<script src="assets/queue.js?v=20260930v"></script>
-<script src="assets/nav.js?v=20260930v"></script>
-<script src="assets/main.js?v=20260930v"></script>
+<script src="assets/cloud-config.js?v=20260930w"></script>
+<script src="assets/cloud.js?v=20260930w"></script>
+<script src="assets/i18n.js?v=20260930w"></script>
+<script src="assets/board.js?v=20260930w"></script>
+<script src="assets/editor.js?v=20260930w"></script>
+<script src="assets/feed.js?v=20260930w"></script>
+<!-- 部门成员已独立成 team.html，team.js / team-render.js 只在那一页加载 -->
+<script src="assets/queue.js?v=20260930w"></script>
+<script src="assets/nav.js?v=20260930w"></script>
+<script src="assets/main.js?v=20260930w"></script>
 <!-- 国庆横幅 / 专区：放在 main.js 之后，这样填进去的周年数字不会被 applyLang 覆盖回去 -->
-<script src="assets/national.js?v=20260930v"></script>
+<script src="assets/national.js?v=20260930w"></script>
 <script>
 /* ---------- 首页「活动报名」板块 ----------
    看板的全部逻辑（红绿灯判定、数字、图例、以及「旧结构自愈」）都在 assets/board.js，

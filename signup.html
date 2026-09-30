@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-ver="20260930v" data-page-title="doc.signup.title">
+<html lang="zh-CN" data-ver="20260930w" data-page-title="doc.signup.title">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,7 +10,7 @@
    于是点站内链接（全是裸路径）进去时整页退回旧设计。
    这里比对 <html data-ver>：不是当前版本就带查询串重拉一次（查询串必定回源）。 */
 (function () {
-  var VER = "20260930v";
+  var VER = "20260930w";
   try {
     var el = document.documentElement;
     var healed = /[?&]_v=/.test(location.search);
@@ -32,8 +32,8 @@
 <title>活动报名 | GUIS 义工社</title>
 <meta name="description" content="GUIS 义工社义工活动报名 —— 广州优联国际学校学生志愿服务组织。" />
 <meta name="theme-color" content="#FFFFFF" />
-<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20260930v" />
-<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20260930v" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20260930w" />
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20260930w" />
 <!-- 品牌标志兜底样式（内联，随 HTML 一起下发）。
      即使 assets/site.css 被浏览器缓存成旧版本，标志也不会按图片原始尺寸撑破布局。
      这里只设尺寸上限（max-*），正常加载 site.css 时这些上限都不会生效。 -->
@@ -57,8 +57,8 @@
   .hero-brand .hero-va{max-height:40px}
 }
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20260930v" />
-<link rel="stylesheet" href="assets/app.css?v=20260930v" />
+<link rel="stylesheet" href="assets/site.css?v=20260930w" />
+<link rel="stylesheet" href="assets/app.css?v=20260930w" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
@@ -93,8 +93,8 @@
         <span data-i18n="nav.about">关于我们</span><span class="nav-caret" aria-hidden="true"></span>
       </button>
       <div class="nav-drop-menu">
-        <a href="index.html#team" data-i18n="nav.team">部门成员</a>
-        <a href="index.html#journey" data-i18n="nav.journey">发展历程</a>
+        <a href="team.html" data-i18n="nav.team">部门成员</a>
+        <a href="journey.html" data-i18n="nav.journey">发展历程</a>
         <a href="index.html#contact" data-i18n="nav.contact">联系我们</a>
       </div>
     </div>
@@ -103,7 +103,6 @@
     <a href="signup.html" class="is-active" data-i18n="nav.signup">活动报名</a>
     <a href="announcements.html" data-i18n="nav.news">公告</a>
     <a href="index.html#journal" data-i18n="nav.journal">刊物</a>
-    <a href="index.html#gallery" data-i18n="nav.gallery">志愿风采</a>
 
     <div class="lang-switch" role="group" aria-label="Language / 语言">
       <button class="lang-btn is-active" data-lang="zh" aria-pressed="true">中文</button>
@@ -237,18 +236,22 @@
         </div>
       </div>
 
-      <!-- ============ 过往活动（和报名合并在一起，不再单独占一个导航项） ============ -->
+      <!-- ============ 活动日历 ============
+           过往活动 + 未来排期合并进报名页。一周以星期一开始，今天高亮，
+           顶部 12 个月是缩略条，可以直接跳月。 -->
       <section id="archive" style="margin-top:3rem;">
         <div class="reveal">
-          <p class="eyebrow" data-i18n="arc.eyebrow">过往活动</p>
-          <h2 class="section-title" data-i18n="arc.title">那些已经做完的事</h2>
-          <p class="lede" data-i18n="arc.lede">执委会归档后的活动会留在这里：时间地点、活动总结，以及当时录取的志愿者名单。点进去可以看到完整记录。</p>
+          <p class="eyebrow" data-i18n="cal.eyebrow">活动日历</p>
+          <h2 class="section-title" data-i18n="cal.title">排期与回顾</h2>
+          <p class="lede" data-i18n="cal.lede">高亮的那格是今天。点任意一天可以看到当天的活动安排、报名截止时间；未来的活动也会提前排进来。</p>
         </div>
 
-        <div id="arc-origin" hidden></div>
-        <div id="arc-loading" class="empty" style="margin-top:2.2rem;"><span class="loading"></span> <span data-i18n="arc.loading">正在读取过往活动…</span></div>
-        <div id="arc-list" class="grid reveal" hidden></div>
-        <div id="arc-empty" class="empty" hidden data-i18n="arc.empty">还没有归档任何活动。</div>
+        <div id="cal-origin" hidden></div>
+        <div id="cal-loading" class="empty" style="margin-top:1.4rem;"><span class="loading"></span> <span data-i18n="cal.loading">正在读取活动日历…</span></div>
+        <!-- 注意：这里不能挂 .reveal —— 它是隐藏容器里动态插入的，
+             initReveal() 只在 DOMContentLoaded 扫一次，补注册不到，会永远 opacity:0 -->
+        <div id="cal-root" hidden style="margin-top:1.4rem;"></div>
+        <div id="cal-fail" class="empty" hidden data-i18n="cal.fail">读取失败，请稍后重试。</div>
       </section>
 
     </div>
@@ -271,13 +274,14 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
-<script src="assets/cloud-config.js?v=20260930v"></script>
-<script src="assets/cloud.js?v=20260930v"></script>
-<script src="assets/i18n.js?v=20260930v"></script>
-<script src="assets/board.js?v=20260930v"></script>
-<script src="assets/nav.js?v=20260930v"></script>
-<script src="assets/main.js?v=20260930v"></script>
-<script src="assets/queue.js?v=20260930v"></script>
+<script src="assets/cloud-config.js?v=20260930w"></script>
+<script src="assets/cloud.js?v=20260930w"></script>
+<script src="assets/i18n.js?v=20260930w"></script>
+<script src="assets/board.js?v=20260930w"></script>
+<script src="assets/calendar.js?v=20260930w"></script>
+<script src="assets/nav.js?v=20260930w"></script>
+<script src="assets/main.js?v=20260930w"></script>
+<script src="assets/queue.js?v=20260930w"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   "use strict";
@@ -539,6 +543,37 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
+  /* ---------- 活动日历（过往活动 + 未来排期） ---------- */
+  var calRoot = $("cal-root"), calLoading = $("cal-loading"), calFail = $("cal-fail");
+  var cal = null;
+
+  function loadCalendar() {
+    if (!calRoot) return;
+    C.listCalendarActivities().then(function (res) {
+      var rows = C.unwrap(res, "读取失败") || [];
+      if (calLoading) calLoading.hidden = true;
+      cal = window.GUISCalendar.create(calRoot, {});
+      cal.setData(rows);
+      calRoot.hidden = false;
+    }).catch(function (err) {
+      if (calLoading) calLoading.hidden = true;
+      if (calFail) { calFail.hidden = false; }
+      console.error("[GUIS] calendar failed", err && err.message);
+    });
+  }
+
+  function calendarMirrorNotice(endpoint) {
+    if (calLoading) calLoading.hidden = true;
+    var box = $("cal-origin");
+    if (box) {
+      box.innerHTML =
+        '<div class="origin-banner"><b>当前站点是静态镜像，读不到活动日历。</b>' +
+        "请在正式地址上查看：" +
+        '<a href="' + endpoint + '/signup.html#archive"><b>' + endpoint + "/signup.html#archive</b></a></div>";
+      box.hidden = false;
+    }
+  }
+
   /* 域名与云端点不一致（静态镜像站点）时，云服务会拒绝请求 —— 给出明确指引，
      而不是显示一个看起来像「没有活动」的空状态。 */
   var hostOK = location.origin.replace(/\/+$/, "") === C.endpoint.replace(/\/+$/, "");
@@ -551,11 +586,13 @@ document.addEventListener("DOMContentLoaded", function () {
         '<a href="' + C.endpoint + '/signup.html"><b>' + C.endpoint + "/signup.html</b></a></div>";
       box.hidden = false;
     }
+    calendarMirrorNotice(C.endpoint);
     pickLoading.hidden = true;
     return;
   }
 
   loadActivities();
+  loadCalendar();
 });
 </script>
 </body>

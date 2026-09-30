@@ -88,6 +88,16 @@
         .order("starts_at", { ascending: true, nullsFirst: false });
     },
 
+    /* 日历专用：不加 status 过滤，交给 RLS 决定能看到哪些
+       （匿名：开放报名的 + 已归档的；管理员：全部）。
+       这样公开日历既能看到未来排期，也能翻到过往活动。 */
+    listCalendarActivities: function () {
+      return db
+        .from("activities")
+        .select("id, title, summary, category, location, starts_at, ends_at, signup_deadline, capacity, status, notified_at, archived, manager_email, hours, created_at")
+        .order("starts_at", { ascending: true, nullsFirst: false });
+    },
+
     listMyActivities: function () {
       return db
         .from("activities")
