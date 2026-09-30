@@ -683,8 +683,10 @@ html.js .reveal.is-in { opacity: 1; transform: none; }
   color: var(--red); font-weight: 700; line-height: 1.4; letter-spacing: -0.01em;
   font-size: clamp(1.15rem, 3.2vw, 1.7rem);
 }
-/* hidden 属性要能压过上面这些 display —— 作者样式会盖掉 UA 的 [hidden]{display:none} */
-.board[hidden], .board-figure[hidden], .board-none[hidden], .board-num-label[hidden] { display: none; }
+/* hidden 属性要能压过作者样式 —— 作者写的 display:flex/grid 会盖掉 UA 的
+   [hidden]{display:none}，于是「明明设了 hidden，元素还杵在那儿」。
+   与其给每个组件补一条，统一在这里兜住。 */
+[hidden] { display: none !important; }
 .board-actions { margin-top: 1.5rem; display: flex; gap: 0.75rem; flex-wrap: wrap; }
 
 .tl-legend { display: flex; flex-direction: column; gap: 0.7rem; }

@@ -54,7 +54,7 @@
     listMyActivities: function () {
       return db
         .from("activities")
-        .select("id, title, summary, category, location, starts_at, ends_at, signup_deadline, capacity, contact, notes, status, notified_at, created_at")
+        .select("id, title, summary, category, location, starts_at, ends_at, signup_deadline, capacity, contact, notes, status, notified_at, recap_html, archived, archived_at, created_at")
         .order("created_at", { ascending: false });
     },
 
@@ -92,7 +92,7 @@
     listRegistrations: function (activityId) {
       var q = db
         .from("registrations")
-        .select("id, activity_id, name, email, phone, grade, programme, student_id, slot, experience, note, status, created_at")
+        .select("id, activity_id, name, email, phone, grade, programme, student_id, slot, experience, note, status, selected, selected_at, selected_by, created_at")
         .order("created_at", { ascending: true });
       if (activityId) q = q.eq("activity_id", activityId);
       return q;
@@ -104,6 +104,102 @@
 
     deleteRegistration: function (id) {
       return db.from("registrations").delete().eq("id", id).select();
+    },
+
+    /* ---------- 录取（报名成功）----------
+       「选了谁」是一次整体决定，不是一条条改：
+       先把这个活动下所有人清成未录取，再把勾选的人标成已录取。
+       selected_by 记下经手人邮箱，活动详情页会显示是谁定的。 */
+    clearSelection: function (activityId) {
+      return db
+        .from("registrations")
+        .update({ selected: false, selected_at: null, selected_by: null })
+        .eq("activity_id", activityId);
+    },
+
+    markSelected: function (ids, by) {
+      if (!ids || !ids.length) return Promise.resolve({ data: [], error: null });
+      return db
+        .from("registrations")
+        .update({ selected: true, selected_at: new Date().toISOString(), selected_by: by || null })
+        .in("id", ids);
+    },
+
+    /* ---------- 过往活动（归档）---------- */
+    listArchivedActivities: function () {
+      return db
+        .from("activities")
+        .select("id, title, summary, category, location, starts_at, ends_at, signup_deadline, capacity, contact, notes, status, notified_at, recap_html, archived, archived_at, created_at")
+        .eq("archived", true)
+        .order("starts_at", { ascending: false, nullsFirst: false });
+    },
+
+    getActivity: function (id) {
+      return db
+        .from("activities")
+        .select("id, title, summary, category, location, starts_at, ends_at, signup_deadline, capacity, contact, notes, status, notified_at, recap_html, archived, archived_at, created_at")
+        .eq("id", id)
+        .limit(1);
+    },
+
+    setArchived: function (id, archived) {
+      return db
+        .from("activities")
+        .update({ archived: !!archived, archived_at: archived ? new Date().toISOString() : null })
+        .eq("id", id)
+        .select();
+    },
+
+    setRecap: function (id, html) {
+      return db.from("activities").update({ recap_html: html || null }).eq("id", id).select();
+    },
+
+    /* ---------- 刊物（文章）---------- */
+    listArticles: function (onlyPublished) {
+      var q = db
+        .from("articles")
+        .select("id, title, author, cover, excerpt, activity_id, status, published_at, created_at, updated_at")
+        .order("published_at", { ascending: false, nullsFirst: false });
+      if (onlyPublished) q = q.eq("status", "published");
+      return q;
+    },
+
+    getArticle: function (id) {
+      return db.from("articles").select("*").eq("id", id).limit(1);
+    },
+
+    createArticle: function (payload) {
+      return db.from("articles").insert(payload).select();
+    },
+
+    updateArticle: function (id, patch) {
+      return db.from("articles").update(patch).eq("id", id).select();
+    },
+
+    deleteArticle: function (id) {
+      return db.from("articles").delete().eq("id", id).select();
+    },
+
+    /* ---------- 公告 ---------- */
+    listAnnouncements: function (onlyPublished) {
+      var q = db
+        .from("announcements")
+        .select("id, title, body_html, priority, status, published_at, created_at, updated_at")
+        .order("published_at", { ascending: false, nullsFirst: false });
+      if (onlyPublished) q = q.eq("status", "published");
+      return q;
+    },
+
+    createAnnouncement: function (payload) {
+      return db.from("announcements").insert(payload).select();
+    },
+
+    updateAnnouncement: function (id, patch) {
+      return db.from("announcements").update(patch).eq("id", id).select();
+    },
+
+    deleteAnnouncement: function (id) {
+      return db.from("announcements").delete().eq("id", id).select();
     },
 
     /* ---------- 后台白名单 ----------

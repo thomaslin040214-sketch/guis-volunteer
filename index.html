@@ -42,8 +42,8 @@
   .letter-brand img{max-width:100px}
 }
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20260930f" />
-<link rel="stylesheet" href="assets/app.css?v=20260930f" />
+<link rel="stylesheet" href="assets/site.css?v=20260930h" />
+<link rel="stylesheet" href="assets/app.css?v=20260930h" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
@@ -70,8 +70,11 @@
     <a href="#about" data-i18n="nav.about">关于我们</a>
     <a href="#programs" data-i18n="nav.programs">服务项目</a>
     <a href="#signup" data-i18n="nav.signup">活动报名</a>
+    <a href="#news" data-i18n="nav.news">公告</a>
+    <a href="#journal" data-i18n="nav.journal">刊物</a>
     <a href="#gallery" data-i18n="nav.gallery">志愿风采</a>
     <a href="#team" data-i18n="nav.team">团队成员</a>
+    <a href="#archive" data-i18n="nav.archive">过往活动</a>
     <a href="#journey" data-i18n="nav.journey">发展历程</a>
     <a href="#contact" data-i18n="nav.contact">联系我们</a>
     <a href="join.html" data-i18n="nav.join">社长欢迎信</a>
@@ -273,6 +276,28 @@
 
   <hr class="hairline" />
 
+  <!-- ======================= NEWS (公告栏) ======================= -->
+  <section id="news">
+    <div class="wrap">
+      <div class="reveal">
+        <p class="eyebrow" data-i18n="an.eyebrow">公告</p>
+        <h2 class="section-title" data-i18n="an.title">公告栏</h2>
+        <p class="lede" data-i18n="an.lede">红黄绿三盏灯代表优先级：红灯是必须马上处理的事，黄灯是提醒，绿灯是常规通知。完整公告列表在单独页面里。</p>
+      </div>
+
+      <div id="ann-origin" hidden></div>
+      <div id="ann-loading" class="empty" style="margin-top:2.2rem;"><span class="loading"></span> <span data-i18n="an.loading">正在读取公告…</span></div>
+      <div id="ann-list" class="ann-list reveal" hidden></div>
+      <div id="ann-empty" class="empty" hidden data-i18n="an.empty">目前还没有任何公告。</div>
+
+      <div class="board-actions" style="margin-top:1.6rem;">
+        <a href="announcements.html" class="btn btn-primary" data-i18n="an.all">查看全部公告</a>
+      </div>
+    </div>
+  </section>
+
+  <hr class="hairline" />
+
   <!-- ======================= GALLERY (工作照) ======================= -->
   <section id="gallery">
     <div class="wrap">
@@ -359,77 +384,37 @@
 
   <hr class="hairline" />
 
-  <!-- ======================= SERVICE TIME DISTRIBUTION ======================= -->
-  <section id="contribution">
+  <!-- ======================= JOURNAL (刊物) ======================= -->
+  <section id="journal">
     <div class="wrap">
       <div class="reveal">
-        <p class="eyebrow" data-i18n="ct.eyebrow">服务分布</p>
-        <h2 class="section-title" data-i18n="ct.title">本学年服务时长分布</h2>
-        <p class="lede" data-i18n="ct.lede">按项目板块统计的服务时长占比（2025–26 学年）。数据每学期更新一次，口径与每位志愿者的个人工时记录一致。</p>
+        <p class="eyebrow" data-i18n="pub.eyebrow">义工刊物</p>
+        <h2 class="section-title" data-i18n="pub.title">我们写下来的东西</h2>
+        <p class="lede" data-i18n="pub.lede">活动复盘、人物访谈、服务手记。执委会在后台写完发表后，会按发布时间出现在这里，点封面进去就是完整一篇。</p>
       </div>
 
-      <!-- EDIT: 换成真实统计占比 -->
-      <div class="skills reveal d2">
-        <div class="skill">
-          <div class="skill-head"><span class="skill-name" data-i18n="ct.s1">社区关怀与长者陪伴</span><span class="skill-val">34%</span></div>
-          <div class="bar"><span data-fill="34"></span></div>
-        </div>
-        <div class="skill">
-          <div class="skill-head"><span class="skill-name" data-i18n="ct.s2">环保与可持续行动</span><span class="skill-val">22%</span></div>
-          <div class="bar"><span data-fill="22"></span></div>
-        </div>
-        <div class="skill">
-          <div class="skill-head"><span class="skill-name" data-i18n="ct.s3">教育支持与课业辅导</span><span class="skill-val">18%</span></div>
-          <div class="bar"><span data-fill="18"></span></div>
-        </div>
-        <div class="skill">
-          <div class="skill-head"><span class="skill-name" data-i18n="ct.s4">公益募捐与义卖</span><span class="skill-val">14%</span></div>
-          <div class="bar"><span data-fill="14"></span></div>
-        </div>
-        <div class="skill">
-          <div class="skill-head"><span class="skill-name" data-i18n="ct.s5">赛事与会务支持</span><span class="skill-val">8%</span></div>
-          <div class="bar"><span data-fill="8"></span></div>
-        </div>
-        <div class="skill">
-          <div class="skill-head"><span class="skill-name" data-i18n="ct.s6">文化交流与对外联络</span><span class="skill-val">4%</span></div>
-          <div class="bar"><span data-fill="4"></span></div>
-        </div>
-      </div>
-
-      <div class="chips reveal d3" style="margin-top:2rem;">
-        <span class="chip" data-i18n="sk1">需求调研</span>
-        <span class="chip" data-i18n="sk2">活动策划</span>
-        <span class="chip" data-i18n="sk3">志愿者培训</span>
-        <span class="chip" data-i18n="sk4">现场执行</span>
-        <span class="chip" data-i18n="sk5">记录与复盘</span>
-        <span class="chip" data-i18n="sk6">物资统筹</span>
-        <span class="chip" data-i18n="sk7">对外联络</span>
-        <span class="chip" data-i18n="sk8">财务公开</span>
-        <span class="chip" data-i18n="sk9">安全预案</span>
-        <span class="chip" data-i18n="sk10">成效评估</span>
-      </div>
+      <div id="pub-origin" hidden></div>
+      <div id="pub-loading" class="empty" style="margin-top:2.2rem;"><span class="loading"></span> <span data-i18n="pub.loading">正在读取刊物…</span></div>
+      <div id="pub-list" class="pub-grid reveal" hidden></div>
+      <div id="pub-empty" class="empty" hidden data-i18n="pub.empty">还没有发表任何刊物。</div>
     </div>
   </section>
 
   <hr class="hairline" />
 
-  <!-- ======================= ROSTER ======================= -->
-  <section id="roster">
+  <!-- ======================= ARCHIVE (过往活动) ======================= -->
+  <section id="archive">
     <div class="wrap">
       <div class="reveal">
-        <p class="eyebrow" data-i18n="ro.eyebrow">岗位一览</p>
-        <h2 class="section-title" data-i18n="ro.title">常态化志愿岗位</h2>
-        <p class="lede" data-i18n="ro.lede">新成员从这些岗位开始。每个岗位都有固定的带队同学与上岗前培训，不需要经验，但需要守时。</p>
+        <p class="eyebrow" data-i18n="arc.eyebrow">过往活动</p>
+        <h2 class="section-title" data-i18n="arc.title">那些已经做完的事</h2>
+        <p class="lede" data-i18n="arc.lede">执委会归档后的活动会留在这里：时间地点、活动总结，以及当时录取的志愿者名单。点进去可以看到完整记录。</p>
       </div>
 
-      <div class="courses reveal d2">
-        <div class="course"><span class="code">VOL-01</span><span class="name" data-i18n="ro1.name">长者陪伴探访</span><span class="tag" data-i18n="ro1.tag">社区关怀</span></div>
-        <div class="course"><span class="code">VOL-02</span><span class="name" data-i18n="ro2.name">明珠湾净滩与分类记录</span><span class="tag" data-i18n="ro2.tag">环保行动</span></div>
-        <div class="course"><span class="code">VOL-03</span><span class="name" data-i18n="ro3.name">周末课业辅导与阅读陪伴</span><span class="tag" data-i18n="ro3.tag">教育支持</span></div>
-        <div class="course"><span class="code">VOL-04</span><span class="name" data-i18n="ro4.name">义卖市集摊位与收银</span><span class="tag" data-i18n="ro4.tag">公益募捐</span></div>
-        <div class="course"><span class="code">VOL-05</span><span class="name" data-i18n="ro5.name">校运会与开放日志愿岗</span><span class="tag" data-i18n="ro5.tag">赛事会务</span></div>
-        <div class="course"><span class="code">VOL-06</span><span class="name" data-i18n="ro6.name">双语导览与文化工作坊</span><span class="tag" data-i18n="ro6.tag">国际交流</span></div>
-      </div>
+      <div id="arc-origin" hidden></div>
+      <div id="arc-loading" class="empty" style="margin-top:2.2rem;"><span class="loading"></span> <span data-i18n="arc.loading">正在读取过往活动…</span></div>
+      <div id="arc-list" class="grid reveal" hidden></div>
+      <div id="arc-empty" class="empty" hidden data-i18n="arc.empty">还没有归档任何活动。</div>
     </div>
   </section>
 
@@ -622,14 +607,16 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
-<script src="assets/cloud-config.js?v=20260930f"></script>
-<script src="assets/cloud.js?v=20260930f"></script>
-<script src="assets/i18n.js?v=20260930f"></script>
-<script src="assets/board.js?v=20260930f"></script>
-<script src="assets/team.js?v=20260930f"></script>
-<script src="assets/team-render.js?v=20260930f"></script>
-<script src="assets/queue.js?v=20260930f"></script>
-<script src="assets/main.js?v=20260930f"></script>
+<script src="assets/cloud-config.js?v=20260930h"></script>
+<script src="assets/cloud.js?v=20260930h"></script>
+<script src="assets/i18n.js?v=20260930h"></script>
+<script src="assets/board.js?v=20260930h"></script>
+<script src="assets/editor.js?v=20260930h"></script>
+<script src="assets/feed.js?v=20260930h"></script>
+<script src="assets/team.js?v=20260930h"></script>
+<script src="assets/team-render.js?v=20260930h"></script>
+<script src="assets/queue.js?v=20260930h"></script>
+<script src="assets/main.js?v=20260930h"></script>
 <script>
 /* ---------- 首页「活动报名」板块 ----------
    看板的全部逻辑（红绿灯判定、数字、图例、以及「旧结构自愈」）都在 assets/board.js，
