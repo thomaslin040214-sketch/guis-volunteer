@@ -131,7 +131,34 @@ document.addEventListener("DOMContentLoaded", function () {
        通过/不通过/删除都不给；义工小时只有自己负责的活动才让改（在 renderRegs 里判断）。 */
     var peoForm = $("peo-form");
     if (peoForm) peoForm.hidden = !owner;
+
+    /* 全站备份只有执委会能导完整（allowed_admins / student_directory 老师读不到） */
+    var bk = $("backup-btn");
+    if (bk) bk.hidden = !owner;
   }
+
+  /* ---------------- 一键备份 ----------------
+     导出的 JSON 落在自己电脑里，不占云端空间。
+     万一哪天要换托管方式，拿着这个文件就能重建，不用重新录入。 */
+  function runBackup() {
+    var btn = $("backup-btn");
+    if (!window.GUISBackup) {
+      alertIn($("act-alerts"), "error", "备份模块没加载出来，刷新页面再试一次。");
+      return;
+    }
+    busyOn(btn, "导出中…");
+    window.GUISBackup.run({ by: ME.email }).then(function (r) {
+      busyOff(btn);
+      alertIn($("act-alerts"), "ok",
+        "已保存到下载目录：<b>" + r.filename + "</b> · " + r.summary +
+        "。建议顺手复制到网盘或U盘里 —— 这是目前唯一一份自留底。");
+    }).catch(function (err) {
+      busyOff(btn);
+      alertIn($("act-alerts"), "error", "备份失败：" + ((err && err.message) || "请稍后重试"));
+    });
+  }
+  var bkBtn = $("backup-btn");
+  if (bkBtn) bkBtn.addEventListener("click", runBackup);
 
   function showSignedIn(email) {
     ME.email = email || "";
