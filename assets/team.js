@@ -36,8 +36,8 @@ window.GUIS_TEAM = {
         avatar: "assets/photos/dep-pr-head.jpg",
         name: "吴依颖",
         name_en: "Ellie Wu",
-        role: "公关及对外宣传部长",
-        role_en: "Head of Publicity & PR Department",
+        role: "部长",
+        role_en: "Department Lead",
         join: "于2023年09月加入义工组织",
         join_en: "Joined the organization in September 2023.",
         resume: [
@@ -49,9 +49,9 @@ window.GUIS_TEAM = {
           },
           {
             when: "2024年2月",
-            what: "调人义工组织公关及对外宣传部",
-            note: "由于组织架构调整，将其调任于宣传部",
-            when_en: "February 2024", what_en: "Joined the Publicity & PR Department", note_en: "Due to adjustment of team structure"
+            what: "调任义工组织公关及对外宣传部",
+            note: "由于组织架构调整调任于宣传部",
+            when_en: "February 2024", what_en: "Joined the Publicity & PR Department", note_en: "Due to adjustment of team structure, role reallocating to the Publicity Dept."
           }
         ],
         facts: ["（亮点一，如 累计服务 200 小时）", "（亮点二，如 中英双语）"]
