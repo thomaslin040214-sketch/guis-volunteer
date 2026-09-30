@@ -626,23 +626,33 @@ table.data tr.is-picked { background: var(--red-tint); }
   z-index: 2;
 }
 .nd-bar-inner {
+  position: relative; z-index: 1;               /* 压在左侧星阵上面 */
   max-width: var(--wrap-w, 1200px); margin: 0 auto;
-  padding: 0.62rem clamp(1rem, 4vw, 3rem);
+  padding: 0.72rem clamp(1rem, 4vw, 3rem);
   display: flex; align-items: center; gap: 0.9rem;
 }
+/* 左上角虚出去的五颗星：只做背景，不挡点击、不进无障碍树 */
+.nd-bar-stars {
+  position: absolute; z-index: 0; left: -16px; top: 50%;
+  width: clamp(150px, 22%, 240px);
+  transform: translateY(-50%);
+  pointer-events: none; opacity: 0.15;
+  animation: nd-stars-breathe 12s ease-in-out infinite;
+}
+.nd-bar-stars svg { display: block; width: 100%; height: auto; }
 /* 年份：等宽 + 字距，做出「读数」的科技感 */
 .nd-years {
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
-  font-size: 0.78rem; font-weight: 600; letter-spacing: 0.14em;
+  font-size: 0.84rem; font-weight: 600; letter-spacing: 0.14em;
   color: var(--red); display: flex; align-items: center; gap: 0.45rem;
   flex: 0 0 auto;
 }
 .nd-years .nd-dash {
   width: 22px; height: 1px; background: linear-gradient(90deg, var(--red), rgba(156, 33, 38, 0.15));
 }
-.nd-text { font-size: 0.86rem; font-weight: 600; color: var(--text-main); letter-spacing: -0.005em; }
+.nd-text { font-size: 0.95rem; font-weight: 600; color: var(--text-main); letter-spacing: -0.005em; }
 .nd-text .nd-sub {
-  display: block; font-size: 0.74rem; font-weight: 400; color: var(--text-muted); margin-top: 0.1rem;
+  display: block; font-size: 0.8rem; font-weight: 400; color: var(--text-muted); margin-top: 0.12rem;
 }
 .nd-bar-inner .nd-grow { flex: 1; min-width: 0; }
 .nd-bar a.nd-link {
@@ -693,6 +703,22 @@ table.data tr.is-picked { background: var(--red-tint); }
   pointer-events: none;
   background: radial-gradient(circle at 50% 50%, rgba(156, 33, 38, 0.5), transparent 68%);
 }
+/* 左侧五颗星：z-index 1 = 在底纹之上、正文（.nd-inner 是 2）之下，只当背景 */
+.nd-stars {
+  position: absolute; z-index: 1; left: -3%; top: 50%;
+  width: clamp(190px, 34%, 360px);
+  transform: translateY(-50%);
+  pointer-events: none; opacity: 0.16;
+  animation: nd-stars-breathe 12s ease-in-out infinite;
+}
+.nd-stars svg { display: block; width: 100%; height: auto; }
+/* 只呼吸透明度，不要动 transform —— 两处星阵的定位方式不一样，
+   在 keyframes 里写死 transform 会让小屏上的覆盖样式失效。 */
+@keyframes nd-stars-breathe {
+  0%, 100% { opacity: 0.13; }
+  50%      { opacity: 0.21; }
+}
+
 .nd-grid-dots { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
 .nd-grid-dots i {
   position: absolute; width: 4px; height: 4px; border-radius: 50%;
@@ -716,24 +742,24 @@ table.data tr.is-picked { background: var(--red-tint); }
 .nd-body { position: relative; z-index: 2; max-width: 62ch; }
 .nd-eyebrow {
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
-  font-size: 0.72rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase;
-  color: #E5B95C; margin-bottom: 0.7rem;
+  font-size: 0.78rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase;
+  color: #E5B95C; margin-bottom: 0.75rem;
 }
 .nd-title {
-  font-size: clamp(1.4rem, 3.4vw, 2.1rem); font-weight: 700;
-  letter-spacing: -0.03em; line-height: 1.25; margin-bottom: 0.9rem;
+  font-size: clamp(1.7rem, 4.2vw, 2.6rem); font-weight: 700;
+  letter-spacing: -0.03em; line-height: 1.24; margin-bottom: 1rem;
 }
 .nd-title .grad-gold {
   background: linear-gradient(100deg, #E5B95C, #F3DA9E);
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
-.nd-copy { font-size: 0.98rem; line-height: 1.9; color: rgba(255, 255, 255, 0.74); }
-.nd-copy p + p { margin-top: 0.9rem; }
+.nd-copy { font-size: 1.06rem; line-height: 1.9; color: rgba(255, 255, 255, 0.76); }
+.nd-copy p + p { margin-top: 1rem; }
 .nd-copy strong { color: #fff; font-weight: 650; }
 /* 主祝福语：放大、加字距，让它自己就是一句话的标题 */
 .nd-copy .nd-lead {
-  font-size: clamp(1.12rem, 2.6vw, 1.5rem);
-  font-weight: 650; line-height: 1.7; letter-spacing: 0.02em;
+  font-size: clamp(1.3rem, 3.2vw, 1.85rem);
+  font-weight: 650; line-height: 1.65; letter-spacing: 0.02em;
   color: #F3DA9E;
 }
 
@@ -806,12 +832,15 @@ table.data tr.is-picked { background: var(--red-tint); }
   .nd-fly.f1 { width: 104px; left: 2%;  top: 4%; }
   .nd-fly.f2 { width: 70px;  left: 58%; top: 34%; }
   .nd-fly.f3 { display: none; }
+  /* 单列布局下星阵挪到左上角，别压在正文上 */
+  .nd-stars { width: 150px; left: -6%; top: 4%; transform: none; opacity: 0.12; }
 }
 
 @media (max-width: 640px) {
   .nd-bar-inner { gap: 0.6rem; padding: 0.55rem 1rem; }
   .nd-years { display: none; }
-  .nd-text { font-size: 0.8rem; }
+  .nd-text { font-size: 0.88rem; }
+  .nd-bar-stars { width: 130px; left: -20px; }
   .nd-bar a.nd-link { display: none; }
   .nd-figures { grid-template-columns: repeat(2, 1fr); }
 }
@@ -820,4 +849,5 @@ table.data tr.is-picked { background: var(--red-tint); }
   .nd-bar::after { animation: none; display: none; }
   .nd-grid-dots i { animation: none; }
   .nd-fly { animation: none; }
+  .nd-stars, .nd-bar-stars { animation: none; }
 }
