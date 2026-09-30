@@ -302,6 +302,32 @@
   /* 对外暴露：供异步渲染复用（首页活动看板在云端数据回来后才补计数动画） */
   window.GUISEnter = { register: registerEnter, countTo: countTo };
 
+  /* ---------- 旧首页自愈 ----------
+     正式站的裸根路径 `/` 会被边缘节点长期缓存：带 ?v= 或 /index.html 才是新文档，
+     裸域名可能一直返回「看板上线前」的 index.html（只有 #su-list / #su-empty）。
+     那种旧文档没有引 board.js，这里补上并把看板挂进去，
+     让旧书签 / 裸域名也能看到正确的看板，不用等缓存过期。
+
+     只在自己确实跑在旧文档里时才动手（新文档有 #su-board，直接跳过）。 */
+  function healLegacyHome() {
+    if (document.getElementById("su-board") || !document.getElementById("su-list")) return;
+
+    /* 先把旧列表藏起来，免得旧内联脚本把它渲染出来闪一下 */
+    var legacyList = document.getElementById("su-list");
+    if (legacyList) legacyList.style.setProperty("display", "none", "important");
+
+    function boot() {
+      if (window.GUISBoard && window.GUISBoard.mountHomeBoard) window.GUISBoard.mountHomeBoard();
+    }
+    if (window.GUISBoard) { boot(); return; }
+
+    var s = document.createElement("script");
+    s.src = "assets/board.js?v=20260930f";
+    s.onload = boot;
+    s.onerror = function () { if (legacyList) legacyList.style.removeProperty("display"); };
+    document.head.appendChild(s);
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     initLang();
     initSpotlight();
@@ -311,5 +337,6 @@
     initNavState();
     initLightbox();
     initEnterEngine();
+    healLegacyHome();
   });
 })();
