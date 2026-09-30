@@ -173,6 +173,48 @@ nav {
 }
 .nav-links a:hover, .nav-links a.is-active { color: var(--brand); }
 
+/* ---------- 关于我们 · 下拉菜单 ---------- */
+.nav-drop { position: relative; }
+.nav-drop-btn {
+  border: 0; background: transparent; padding: 0; cursor: pointer;
+  font: inherit; font-size: 0.82rem; font-weight: 500; letter-spacing: 0;
+  color: var(--text-muted);
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  white-space: nowrap; transition: color 0.2s ease;
+}
+.nav-drop-btn:hover, .nav-drop.is-open .nav-drop-btn { color: var(--brand); }
+.nav-caret {
+  width: 0; height: 0; flex: none;
+  border-left: 3.5px solid transparent; border-right: 3.5px solid transparent;
+  border-top: 4px solid currentColor;
+  transition: transform 0.22s ease;
+}
+.nav-drop.is-open .nav-caret { transform: rotate(180deg); }
+.nav-drop-menu {
+  position: absolute; top: calc(100% + 0.9rem); left: -0.7rem;
+  min-width: 150px; padding: 0.35rem;
+  background: #fff; border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  box-shadow: 0 12px 28px rgba(16, 24, 40, 0.10);
+  display: none; z-index: 20;
+}
+.nav-drop.is-open .nav-drop-menu { display: block; }
+.nav-drop-menu a {
+  display: block; padding: 0.44rem 0.7rem; border-radius: 6px;
+  font-size: 0.8rem; color: var(--text-muted); white-space: nowrap;
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+.nav-drop-menu a:hover { background: var(--brand-tint); color: var(--brand); }
+
+/* 登录按钮：导航里唯一的实心按钮，放在最右 */
+.nav-links a.nav-login {
+  padding: 0.34rem 0.9rem; border-radius: 980px;
+  background: var(--brand); color: #fff;
+  font-size: 0.78rem; font-weight: 600; letter-spacing: 0.01em;
+  transition: opacity 0.2s ease;
+}
+.nav-links a.nav-login:hover { color: #fff; opacity: 0.86; }
+
 /* Language switch */
 .lang-switch {
   display: flex; align-items: center; gap: 2px;
@@ -732,8 +774,20 @@ html.js .reveal.is-in { opacity: 1; transform: none; }
 }
 @media (max-width: 720px) {
   nav { height: auto; padding: 0.6rem 1rem; flex-wrap: wrap; gap: 0.5rem; }
-  .nav-links { order: 3; width: 100%; justify-content: flex-start; gap: 1rem; overflow-x: auto; padding-bottom: 0.2rem; }
+  /* 窄屏改成换行，不再横向滚动 ——
+     一横滚就会把最后一项截掉，而且下拉菜单会被 overflow 裁掉一半。 */
+  .nav-links { order: 3; width: 100%; justify-content: flex-start; gap: 0.85rem 1rem;
+    flex-wrap: wrap; padding-bottom: 0.2rem; }
   .nav-links a { font-size: 0.76rem; }
+  .nav-drop-btn { font-size: 0.76rem; }
+  /* 展开的菜单就地铺开占一整行，不用绝对定位（父级是 flex 行，绝对定位会被裁） */
+  .nav-drop { width: 100%; order: 9; }
+  .nav-drop-menu {
+    position: static; display: none; width: 100%; min-width: 0;
+    margin-top: 0.45rem; box-shadow: none; background: rgba(0, 0, 0, 0.025);
+  }
+  .nav-drop.is-open .nav-drop-menu { display: block; }
+  .nav-drop-menu a { font-size: 0.78rem; padding: 0.4rem 0.6rem; }
   .course { grid-template-columns: 1fr; gap: 0.2rem; }
   .course .tag { display: none; }
   .project .metrics { grid-template-columns: 1fr; }

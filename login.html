@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-ver="20260930t" data-page-title="lg.title">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta http-equiv="Cache-Control" content="no-cache, must-revalidate" />
+<script>
+/* 文档自愈：托管服务器只给 last-modified，没有 Cache-Control / ETag，
+   浏览器会启发式复用旧版 HTML —— 旧版里引用的还是旧版本号的 CSS/JS，
+   于是点站内链接（全是裸路径）进去时整页退回旧设计。
+   这里比对 <html data-ver>：不是当前版本就带查询串重拉一次（查询串必定回源）。 */
+(function () {
+  var VER = "20260930t";
+  try {
+    var el = document.documentElement;
+    var healed = /[?&]_v=/.test(location.search);
+    if (el.getAttribute("data-ver") === VER) {
+      if (healed && history.replaceState) {
+        var q = location.search.replace(/[?&]_v=[^&]*/, "").replace(/[?&]cb=[^&]*/g, "").replace(/^\?&/, "?");
+        history.replaceState(null, "", location.pathname + (q === "?" ? "" : q) + location.hash);
+      }
+      return;
+    }
+    if (healed) return;                                          /* 带串进来还是旧的，别再跳 */
+    if (sessionStorage.getItem("guis-doc-ver") === VER) return;   /* 本次会话只试一次 */
+    sessionStorage.setItem("guis-doc-ver", VER);
+    var u = location.href.split("#")[0];
+    location.replace(u + (u.indexOf("?") >= 0 ? "&" : "?") + "_v=" + VER + "&cb=" + Date.now() + (location.hash || ""));
+  } catch (e) {}
+})();
+</script>
+<title>登录 | GUIS 义工社</title>
+<meta name="description" content="GUIS 义工社统一登录入口：执委会、负责老师、学生都从这里进，登录后自动识别身份并带你去对应的页面。" />
+<meta name="theme-color" content="#FFFFFF" />
+<meta name="robots" content="noindex, nofollow" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20260930t" />
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20260930t" />
+<!-- 品牌标志兜底样式（内联，随 HTML 一起下发）。
+     即使 assets/site.css 被浏览器缓存成旧版本，标志也不会按图片原始尺寸撑破布局。 -->
+<style>
+.nav-logo{display:flex;align-items:center;gap:.5rem}
+.footer-brand{display:flex;align-items:center;gap:.9rem}
+.nav-logo .logo-img,.nav-logo .logo-va{max-height:34px;width:auto}
+.footer-brand img{max-height:34px;width:auto}
+@media (max-width:640px){
+  .nav-logo .logo-img,.nav-logo .logo-va{max-height:26px}
+  .footer-brand img{max-height:26px}
+}
+@media (max-width:480px){
+  .nav-logo .logo-img,.nav-logo .logo-va{max-height:24px}
+  .footer-brand img{max-height:24px}
+}
+</style>
+<link rel="stylesheet" href="assets/site.css?v=20260930t" />
+<link rel="stylesheet" href="assets/app.css?v=20260930t" />
+<script>document.documentElement.classList.add("js");</script>
+</head>
+<body>
+
+<div class="bg" aria-hidden="true">
+  <div class="bg-mesh"></div>
+  <div class="bg-blob blob-a"></div>
+  <div class="bg-blob blob-b"></div>
+</div>
+
+<nav>
+  <a href="index.html" class="nav-logo">
+    <img class="logo-img" src="assets/logo/guis-ulc-lockup.png" alt="GUIS · Guangzhou Ulink International School | ULC · Ulink College" />
+    <span class="logo-div"></span>
+    <img class="logo-va" src="assets/logo/va-logo.png" alt="GUIS Volunteer Association" />
+    <span class="org" data-i18n="nav.org">义工社</span>
+  </a>
+  <div class="nav-links">
+    <a href="index.html" data-i18n="nav.home">回到主页</a>
+
+    <div class="nav-drop">
+      <button type="button" class="nav-drop-btn" aria-haspopup="true" aria-expanded="false">
+        <span data-i18n="nav.about">关于我们</span><span class="nav-caret" aria-hidden="true"></span>
+      </button>
+      <div class="nav-drop-menu">
+        <a href="index.html#team" data-i18n="nav.team">部门成员</a>
+        <a href="index.html#journey" data-i18n="nav.journey">发展历程</a>
+        <a href="index.html#contact" data-i18n="nav.contact">联系我们</a>
+      </div>
+    </div>
+
+    <a href="programs.html" data-i18n="nav.programs">服务项目</a>
+    <a href="signup.html" data-i18n="nav.signup">活动报名</a>
+    <a href="announcements.html" data-i18n="nav.news">公告</a>
+    <a href="index.html#journal" data-i18n="nav.journal">刊物</a>
+    <a href="index.html#gallery" data-i18n="nav.gallery">志愿风采</a>
+
+    <div class="lang-switch" role="group" aria-label="Language / 语言">
+      <button class="lang-btn is-active" data-lang="zh" aria-pressed="true">中文</button>
+      <button class="lang-btn" data-lang="en" aria-pressed="false">EN</button>
+    </div>
+    <a href="login.html" class="nav-login" data-i18n="nav.login">登录</a>
+  </div>
+</nav>
+
+<main class="page-head">
+  <section style="padding-top:0;">
+    <div class="wrap">
+      <div class="login-wrap">
+
+        <div style="text-align:center;margin-bottom:1.75rem;">
+          <img src="assets/logo/guis-ulc-lockup.png" alt="GUIS | ULC" style="width:220px;margin:0 auto 1rem;" />
+          <p class="eyebrow" data-i18n="nav.login">登录</p>
+          <h1 class="page-title" data-i18n="lg.title">登录义工社</h1>
+          <p class="page-lede" style="margin:0 auto;" data-i18n="lg.lede">执委会、负责老师、学生都从这里进。登录后系统会自动识别你的身份，把你带到对应的页面 —— 不需要自己挑。</p>
+        </div>
+
+        <!-- 域名绑定提示：GitHub Pages 那份读不到云端数据 -->
+        <div class="origin-banner" id="origin-banner" hidden>
+          <b>当前访问地址未绑定到云服务。</b>
+          登录只在应用的正式域名上生效。请改用
+          <a id="origin-link" href="#"></a> 访问本页。
+        </div>
+
+        <!-- 已经登录过：不用再填一遍，直接带你走 -->
+        <div class="panel" id="lg-known" hidden>
+          <div class="panel-body">
+            <p class="hint" style="margin:0;">已登录为 <b id="lg-email-known"></b></p>
+            <div id="lg-status" hidden style="margin-top:0.85rem;"></div>
+          </div>
+        </div>
+
+        <div class="panel" id="lg-forms">
+          <div class="panel-body">
+            <div class="seg" id="lg-seg">
+              <button type="button" class="is-on" data-mode="pass">密码登录</button>
+              <button type="button" data-mode="otp">验证码登录</button>
+              <button type="button" data-mode="neu">首次开通</button>
+            </div>
+
+            <p class="hint" style="margin:-0.55rem 0 1.25rem;text-align:center;" data-i18n="lg.schoolHint">学生用学校邮箱登录，@guiscn.com 这段不用自己填。</p>
+
+            <div id="lg-alerts"></div>
+            <div id="lg-status2" hidden></div>
+
+            <form id="form-pass" novalidate>
+              <div class="form-grid">
+                <div class="field span-2">
+                  <label for="lg-email" data-i18n="lg.email">邮箱</label>
+                  <input id="lg-email" type="text" autocomplete="username" placeholder="学生填前缀即可" required />
+                </div>
+                <div class="field span-2">
+                  <label for="lg-pass" data-i18n="lg.pass">密码</label>
+                  <input id="lg-pass" type="password" autocomplete="current-password" required />
+                </div>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary" id="lg-submit" data-i18n="lg.submit">登录</button>
+                <button type="button" class="link-btn" id="lg-forget" data-i18n="lg.forget">忘记密码？</button>
+              </div>
+            </form>
+
+            <form id="form-otp" novalidate hidden>
+              <div class="form-grid">
+                <div class="field span-2">
+                  <label for="lg-otp-email" data-i18n="lg.email">邮箱</label>
+                  <input id="lg-otp-email" type="text" autocomplete="username" placeholder="学生填前缀即可" />
+                </div>
+                <div class="field span-2">
+                  <label for="lg-otp-code" data-i18n="lg.otpCode">验证码</label>
+                  <input id="lg-otp-code" type="text" inputmode="numeric" placeholder="邮箱收到的 6 位验证码" />
+                </div>
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn btn-secondary" id="lg-otp-send" data-i18n="lg.otpSend">获取验证码</button>
+                <button type="submit" class="btn btn-primary" id="lg-otp-go" data-i18n="lg.otpGo">登录</button>
+              </div>
+            </form>
+
+            <form id="form-new" novalidate hidden>
+              <p class="hint" style="margin:0 0 1.1rem;" data-i18n="lg.newHint">学生用学校邮箱（@guiscn.com）自助开通；负责老师和执委会由执委会先在后台「人员管理」里加进名单，再来这里登录。</p>
+              <div class="form-grid">
+                <div class="field span-2">
+                  <label for="lg-new-email" data-i18n="lg.email">学校邮箱</label>
+                  <div class="me-wrap-field" style="display:flex;align-items:center;gap:0;">
+                    <input id="lg-new-email" type="text" autocomplete="username" placeholder="例如 linjtom" style="border-right:0;border-top-right-radius:0;border-bottom-right-radius:0;" />
+                    <span class="me-suffix" style="padding:0.55rem 0.7rem;border:1px solid var(--card-border);border-left:0;border-radius:0 var(--radius-sm) var(--radius-sm) 0;background:var(--bg-soft);color:var(--text-subtle);font-size:0.85rem;white-space:nowrap;">@guiscn.com</span>
+                  </div>
+                </div>
+                <div class="field span-2">
+                  <label for="lg-new-code" data-i18n="lg.newCode">邮箱里的 6 位验证码</label>
+                  <input id="lg-new-code" type="text" inputmode="numeric" placeholder="先点下面的按钮获取" />
+                </div>
+                <div class="field span-2">
+                  <label for="lg-new-pass" data-i18n="lg.newPass">设置密码（至少 6 位）</label>
+                  <input id="lg-new-pass" type="password" autocomplete="new-password" />
+                </div>
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn btn-secondary" id="lg-new-send" data-i18n="lg.newSend">核对并发送验证码</button>
+                <button type="submit" class="btn btn-primary" id="lg-new-go" data-i18n="lg.newGo">开通并登录</button>
+              </div>
+            </form>
+
+            <p class="hint" style="margin-top:1.25rem;text-align:center;">
+              执委会进 <a href="admin.html" style="color:var(--brand);text-decoration:underline;">后台</a> ·
+              老师进 <a href="checkin.html" style="color:var(--brand);text-decoration:underline;">签到页</a> ·
+              学生进 <a href="me.html" style="color:var(--brand);text-decoration:underline;">我的义工账户</a>
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap footer-inner">
+    <div class="footer-brand">
+      <img src="assets/logo/guis-ulc-lockup.png" alt="GUIS | ULC" />
+      <img class="footer-va" src="assets/logo/va-logo.png" alt="GUIS Volunteer Association" />
+      <span class="footer-org" data-i18n="footer.org">广州优联国际学校义工社<br />Guangzhou Ulink International School Volunteer Service</span>
+    </div>
+    <span data-i18n="footer.text">© 2026 GUIS 义工社 · 学生自主运营 · 服务记录公开可查。</span>
+    <div class="footer-links">
+      <a href="index.html" data-i18n="nav.home">回到主页</a>
+      <a href="signup.html" data-i18n="nav.signup">活动报名</a>
+      <a href="index.html#contact" data-i18n="nav.contact">联系我们</a>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
+<script src="assets/cloud-config.js?v=20260930t"></script>
+<script src="assets/cloud.js?v=20260930t"></script>
+<script src="assets/i18n.js?v=20260930t"></script>
+<script src="assets/nav.js?v=20260930t"></script>
+<script src="assets/main.js?v=20260930t"></script>
+<script src="assets/login.js?v=20260930t"></script>
+</body>
+</html>

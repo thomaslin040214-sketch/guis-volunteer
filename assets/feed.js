@@ -406,7 +406,7 @@
           rosterHTML +
           (a.roster_at ? '<p class="hint">' + esc(t("arc.rosterAt", "名单确定于")) + " " + fmtDT(a.roster_at) + "</p>" : "") +
 
-          '<p class="article-back"><a href="index.html#archive">← ' + esc(t("arc.back", "返回过往活动")) + "</a></p>" +
+          '<p class="article-back"><a href="signup.html#archive">← ' + esc(t("arc.back", "返回过往活动")) + "</a></p>" +
         "</article>";
     }).catch(function () {
       fail(t("arc.fail", "读取失败，请稍后重试。"));
