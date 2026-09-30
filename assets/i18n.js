@@ -296,6 +296,21 @@ window.SITE_I18N = {
     "arc.rosterAt": "名单确定于",
     "arc.back": "返回过往活动",
 
+    /* ---------- 国庆（节日限定，assets/national.js 控制显示窗口）---------- */
+    "nd.bar": "庆祝中华人民共和国成立 <span id=\"nd-anniv\">77</span> 周年",
+    "nd.barSub": "GUIS 义工社 · 把节日过成一次具体的行动",
+    "nd.link": "假期服务安排",
+    "nd.eyebrow": "National Day · 国庆",
+    "nd.title": "山河锦绣，<span class=\"grad-gold\">我们把节日过成一件具体的事</span>",
+    "nd.p1": "假期里义工社照旧有两件事要做：去明珠湾清一次岸线，再去社区看几位独居的长者。没有仪式，也不用合影发朋友圈 —— 就是把该做的事做完，把该陪的人陪到。",
+    "nd.p2": "如果你这几天正好有空，欢迎一起来。<strong>不需要经验，带一双能走路的鞋就行。</strong>",
+    "nd.k1": "起点",
+    "nd.k2": "今年",
+    "nd.k3": "建国周年",
+    "nd.k4": "假期服务",
+    "nd.cta1": "看看假期这两场",
+    "nd.cta2": "写信告诉我们你能来",
+
     /* ---------- 公开内容流通用 ---------- */
     "feed.mirrorTitle": "当前站点是静态镜像，读不到云端内容。",
     "feed.mirrorBody": "请前往正式站点查看：",
@@ -647,6 +662,21 @@ window.SITE_I18N = {
     "arc.noRoster": "No volunteer list has been published for this activity yet.",
     "arc.rosterAt": "List finalised",
     "arc.back": "Back to past events",
+
+    /* ---------- National Day (shown only around 1 Oct) ---------- */
+    "nd.bar": "Celebrating <span id=\"nd-anniv\">77</span> years of the People's Republic of China",
+    "nd.barSub": "GUIS Volunteer Service · we spend the holiday doing one concrete thing",
+    "nd.link": "Holiday service plan",
+    "nd.eyebrow": "National Day · 国庆",
+    "nd.title": "A country worth celebrating — <span class=\"grad-gold\">we'll mark it by getting something done</span>",
+    "nd.p1": "Over the break we have two things on as usual: a clean-up along the Mingzhu Bay shoreline, and visits to a few elderly neighbours living alone. No ceremony, no group photo for social media — just finishing what needs doing and keeping the people we promised to keep.",
+    "nd.p2": "If you happen to be free these days, come along. <strong>No experience needed — a pair of shoes you can walk in is enough.</strong>",
+    "nd.k1": "From",
+    "nd.k2": "Now",
+    "nd.k3": "Years",
+    "nd.k4": "Sessions this break",
+    "nd.cta1": "See the two sessions",
+    "nd.cta2": "Write and tell us you're in",
 
     /* ---------- Shared by public feeds ---------- */
     "feed.mirrorTitle": "This site is a static mirror and cannot read the cloud content.",
