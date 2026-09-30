@@ -542,7 +542,7 @@ window.SITE_I18N = {
     "co.alt": "Read the president's welcome",
     "co.l1k": "Weekly meeting", "co.l1v": "Wednesdays 16:30 during term",
     "co.l2k": "Recruitment window", "co.l2v": "First two weeks of each semester",
-    "co.l3k": "Supervised by", "co.l3v": "GUIS Student Affairs Office",
+    "co.l3k": "Supervised by", "co.l3v": "GUIS-ULC Office of the Student Affair",
     "co.meta": "Guangzhou · No. 8 Weili Road, Nansha District · on the GUIS campus",
 
     "footer.org": "Guangzhou Ulink International School<br />Student Volunteer Service",
