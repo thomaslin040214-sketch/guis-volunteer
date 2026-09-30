@@ -73,15 +73,31 @@
     else node.classList.add("is-in");
   }
 
-  /* ---------- 优先级灯：公告的三档 ---------- */
+  /* ---------- 优先级灯：公告的三档 ----------
+     ⚠️ 灯的形状复用活动看板那套（board.js 的三格灯座），但**文案必须换**：
+     活动那边红黄绿是「报名状态」（报名中 / 等待通知 / 已通知），
+     公告这边是「优先级」（紧急 / 提醒 / 常规）。
+     所以一定要把 text 传进去，否则灯旁边会出现报名的文案，两套串在一起。 */
   var PRIORITY = ["red", "yellow", "green"];
   function prioLabel(p) {
-    return t("an.p." + p, p === "red" ? "紧急" : p === "yellow" ? "提醒" : "一般");
+    return t("an.p." + p, p === "red" ? "紧急" : p === "yellow" ? "提醒" : "常规");
   }
+  /* 带文案的整盏灯（公告条目、后台预览用） */
   function prioLamp(p) {
+    var text = prioLabel(p);
     var B = window.GUISBoard;
-    if (B && B.lampHTML) return B.lampHTML(p, { short: true });
-    return '<span class="tl tl-compact"><i class="tl-lamp tl-' + p + ' is-on"></i></span>';
+    if (B && B.lampHTML) return B.lampHTML(p, { short: true, text: text });
+    return '<span class="tl tl-compact" role="img" aria-label="' + esc(text) +
+      '" title="' + esc(text) + '">' +
+      '<i class="tl-lamp tl-' + p + ' is-on"></i>' +
+      '<span class="tl-text">' + esc(text) + "</span></span>";
+  }
+  /* 只有一个圆点（图例里用：旁边还要写数量和名称，再挂一段文案就重复了） */
+  function prioDot(p) {
+    var text = prioLabel(p);
+    var B = window.GUISBoard;
+    if (B && B.dotHTML) return B.dotHTML(p, { text: text });
+    return '<i class="tl-dot tl-' + p + '" role="img" aria-label="' + esc(text) + '"></i>';
   }
   function prioOf(a) {
     var p = String((a && a.priority) || "green").toLowerCase();
@@ -305,7 +321,7 @@
 
       var head = '<div class="ann-summary">' +
         PRIORITY.map(function (p) {
-          return '<span class="ann-chip ann-' + p + '">' + prioLamp(p) +
+          return '<span class="ann-chip ann-' + p + '">' + prioDot(p) +
             '<b>' + counts[p] + "</b> " + esc(prioLabel(p)) + "</span>";
         }).join("") +
       "</div>";
@@ -410,6 +426,7 @@
     fmtDT: fmtDT,
     prioLabel: prioLabel,
     prioLamp: prioLamp,
+    prioDot: prioDot,
     prioOf: prioOf
   };
 

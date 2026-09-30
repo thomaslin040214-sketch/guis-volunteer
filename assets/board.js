@@ -64,14 +64,18 @@
     });
   }
 
-  /* 信号灯本体：三格灯座，只有当前状态那一格点亮 */
+  /* 信号灯本体：三格灯座，只有当前状态那一格点亮。
+     ⚠️ opts.text：调用方可以自己指定灯旁边的文案。
+     公告栏就是这么用的 —— 它的红黄绿是「优先级」，要说「紧急/提醒/常规」，
+     不能沿用本文件里活动状态的「报名中/等待通知/已通知」。两套灯长得一样、文案不同。 */
   function lampHTML(light, opts) {
     opts = opts || {};
     var lamps = ORDER.map(function (k) {
       var on = k === light;
       return '<i class="tl-lamp tl-' + k + (on ? " is-on" : "") + '"></i>';
     }).join("");
-    var text = opts.short ? shortLabelOf(light) : labelOf(light);
+    var text = opts.text != null ? opts.text
+      : (opts.short ? shortLabelOf(light) : labelOf(light));
     return (
       '<span class="tl' + (opts.big ? " tl-big" : "") + '" role="img" ' +
         'aria-label="' + esc(text) + '" title="' + esc(text) + '">' +
@@ -85,10 +89,12 @@
     return lampHTML(lightOf(a), opts);
   }
 
-  /* 只画一个圆点（用在紧凑排版里） */
-  function dotHTML(light) {
+  /* 只画一个圆点（用在紧凑排版里）。同样支持 opts.text 覆盖文案。 */
+  function dotHTML(light, opts) {
+    opts = opts || {};
+    var text = opts.text != null ? opts.text : labelOf(light);
     return '<i class="tl-dot tl-' + light + '" role="img" aria-label="' +
-      esc(labelOf(light)) + '"></i>';
+      esc(text) + '"></i>';
   }
 
   /* ---------- 统计 ---------- */
