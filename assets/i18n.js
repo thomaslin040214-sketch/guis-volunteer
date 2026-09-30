@@ -41,6 +41,11 @@ window.SITE_I18N = {
     "lg.footAdmin": "执委会后台",
     "lg.footTeacher": "老师签到页",
     "lg.footStudent": "我的义工账户",
+    /* 右上角头像菜单（assets/session.js 动态渲染，等不到 applyLang） */
+    "navme.owner": "执委会",
+    "navme.teacher": "负责老师",
+    "navme.student": "义工学生",
+    "navme.out": "退出登录",
 
     "ui.cv": "查看履历",
     "ui.when": "时间",
@@ -421,6 +426,11 @@ window.SITE_I18N = {
     "lg.footAdmin": "Committee admin",
     "lg.footTeacher": "Teacher check-in",
     "lg.footStudent": "My service account",
+    /* Top-right avatar menu (rendered by assets/session.js) */
+    "navme.owner": "Committee",
+    "navme.teacher": "Supervising teacher",
+    "navme.student": "Student volunteer",
+    "navme.out": "Sign out",
 
     "ui.cv": "View background",
     "ui.when": "When",
