@@ -708,6 +708,11 @@ table.data tr.is-picked { background: var(--red-tint); }
   50%      { transform: translateY(-9px); opacity: 0.75; }
 }
 
+.nd-inner {
+  position: relative; z-index: 2;
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 320px);
+  gap: clamp(1.5rem, 4vw, 2.6rem); align-items: center;
+}
 .nd-body { position: relative; z-index: 2; max-width: 62ch; }
 .nd-eyebrow {
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
@@ -725,6 +730,12 @@ table.data tr.is-picked { background: var(--red-tint); }
 .nd-copy { font-size: 0.98rem; line-height: 1.9; color: rgba(255, 255, 255, 0.74); }
 .nd-copy p + p { margin-top: 0.9rem; }
 .nd-copy strong { color: #fff; font-weight: 650; }
+/* 主祝福语：放大、加字距，让它自己就是一句话的标题 */
+.nd-copy .nd-lead {
+  font-size: clamp(1.12rem, 2.6vw, 1.5rem);
+  font-weight: 650; line-height: 1.7; letter-spacing: 0.02em;
+  color: #F3DA9E;
+}
 
 /* 数字读数区：等宽数字 + 细分隔线，像仪表盘 */
 .nd-figures {
@@ -765,6 +776,38 @@ table.data tr.is-picked { background: var(--red-tint); }
   border-bottom: 1px solid rgba(229, 185, 92, 0.3);
 }
 
+/* ---------- 会飘的国旗 ---------- */
+.nd-flags { position: relative; height: 250px; }
+.nd-fly {
+  position: absolute; display: block; overflow: visible;
+  filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.45));
+  will-change: transform;
+}
+.nd-fly.f1 { width: 148px; left: 4%;  top: 8%;   animation: nd-fly-a 9s ease-in-out infinite; }
+.nd-fly.f2 { width: 96px;  left: 54%; top: 50%;  animation: nd-fly-b 7.5s ease-in-out infinite; }
+.nd-fly.f3 { width: 64px;  left: 18%; top: 68%;  animation: nd-fly-c 6s ease-in-out infinite; }
+
+@keyframes nd-fly-a {
+  0%, 100% { transform: translate(0, 0) rotate(-4deg); }
+  50%      { transform: translate(10px, -16px) rotate(3deg); }
+}
+@keyframes nd-fly-b {
+  0%, 100% { transform: translate(0, 0) rotate(5deg); }
+  50%      { transform: translate(-8px, -13px) rotate(-2deg); }
+}
+@keyframes nd-fly-c {
+  0%, 100% { transform: translate(0, 0) rotate(-7deg); }
+  50%      { transform: translate(6px, -10px) rotate(2deg); }
+}
+
+@media (max-width: 900px) {
+  .nd-inner { grid-template-columns: 1fr; gap: 1.2rem; }
+  .nd-flags { height: 132px; }
+  .nd-fly.f1 { width: 104px; left: 2%;  top: 4%; }
+  .nd-fly.f2 { width: 70px;  left: 58%; top: 34%; }
+  .nd-fly.f3 { display: none; }
+}
+
 @media (max-width: 640px) {
   .nd-bar-inner { gap: 0.6rem; padding: 0.55rem 1rem; }
   .nd-years { display: none; }
@@ -776,4 +819,5 @@ table.data tr.is-picked { background: var(--red-tint); }
 @media (prefers-reduced-motion: reduce) {
   .nd-bar::after { animation: none; display: none; }
   .nd-grid-dots i { animation: none; }
+  .nd-fly { animation: none; }
 }

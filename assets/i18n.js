@@ -301,8 +301,7 @@ window.SITE_I18N = {
     "nd.barSub": "愿山河锦绣，岁岁长安",
     "nd.eyebrow": "National Day · 国庆",
     "nd.title": "山河锦绣，<span class=\"grad-gold\">庆祝中华人民共和国成立 <span id=\"nd-anniv-2\">77</span> 周年</span>",
-    "nd.p1": "七十七年过去了，山河换了模样，日子也换了模样。愿这片土地上的每一座城市都平安，每一条街巷都留着烟火气。",
-    "nd.p2": "愿每一位老人都有人惦记，每一个孩子都能安心读书，每一个认真生活的人，也被生活认真对待。",
+    "nd.p1": "七十七年过去了，山河无恙，国泰民安。",
     "nd.p3": "<strong>祝祖国生日快乐。愿山河锦绣，岁岁长安。</strong>",
 
     /* ---------- 公开内容流通用 ---------- */
@@ -662,8 +661,7 @@ window.SITE_I18N = {
     "nd.barSub": "Wishing the country peace and prosperity, year after year",
     "nd.eyebrow": "National Day · 国庆",
     "nd.title": "A land worth singing for — <span class=\"grad-gold\">celebrating <span id=\"nd-anniv-2\">77</span> years of the People's Republic of China</span>",
-    "nd.p1": "Seventy-seven years on, the country has changed, and so has daily life in it. May every city on this land be safe, and every street keep its everyday warmth.",
-    "nd.p2": "May every elder have someone who checks in, every child be free to study in peace, and everyone who lives earnestly be met with the same in return.",
+    "nd.p1": "Seventy-seven years on — the land is unbroken, the country at peace.",
     "nd.p3": "<strong>Happy birthday, China. May the land stay splendid, and the years stay calm.</strong>",
 
     /* ---------- Shared by public feeds ---------- */
