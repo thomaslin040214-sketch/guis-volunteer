@@ -38,8 +38,8 @@ window.GUIS_TEAM = {
         name_en: "Ellie Wu",
         role: "部长",
         role_en: "Department Lead",
-        join: "于2023年09月加入义工组织",
-        join_en: "Joined the organization in September 2023.",
+        join: "于2026年08月就任",
+        join_en: "Inaugurated in August 2026",
         resume: [
           {
             when: "2023年09月",
@@ -67,15 +67,15 @@ window.GUIS_TEAM = {
     {
       id: "hr",
       name: "人力资源部",
-      name_en: "Human Resources",
+      name_en: "Human Resources Department",
       head: {
         avatar: "assets/photos/dep-hr-head.jpg",
-        name: "（在此填写部长姓名）",
-        name_en: "",
+        name: "邱梅馨颍",
+        name_en: "Evelyn Qiumei",
         role: "部长",
         role_en: "Department Head",
-        join: "（在此填写加入时间，如 2024-09）",
-        join_en: "",
+        join: "于2026年08月就任",
+        join_en: "Inaugurated in August 2026",
         resume: [
           {
             when: "（年份·学期）",
@@ -93,8 +93,10 @@ window.GUIS_TEAM = {
         facts: ["（亮点一）", "（亮点二）"]
       },
       members: [
-        { avatar: "assets/photos/dep-hr-m1.jpg", name: "（部员姓名）", name_en: "", join: "（加入时间）", join_en: "" },
-        { avatar: "assets/photos/dep-hr-m2.jpg", name: "（部员姓名）", name_en: "", join: "（加入时间）", join_en: "" }
+        { avatar: "assets/photos/dep-hr-m1.jpg", name: "陈芳", name_en: "Ariel Chen", join: "2023年08月加入", join_en: "Joined in August 2022" },
+        { avatar: "assets/photos/dep-hr-m2.jpg", name: "厉一尘", name_en: "Cherise Li", join: "2023年08月加入", join_en: "Joined in August 2023" },
+         { avatar: "assets/photos/dep-hr-m2.jpg", name: "邹以恬", name_en: "Celina Zou", join: "2023年08月加入", join_en: "Joined in August 2023" },        
+         { avatar: "assets/photos/dep-hr-m2.jpg", name: "何家秀", name_en: "Julie He", join: "2023年08月加入", join_en: "Joined in August 2023" },
       ]
     },
 
