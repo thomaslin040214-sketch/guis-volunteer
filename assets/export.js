@@ -35,6 +35,9 @@
     { t: "相关经验", w: 26 },
     { t: "备注", w: 24 },
     { t: "状态", w: 10 },
+    { t: "是否录取", w: 10 },
+    { t: "签到", w: 10 },
+    { t: "签到时间", w: 18 },
     { t: "报名时间", w: 18 }
   ];
 
@@ -184,7 +187,7 @@
       cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
       cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF" + BRAND } };
       cell.alignment = { horizontal: "center", vertical: "middle" };
-      cell.border = thinBorder("FFD9C7C8");
+      cell.border = thinBorder("FFD3DEEA");
     });
     hr.commit();
 
@@ -202,7 +205,7 @@
         };
         cell.border = thinBorder("FFE6E6E6");
         if (ri % 2 === 1) {
-          cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFBF6F6" } };
+          cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF6F8FB" } };
         }
       });
       row.commit();

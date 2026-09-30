@@ -28,6 +28,17 @@
     return res.data;
   }
 
+  /* 签到码兜底生成器。数据库里 check_token 已有默认值，
+     这里只在「历史行刚好是空码」这种意外情况下补一个，正常路径用不到。 */
+  function newToken() {
+    var a = new Uint8Array(8);
+    if (window.crypto && window.crypto.getRandomValues) window.crypto.getRandomValues(a);
+    else for (var i = 0; i < a.length; i++) a[i] = Math.floor(Math.random() * 256);
+    var s = "";
+    for (var j = 0; j < a.length; j++) s += ("0" + a[j].toString(16)).slice(-2);
+    return s.slice(0, 14);
+  }
+
   var db = cloud.database;
 
   var api = {
@@ -92,7 +103,7 @@
     listRegistrations: function (activityId) {
       var q = db
         .from("registrations")
-        .select("id, activity_id, name, email, phone, grade, programme, student_id, slot, experience, note, status, selected, selected_at, selected_by, created_at")
+        .select("id, activity_id, name, email, phone, grade, programme, student_id, slot, experience, note, status, selected, selected_at, selected_by, check_token, checked_in, checked_in_at, checked_in_by, created_at")
         .order("created_at", { ascending: true });
       if (activityId) q = q.eq("activity_id", activityId);
       return q;
@@ -123,6 +134,44 @@
         .from("registrations")
         .update({ selected: true, selected_at: new Date().toISOString(), selected_by: by || null })
         .in("id", ids);
+    },
+
+    /* ---------- 签到 ----------
+       签到码 check_token 由数据库默认生成（新行自动有），历史行已回填，
+       所以前端原则上不用自己造码 —— 这里只在万一遇到空码时补一个。 */
+    ensureCheckToken: function (id) {
+      var tok = newToken();
+      return db
+        .from("registrations")
+        .update({ check_token: tok })
+        .eq("id", id)
+        .select("id, check_token")
+        .then(function (res) {
+          var row = (res && res.data && res.data[0]) || null;
+          return row ? row.check_token : tok;
+        });
+    },
+
+    /* 按签到码找人：老师扫到码之后用。只有白名单管理员能读 registrations。 */
+    findByCheckToken: function (token) {
+      return db
+        .from("registrations")
+        .select("id, activity_id, name, email, phone, grade, programme, student_id, slot, status, selected, check_token, checked_in, checked_in_at, checked_in_by, created_at")
+        .eq("check_token", token)
+        .limit(1);
+    },
+
+    /* 打钩 / 取消打钩。on=false 时把时间和经手人一起清掉，不留半截状态。 */
+    setCheckedIn: function (id, on, by) {
+      return db
+        .from("registrations")
+        .update({
+          checked_in: !!on,
+          checked_in_at: on ? new Date().toISOString() : null,
+          checked_in_by: on ? (by || null) : null
+        })
+        .eq("id", id)
+        .select("id, checked_in, checked_in_at, checked_in_by");
     },
 
     /* ---------- 过往活动（归档）---------- */

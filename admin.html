@@ -7,8 +7,8 @@
 <meta name="description" content="GUIS 义工组织后台管理：创建义工活动、查看报名名单、导出 Excel。" />
 <meta name="theme-color" content="#FFFFFF" />
 <meta name="robots" content="noindex, nofollow" />
-<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20260930o" />
-<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20260930o" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20260930p" />
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20260930p" />
 <!-- 品牌标志兜底样式（内联，随 HTML 一起下发）。
      即使 assets/site.css 被浏览器缓存成旧版本，标志也不会按图片原始尺寸撑破布局。
      这里只设尺寸上限（max-*），正常加载 site.css 时这些上限都不会生效。 -->
@@ -32,8 +32,8 @@
   .hero-brand .hero-va{max-height:40px}
 }
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20260930o" />
-<link rel="stylesheet" href="assets/app.css?v=20260930o" />
+<link rel="stylesheet" href="assets/site.css?v=20260930p" />
+<link rel="stylesheet" href="assets/app.css?v=20260930p" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
@@ -188,6 +188,7 @@
           <div class="who">已登录：<b id="who-email"></b></div>
           <div style="display:flex;gap:0.7rem;align-items:center;flex-wrap:wrap;">
             <a href="signup.html" class="btn btn-secondary" style="padding:0.5rem 1rem;font-size:0.82rem;">查看报名页</a>
+            <a href="checkin.html" class="btn btn-primary" style="padding:0.5rem 1rem;font-size:0.82rem;">活动签到</a>
             <button type="button" class="btn btn-secondary" id="logout-btn" style="padding:0.5rem 1rem;font-size:0.82rem;">退出登录</button>
           </div>
         </div>
@@ -315,8 +316,9 @@
             <div class="panel-head">
               <div>
                 <h2>报名名单</h2>
-                <div class="sub">选择活动后可查看、审核报名并导出 Excel。</div>
+                <div class="sub">选择活动后可查看、审核报名、查看每个人的签到码并导出 Excel。</div>
               </div>
+              <a href="checkin.html" class="link-btn" id="goto-checkin">去活动签到页 →</a>
             </div>
             <div class="panel-body">
               <div class="toolbar">
@@ -330,6 +332,7 @@
                   <option value="approved">已通过</option>
                   <option value="rejected">未通过</option>
                 </select>
+                <button type="button" class="btn btn-secondary" id="qr-all-btn">全部签到码</button>
                 <button type="button" class="btn btn-primary" id="export-btn">导出 Excel</button>
               </div>
 
@@ -366,8 +369,9 @@
                       <th>相关经验</th>
                       <th>备注</th>
                       <th>状态</th>
+                      <th>签到</th>
                       <th>报名时间</th>
-                      <th style="width:150px;">操作</th>
+                      <th style="width:190px;">操作</th>
                     </tr>
                   </thead>
                   <tbody id="reg-body"></tbody>
@@ -654,12 +658,13 @@
 <!-- 导出 Excel：ExcelJS 才能往表里插 logo（SheetJS 社区版写不了图片），加载失败时用 SheetJS 降级 -->
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="assets/cloud-config.js?v=20260930o"></script>
-<script src="assets/cloud.js?v=20260930o"></script>
-<script src="assets/board.js?v=20260930o"></script>
-<script src="assets/export.js?v=20260930o"></script>
-<script src="assets/editor.js?v=20260930o"></script>
-<script src="assets/feed.js?v=20260930o"></script>
-<script src="assets/admin.js?v=20260930o"></script>
+<script src="assets/cloud-config.js?v=20260930p"></script>
+<script src="assets/cloud.js?v=20260930p"></script>
+<script src="assets/qr.js?v=20260930p"></script>
+<script src="assets/board.js?v=20260930p"></script>
+<script src="assets/export.js?v=20260930p"></script>
+<script src="assets/editor.js?v=20260930p"></script>
+<script src="assets/feed.js?v=20260930p"></script>
+<script src="assets/admin.js?v=20260930p"></script>
 </body>
 </html>

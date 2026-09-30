@@ -635,10 +635,14 @@ document.addEventListener("DOMContentLoaded", function () {
         "<td>" + esc(r.experience) + "</td>" +
         "<td>" + esc(r.note) + "</td>" +
         '<td><span class="badge ' + statusClass(r.status) + '">' + statusLabel(r.status) + "</span></td>" +
+        "<td>" + (r.checked_in
+          ? '<span class="ci-yes">已签到</span><span class="ci-when">' + fmtDT(r.checked_in_at) + "</span>"
+          : '<span class="ci-no">未签到</span>') + "</td>" +
         "<td>" + fmtDT(r.created_at) + "</td>" +
         '<td><div class="row-actions">' +
           '<button type="button" class="tbl-btn ok" data-approve="' + r.id + '">通过</button>' +
           '<button type="button" class="tbl-btn" data-reject="' + r.id + '">不通过</button>' +
+          '<button type="button" class="tbl-btn" data-qr="' + r.id + '">签到码</button>' +
           '<button type="button" class="tbl-btn danger" data-delreg="' + r.id + '">删除</button>' +
         "</div></td>" +
       "</tr>";
@@ -713,6 +717,33 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (approve) setStatus(approve, "approved");
     if (reject) setStatus(reject, "rejected");
+
+    /* 看这个人的签到码。老数据可能还没生成过码，这里顺手补一个。 */
+    var qr = t.getAttribute("data-qr");
+    if (qr) {
+      var qrow = regRows.filter(function (r) { return String(r.id) === String(qr); })[0];
+      if (qrow) {
+        busyOn(t, "…");
+        clear($("reg-alerts"));
+        var ready = qrow.check_token
+          ? Promise.resolve(qrow.check_token)
+          : C.ensureCheckToken(qrow.id).then(function (tok) { qrow.check_token = tok; return tok; });
+        ready.then(function (tok) {
+          busyOff(t);
+          window.GUISQR.showOne({
+            title: qrow.name + " 的签到码",
+            sub: "活动现场出示这张码给老师扫即可签到；也可以打印出来发下去。",
+            name: qrow.name,
+            sub2: [qrow.grade, qrow.student_id].filter(Boolean).join(" · "),
+            token: tok,
+            size: 240
+          });
+        }).catch(function (err) {
+          busyOff(t);
+          alertIn($("reg-alerts"), "error", failMsg(err, "取签到码失败"));
+        });
+      }
+    }
 
     if (del) {
       if (!window.confirm("确定删除这条报名记录吗？该操作无法撤销。")) return;
@@ -834,6 +865,9 @@ document.addEventListener("DOMContentLoaded", function () {
         "相关经验": r.experience || "",
         "备注": r.note || "",
         "状态": statusLabel(r.status),
+        "是否录取": r.selected ? "是" : "",
+        "签到": r.checked_in ? "是" : "",
+        "签到时间": fmtDT(r.checked_in_at),
         "报名时间": fmtDT(r.created_at)
       };
     });
@@ -872,6 +906,47 @@ document.addEventListener("DOMContentLoaded", function () {
 
   $("export-btn").addEventListener("click", function () {
     doExport(toRows(), this);
+  });
+
+  /* ---------- 全部签到码 ----------
+     同学自己看不到自己的码（报名页是匿名的），所以后台一次性把录取名单的码
+     全打出来：打印、截图、或者发到年级群里都行。
+     缺码的老数据会在这里顺手补上，补完写回 regRows，下次打开就不用再补。 */
+  $("qr-all-btn").addEventListener("click", function () {
+    clear($("reg-alerts"));
+    var sel = regRows.filter(function (r) { return r.selected; });
+    var list = sel.length ? sel : currentFilter();
+    if (!list.length) {
+      alertIn($("reg-alerts"), "warn", "当前没有可生成签到码的人 —— 先选一个活动。");
+      return;
+    }
+    var actTitle = currentActivityTitle();
+
+    window.GUISQR.showSheet({
+      title: actTitle ? actTitle + " · 签到码" : "签到码",
+      sub: (sel.length ? "录取名单 " : "全部报名 ") + list.length + " 人 · 可打印或存成 PDF 发给同学",
+      items: list.map(function (r) {
+        return {
+          id: r.id,
+          name: r.name || "",
+          sub: [r.grade, r.student_id].filter(Boolean).join(" · "),
+          token: r.check_token || ""
+        };
+      }),
+      ensure: function (item) {
+        return C.ensureCheckToken(item.id).then(function (tok) {
+          var row = regRows.filter(function (r) { return String(r.id) === String(item.id); })[0];
+          if (row) row.check_token = tok;
+          return tok;
+        });
+      }
+    });
+  });
+
+  /* 跳到签到页时把当前活动带过去，老师不用再选一遍 */
+  $("goto-checkin").addEventListener("click", function () {
+    var id = $("reg-activity").value;
+    this.href = id ? "checkin.html?a=" + encodeURIComponent(id) : "checkin.html";
   });
 
   $("export-picked").addEventListener("click", function () {

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>活动签到 | GUIS 义工社</title>
+<meta name="description" content="GUIS 义工活动现场签到：扫描同学出示的二维码，或在名单里手动打钩。" />
+<meta name="theme-color" content="#FFFFFF" />
+<meta name="robots" content="noindex, nofollow" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20260930p" />
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20260930p" />
+<!-- 品牌标志兜底样式（内联，随 HTML 一起下发）。
+     即使 assets/site.css 被浏览器缓存成旧版本，标志也不会按图片原始尺寸撑破布局。 -->
+<style>
+.nav-logo{display:flex;align-items:center;gap:.5rem}
+.footer-brand{display:flex;align-items:center;gap:.9rem}
+.nav-logo .logo-img,.nav-logo .logo-va{max-height:34px;width:auto}
+.footer-brand img{max-height:34px;width:auto}
+@media (max-width:640px){
+  .nav-logo .logo-img,.nav-logo .logo-va{max-height:26px}
+  .footer-brand img{max-height:26px}
+}
+@media (max-width:480px){
+  .nav-logo .logo-img,.nav-logo .logo-va{max-height:24px}
+  .footer-brand img{max-height:24px}
+}
+</style>
+<link rel="stylesheet" href="assets/site.css?v=20260930p" />
+<link rel="stylesheet" href="assets/app.css?v=20260930p" />
+<script>document.documentElement.classList.add("js");</script>
+</head>
+<body>
+
+<div class="bg" aria-hidden="true">
+  <div class="bg-mesh"></div>
+  <div class="bg-blob blob-a"></div>
+  <div class="bg-blob blob-b"></div>
+</div>
+
+<nav>
+  <a href="index.html" class="nav-logo">
+    <img class="logo-img" src="assets/logo/guis-ulc-lockup.png" alt="GUIS · Guangzhou Ulink International School | ULC · Ulink College" />
+    <span class="logo-div"></span>
+    <img class="logo-va" src="assets/logo/va-logo.png" alt="GUIS Volunteer Association" />
+    <span class="org">义工社 · 签到</span>
+  </a>
+  <div class="nav-links">
+    <a href="index.html">回到主页</a>
+    <a href="admin.html">后台管理</a>
+    <a href="checkin.html" class="is-active">活动签到</a>
+  </div>
+</nav>
+
+<main class="page-head">
+  <section style="padding-top:0;">
+    <div class="wrap">
+
+      <!-- 域名绑定提示：GitHub Pages 那份读不到报名数据 -->
+      <div class="origin-banner" id="origin-banner" hidden>
+        <b>当前访问地址未绑定到云服务。</b>
+        签到与名单读写只在应用的正式域名上生效。请改用
+        <a id="origin-link" href="#"></a> 访问本页。
+      </div>
+
+      <!-- ============ 登录 ============ -->
+      <div id="login-view" hidden>
+        <div class="login-wrap">
+          <div style="text-align:center;margin-bottom:1.75rem;">
+            <img src="assets/logo/guis-ulc-lockup.png" alt="GUIS | ULC" style="width:220px;margin:0 auto 1rem;" />
+            <p class="eyebrow">活动签到</p>
+            <h1 class="page-title">带队老师登录</h1>
+            <p class="page-lede" style="margin:0 auto;">登录后可以扫描同学的签到码，或在名单里手动打钩。</p>
+          </div>
+
+          <div class="panel">
+            <div class="panel-body">
+              <div class="seg" id="auth-seg">
+                <button type="button" class="is-on" data-mode="password">密码登录</button>
+                <button type="button" data-mode="otp">验证码登录</button>
+              </div>
+
+              <p class="hint" style="margin:-0.55rem 0 1.25rem;text-align:center;">
+                和后台同一套白名单 —— 需要先由义工社执委会把你的邮箱加进白名单。
+              </p>
+
+              <div id="auth-alerts"></div>
+
+              <form id="form-password" novalidate>
+                <div class="form-grid">
+                  <div class="field span-2">
+                    <label for="ci-email">邮箱</label>
+                    <input id="ci-email" type="email" autocomplete="username" required />
+                  </div>
+                  <div class="field span-2">
+                    <label for="ci-pass">密码</label>
+                    <input id="ci-pass" type="password" autocomplete="current-password" required />
+                  </div>
+                </div>
+                <div class="form-actions">
+                  <button type="submit" class="btn btn-primary" id="ci-submit">登录</button>
+                </div>
+              </form>
+
+              <form id="form-otp" novalidate hidden>
+                <div class="form-grid">
+                  <div class="field span-2">
+                    <label for="ci-otp-email">邮箱</label>
+                    <input id="ci-otp-email" type="email" autocomplete="username" required />
+                  </div>
+                  <div class="field span-2">
+                    <label for="ci-otp-code">验证码</label>
+                    <input id="ci-otp-code" type="text" inputmode="numeric" placeholder="邮箱收到的 6 位验证码" />
+                    <span class="hint" id="ci-otp-hint">先点「获取验证码」，再把邮箱里的验证码填进来。</span>
+                  </div>
+                </div>
+                <div class="form-actions">
+                  <button type="button" class="btn btn-secondary" id="ci-otp-send">获取验证码</button>
+                  <button type="submit" class="btn btn-primary" id="ci-otp-submit">登录</button>
+                </div>
+              </form>
+
+              <p class="hint" style="margin-top:1.25rem;text-align:center;">
+                还没有账号？请让执委会先加白名单，再访问 <a href="admin.html?setup=1" style="color:var(--brand);text-decoration:underline;">admin.html?setup=1</a> 开通。
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ 已登录 ============ -->
+      <div id="app-view" hidden>
+
+        <div class="admin-bar">
+          <div class="who">已登录：<b id="who-email"></b></div>
+          <div style="display:flex;gap:0.7rem;align-items:center;flex-wrap:wrap;">
+            <a href="admin.html" class="btn btn-secondary" style="padding:0.5rem 1rem;font-size:0.82rem;">回到后台</a>
+            <button type="button" class="btn btn-secondary" id="logout-btn" style="padding:0.5rem 1rem;font-size:0.82rem;">退出登录</button>
+          </div>
+        </div>
+
+        <!-- ---------- 选择活动 + 进度 ---------- -->
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>签到进度</h2>
+              <div class="sub">选择活动后，下面会显示应到 / 已到人数。</div>
+            </div>
+            <button type="button" class="link-btn" id="ci-refresh">刷新</button>
+          </div>
+          <div class="panel-body">
+            <div class="toolbar">
+              <div class="grow">
+                <select id="ci-activity"><option value="">选择活动…</option></select>
+              </div>
+              <input type="search" id="ci-search" placeholder="搜索姓名 / 学号…" style="max-width:240px;" />
+              <select id="ci-filter">
+                <option value="selected">录取名单</option>
+                <option value="todo">还没签到</option>
+                <option value="done">已签到</option>
+                <option value="all">全部报名</option>
+              </select>
+            </div>
+
+            <div id="ci-alerts"></div>
+
+            <div class="ci-metrics">
+              <div class="ci-metric">
+                <span class="ci-mv" id="m-total">0</span>
+                <span class="ci-ml">应到</span>
+              </div>
+              <div class="ci-metric is-brand">
+                <span class="ci-mv" id="m-done">0</span>
+                <span class="ci-ml">已签到</span>
+              </div>
+              <div class="ci-metric">
+                <span class="ci-mv" id="m-todo">0</span>
+                <span class="ci-ml">未到</span>
+              </div>
+              <div class="ci-progress">
+                <div class="ci-bar"><span id="m-bar-fill"></span></div>
+                <span class="ci-pct" id="m-pct">0%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ---------- 扫码 ---------- -->
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>扫描签到</h2>
+              <div class="sub">对准同学手机上出示的签到码，识别到会自动打钩。</div>
+            </div>
+            <button type="button" class="btn btn-primary" id="ci-scan-toggle" style="padding:0.5rem 1.1rem;font-size:0.85rem;">开始扫描</button>
+          </div>
+          <div class="panel-body">
+            <div id="ci-scan-alerts"></div>
+
+            <div id="ci-scan-box" hidden>
+              <div class="scan-stage">
+                <video id="ci-video" playsinline muted></video>
+                <div class="scan-frame" aria-hidden="true"></div>
+              </div>
+              <canvas id="ci-canvas" hidden></canvas>
+            </div>
+
+            <div class="scan-hit" id="ci-scan-result" hidden></div>
+
+            <div class="scan-manual">
+              <label for="ci-manual">手输签到码（摄像头不能用时的兜底）</label>
+              <div class="scan-manual-row">
+                <input id="ci-manual" type="text" inputmode="latin" placeholder="粘贴或输入同学的签到码" />
+                <button type="button" class="btn btn-secondary" id="ci-manual-go">签到</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ---------- 名单 ---------- -->
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>参与人员</h2>
+              <div class="sub">左边方框打钩即可手动签到；「二维码」可以随时调出这个人的码。</div>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div id="ci-loading" class="empty" hidden><span class="loading"></span> 正在读取名单…</div>
+            <div id="ci-empty" class="empty" hidden></div>
+            <div class="table-scroll" id="ci-table-wrap" hidden>
+              <table class="data">
+                <thead>
+                  <tr>
+                    <th class="tick-cell" title="打钩 = 已签到">✓</th>
+                    <th style="width:44px;">#</th>
+                    <th>姓名</th>
+                    <th>年级</th>
+                    <th>课程</th>
+                    <th>学号</th>
+                    <th>岗位 / 时段</th>
+                    <th>签到状态</th>
+                    <th style="width:150px;">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="ci-body"></tbody>
+              </table>
+            </div>
+            <p class="hint" id="ci-count" style="margin-top:0.85rem;"></p>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap footer-inner">
+    <div class="footer-brand">
+      <img src="assets/logo/guis-ulc-lockup.png" alt="GUIS | ULC" />
+      <img class="footer-va" src="assets/logo/va-logo.png" alt="GUIS Volunteer Association" />
+      <span class="footer-org">广州优联国际学校义工社<br />活动签到</span>
+    </div>
+    <span>© 2026 GUIS 义工社 · 签到页仅限带队老师访问</span>
+    <div class="footer-links">
+      <a href="index.html">回到主页</a>
+      <a href="admin.html">后台管理</a>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
+<script src="assets/cloud-config.js?v=20260930p"></script>
+<script src="assets/cloud.js?v=20260930p"></script>
+<script src="assets/qr.js?v=20260930p"></script>
+<script src="assets/checkin.js?v=20260930p"></script>
+</body>
+</html>
