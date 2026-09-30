@@ -53,11 +53,37 @@
       return cloud.auth.getSession();
     },
 
+    /* ---------- 我是谁 ----------
+       角色只有服务端说了算：allowed_admins 的读策略是 is_owner()，
+       普通老师读不到自己那一行，所以走 my_access()（SECURITY DEFINER）。
+       返回 role = owner（执委会）/ teacher（负责老师）/ student（学生）。 */
+    myAccess: function () {
+      return db.rpc("my_access");
+    },
+    touchLogin: function () {
+      return db.rpc("touch_login");
+    },
+
+    /* ---------- 学生身份 ---------- */
+    /* 开通前还没账号，是匿名调用，只能靠 SECURITY DEFINER 函数核对名单，
+       并且只回 known / 姓名 / 年级，不泄漏整张表。 */
+    checkStudentEmail: function (email) {
+      return db.rpc("check_student_email", { p_email: email });
+    },
+    markStudentActivated: function () {
+      return db.rpc("mark_student_activated");
+    },
+    /* 学生的义工记录：走 SECURITY DEFINER 函数拼好活动信息一次返回，
+       免得给 registrations 再开一条「读自己」的策略。 */
+    myService: function () {
+      return db.rpc("my_service");
+    },
+
     /* ---------- 活动 ---------- */
     listOpenActivities: function () {
       return db
         .from("activities")
-        .select("id, title, summary, category, location, starts_at, ends_at, signup_deadline, capacity, status, notified_at, created_at")
+        .select("id, title, summary, category, location, starts_at, ends_at, signup_deadline, capacity, status, notified_at, manager_email, hours, created_at")
         .eq("status", "open")
         .order("starts_at", { ascending: true, nullsFirst: false });
     },
@@ -65,8 +91,21 @@
     listMyActivities: function () {
       return db
         .from("activities")
-        .select("id, title, summary, category, location, starts_at, ends_at, signup_deadline, capacity, contact, notes, status, notified_at, recap_html, archived, archived_at, created_at")
+        .select("id, title, summary, category, location, starts_at, ends_at, signup_deadline, capacity, contact, notes, status, notified_at, recap_html, archived, archived_at, manager_email, hours, created_at")
         .order("created_at", { ascending: false });
+    },
+
+    /* 活动负责人：单活动的指定优先，没有就用板块的默认负责人。
+       category_managers 提供板块默认值，有效负责人 = COALESCE(单活动, 板块)。 */
+    listCategoryManagers: function () {
+      return db.from("category_managers").select("category, email, updated_at").order("category", { ascending: true });
+    },
+
+    setCategoryManager: function (category, email) {
+      return db.from("category_managers").upsert(
+        { category: category, email: email || null, updated_at: new Date().toISOString() },
+        { onConflict: "category" }
+      );
     },
 
     createActivity: function (payload) {
@@ -103,10 +142,19 @@
     listRegistrations: function (activityId) {
       var q = db
         .from("registrations")
-        .select("id, activity_id, name, email, phone, grade, programme, student_id, slot, experience, note, status, selected, selected_at, selected_by, check_token, checked_in, checked_in_at, checked_in_by, created_at")
+        .select("id, activity_id, name, email, phone, grade, programme, student_id, slot, experience, note, status, selected, selected_at, selected_by, check_token, checked_in, checked_in_at, checked_in_by, hours, created_at")
         .order("created_at", { ascending: true });
       if (activityId) q = q.eq("activity_id", activityId);
       return q;
+    },
+
+    /* 逐人覆盖义工小时。传 null 表示「用活动默认时长」。 */
+    setHours: function (id, hours) {
+      return db
+        .from("registrations")
+        .update({ hours: (hours === "" || hours == null) ? null : Number(hours) })
+        .eq("id", id)
+        .select("id, hours");
     },
 
     setRegistrationStatus: function (id, status) {
@@ -178,7 +226,7 @@
     listArchivedActivities: function () {
       return db
         .from("activities")
-        .select("id, title, summary, category, location, starts_at, ends_at, signup_deadline, capacity, contact, notes, status, notified_at, recap_html, archived, archived_at, created_at")
+        .select("id, title, summary, category, location, starts_at, ends_at, signup_deadline, capacity, contact, notes, status, notified_at, recap_html, archived, archived_at, manager_email, hours, created_at")
         .eq("archived", true)
         .order("starts_at", { ascending: false, nullsFirst: false });
     },
@@ -186,7 +234,7 @@
     getActivity: function (id) {
       return db
         .from("activities")
-        .select("id, title, summary, category, location, starts_at, ends_at, signup_deadline, capacity, contact, notes, status, notified_at, recap_html, archived, archived_at, created_at")
+        .select("id, title, summary, category, location, starts_at, ends_at, signup_deadline, capacity, contact, notes, status, notified_at, recap_html, archived, archived_at, manager_email, hours, created_at")
         .eq("id", id)
         .limit(1);
     },
@@ -258,17 +306,46 @@
     isAllowedAdmin: function () {
       return db.rpc("is_allowed_admin");
     },
-
-    listAdmins: function () {
-      return db.from("allowed_admins").select("email, note, created_at").order("created_at", { ascending: true });
+    isOwner: function () {
+      return db.rpc("is_owner");
     },
 
-    addAdmin: function (email, note) {
-      return db.from("allowed_admins").insert({ email: email, note: note || null });
+    /* ---------- 人员管理（只有执委会能读能写）---------- */
+    listMembers: function () {
+      return db
+        .from("allowed_admins")
+        .select("email, note, role, is_student, must_change_password, last_login_at, created_at")
+        .order("created_at", { ascending: true });
     },
 
-    removeAdmin: function (email) {
-      return db.from("allowed_admins").delete().eq("email", email);
+    addMember: function (payload) {
+      return db.from("allowed_admins").insert(payload).select();
+    },
+
+    updateMember: function (email, patch) {
+      return db.from("allowed_admins").update(patch).eq("email", email).select();
+    },
+
+    removeMember: function (email) {
+      return db.from("allowed_admins").delete().eq("email", email).select();
+    },
+
+    /* ---------- 学生名单（开通白名单）---------- */
+    listStudents: function () {
+      return db
+        .from("student_directory")
+        .select("email, name, grade, student_id, programme, activated, activated_at, created_at")
+        .order("email", { ascending: true });
+    },
+
+    importStudents: function (rows) {
+      if (!rows || !rows.length) return Promise.resolve({ data: [], error: null });
+      /* upsert：重复导入同一份名单不会报错，只会把姓名年级刷新一遍 */
+      return db.from("student_directory").upsert(rows, { onConflict: "email" }).select("email");
+    },
+
+    deleteStudent: function (email) {
+      return db.from("student_directory").delete().eq("email", email).select("email");
     }
   };
 

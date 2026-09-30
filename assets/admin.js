@@ -91,12 +91,62 @@ document.addEventListener("DOMContentLoaded", function () {
   /* ---------------- 登录态 ---------------- */
   var loginView = $("login-view"), appView = $("app-view");
 
+  /* ---------------- 角色 ----------------
+     两套权限，服务端才是边界（activities / articles / announcements / allowed_admins
+     的写入策略全部只认 is_owner()）。前端这里只是把不该点的入口藏掉，
+     免得老师点了之后收到一句看不懂的报错。 */
+  var ME = { email: "", role: "teacher", isStudent: false, mustChange: false };
+  function isOwner() { return ME.role === "owner"; }
+
+  /* 只有执委会能进的页签；负责老师一律看不到。 */
+  var OWNER_ONLY_TABS = ["acts", "journal", "announce", "people", "students"];
+
+  function applyRoleUI() {
+    var owner = isOwner();
+    Array.prototype.forEach.call(document.querySelectorAll(".tab-btn"), function (b) {
+      var t = b.getAttribute("data-tab");
+      if (OWNER_ONLY_TABS.indexOf(t) >= 0) b.hidden = !owner;
+    });
+
+    var note = $("role-note");
+    if (note) {
+      note.hidden = owner;
+      if (!owner) {
+        note.innerHTML = '<div class="alert alert-info">' +
+          "你是<b>负责老师</b>：可以看全校活动的报名名单、给分配给自己的活动签到并录入义工小时；" +
+          "活动、刊物、公告的编辑只有执委会能操作。要开通更多权限，请让执委会在「人员管理」里把你的角色改成执委会。" +
+          "</div>";
+      }
+    }
+
+    /* 活动表单里只有执委会能改的东西：新建/编辑活动整块表单对老师隐藏 */
+    var formPanel = $("act-form-panel");
+    if (formPanel) formPanel.hidden = !owner;
+    var managerSel = $("a-manager");
+    if (managerSel) managerSel.disabled = !owner;
+    var hoursIn = $("a-hours");
+    if (hoursIn) hoursIn.disabled = !owner;
+
+    /* 报名名单里的写操作：老师只保留「签到码」和删除之外…实际上老师一律只读，
+       通过/不通过/删除都不给；义工小时只有自己负责的活动才让改（在 renderRegs 里判断）。 */
+    var peoForm = $("peo-form");
+    if (peoForm) peoForm.hidden = !owner;
+  }
+
   function showSignedIn(email) {
-    $("who-email").textContent = email || "";
+    ME.email = email || "";
+    $("who-email").textContent = ME.email + (isOwner() ? " · 执委会" : " · 负责老师");
     loginView.hidden = true;
     appView.hidden = false;
+    applyRoleUI();
+    C.touchLogin();
     loadActivities();
     loadActivityOptions();
+    loadManagerOptions();
+    /* 板块默认负责人要先拿到，「我管不管这个活动」的判断要用它 */
+    loadCatMgrMap().then(function () {
+      if (isOwner()) loadCategoryManagers();
+    });
   }
 
   function showLogin() {
@@ -114,11 +164,20 @@ document.addEventListener("DOMContentLoaded", function () {
         C.auth.signOut();
         showLogin();
         alertIn($("auth-alerts"), "error",
-          "该邮箱（" + esc(email) + "）还没有加入后台白名单，请联系义工社执委会先把邮箱加进来。");
+          "该邮箱（" + esc(email) + "）还没有加入后台人员名单，请联系义工社执委会先把邮箱加进来。");
         return false;
       }
-      showSignedIn(email);
-      return true;
+      /* 拿到角色再决定界面。my_access() 是 SECURITY DEFINER，
+         普通老师也能读到自己的角色（allowed_admins 表的读策略只有执委会）。 */
+      return C.myAccess().then(function (ar) {
+        var row = (ar && ar.data && ar.data[0]) || {};
+        ME.email = row.email || email || "";
+        ME.role = row.role === "owner" ? "owner" : "teacher";
+        ME.isStudent = !!row.is_student;
+        ME.mustChange = !!row.must_change_password;
+        showSignedIn(ME.email);
+        return true;
+      });
     }).catch(function () {
       C.auth.signOut();
       showLogin();
@@ -287,9 +346,10 @@ document.addEventListener("DOMContentLoaded", function () {
   /* ---------------- Tab 切换 ----------------
      每个页签进场时要做的第一件事写在 onEnter 里（拉数据、启动轮询等），
      离开实时报名时要停掉定时器，否则它会一直在后台刷新。 */
-  var TAB_IDS = ["acts", "regs", "live", "archive", "journal", "announce", "admins"];
+  var TAB_IDS = ["acts", "regs", "live", "archive", "journal", "announce", "people", "students"];
   var TAB_ENTER = {
-    admins: function () { loadAdmins(); },
+    people: function () { if (isOwner()) { loadPeople(); loadCategoryManagers(); } },
+    students: function () { if (isOwner()) loadStudents(); },
     live: function () { loadLive(true); },
     archive: function () {
       if ($("arc-activity").options.length <= 1) loadArchiveOptions();
@@ -419,6 +479,8 @@ document.addEventListener("DOMContentLoaded", function () {
       $("a-contact").value = a.contact || "";
       $("a-status").value = a.status || "open";
       $("a-notes").value = a.notes || "";
+      $("a-manager").value = a.manager_email || "";
+      $("a-hours").value = (a.hours == null ? 2 : a.hours);
       clear($("act-alerts"));
       $("act-form").scrollIntoView({ behavior: "smooth", block: "start" });
     }
@@ -490,6 +552,8 @@ document.addEventListener("DOMContentLoaded", function () {
     $("act-form").reset();
     $("a-capacity").value = 30;
     $("a-status").value = "open";
+    $("a-manager").value = "";
+    $("a-hours").value = 2;
     clear($("act-alerts"));
   }
   $("act-reset").addEventListener("click", resetForm);
@@ -510,8 +574,11 @@ document.addEventListener("DOMContentLoaded", function () {
       capacity: parseInt($("a-capacity").value, 10) || null,
       contact: $("a-contact").value.trim() || null,
       notes: $("a-notes").value.trim() || null,
-      status: $("a-status").value
+      status: $("a-status").value,
+      manager_email: $("a-manager").value || null,
+      hours: parseFloat($("a-hours").value)
     };
+    if (isNaN(payload.hours)) payload.hours = 2;
 
     var btn = $("act-submit");
     btn.disabled = true;
@@ -523,7 +590,7 @@ document.addEventListener("DOMContentLoaded", function () {
     req.then(function (res) {
       var out = C.unwrap(res, "保存失败") || [];
       btn.disabled = false; btn.textContent = label;
-      if (!out.length) { alertIn($("act-alerts"), "error", "没有改动 —— 服务端没有写入任何一行，请确认登录邮箱已在「白名单」页签里。"); return; }
+      if (!out.length) { alertIn($("act-alerts"), "error", "没有改动 —— 服务端没有写入任何一行。只有执委会能新建或修改活动，请到「人员管理」确认你的角色。"); return; }
       alertIn($("act-alerts"), "ok", editingId ? "已保存修改。" : "活动已创建，学生现在可以在报名页看到它。");
       resetForm();
       loadActivities();
@@ -558,6 +625,53 @@ document.addEventListener("DOMContentLoaded", function () {
       if (!q) return true;
       return [r.name, r.email, r.student_id, r.phone].join(" ").toLowerCase().indexOf(q) >= 0;
     });
+  }
+
+  /* ---------- 这个活动归谁管 ----------
+     单个活动上指定的 manager_email 优先，没有就用板块默认负责人。
+     执委会管所有活动；负责老师只能动分配给自己的活动。 */
+  var catMgrs = {};
+
+  function loadCatMgrMap() {
+    return C.listCategoryManagers().then(function (res) {
+      catMgrs = {};
+      (C.unwrap(res, "读取失败") || []).forEach(function (c) {
+        if (c.email) catMgrs[c.category] = c.email;
+      });
+    }).catch(function () { catMgrs = {}; });
+  }
+
+  function effectiveManager(a) {
+    if (!a) return "";
+    return a.manager_email || catMgrs[a.category] || "";
+  }
+  function iManage(a) {
+    if (isOwner()) return true;
+    var m = effectiveManager(a);
+    return !!m && String(m).toLowerCase() === String(ME.email || "").toLowerCase();
+  }
+  function currentActivity() {
+    var id = $("reg-activity").value;
+    return myActivities.filter(function (x) { return String(x.id) === String(id); })[0] || null;
+  }
+  function canManageCurrent() { return iManage(currentActivity()); }
+
+  function fmtH(n) {
+    if (n == null || isNaN(Number(n))) return "0";
+    return String(Math.round(Number(n) * 100) / 100);
+  }
+
+  /* 小时格子：能管的给输入框（留空 = 用活动默认时长），不能管的显示只读文本。 */
+  function hoursCell(r) {
+    var act = currentActivity();
+    var def = act && act.hours != null ? Number(act.hours) : 0;
+    var val = r.hours != null ? Number(r.hours) : null;
+    if (!canManageCurrent()) {
+      return '<span class="ci-no">' + fmtH(val != null ? val : def) + " 小时" +
+        (val == null ? "（默认）" : "") + "</span>";
+    }
+    return '<input type="number" class="hours-in" min="0" step="0.5" value="' +
+      (val != null ? val : "") + '" placeholder="' + fmtH(def) + '" title="留空 = 用活动默认时长" data-hours="' + r.id + '" />';
   }
 
   /* ---------- 勾选录取 ----------
@@ -638,12 +752,18 @@ document.addEventListener("DOMContentLoaded", function () {
         "<td>" + (r.checked_in
           ? '<span class="ci-yes">已签到</span><span class="ci-when">' + fmtDT(r.checked_in_at) + "</span>"
           : '<span class="ci-no">未签到</span>') + "</td>" +
+        "<td>" + hoursCell(r) + "</td>" +
         "<td>" + fmtDT(r.created_at) + "</td>" +
         '<td><div class="row-actions">' +
-          '<button type="button" class="tbl-btn ok" data-approve="' + r.id + '">通过</button>' +
-          '<button type="button" class="tbl-btn" data-reject="' + r.id + '">不通过</button>' +
+          /* 录取与删除只有执委会能操作；老师一律只读。 */
+          (isOwner()
+            ? '<button type="button" class="tbl-btn ok" data-approve="' + r.id + '">通过</button>' +
+              '<button type="button" class="tbl-btn" data-reject="' + r.id + '">不通过</button>'
+            : "") +
           '<button type="button" class="tbl-btn" data-qr="' + r.id + '">签到码</button>' +
-          '<button type="button" class="tbl-btn danger" data-delreg="' + r.id + '">删除</button>' +
+          (isOwner()
+            ? '<button type="button" class="tbl-btn danger" data-delreg="' + r.id + '">删除</button>'
+            : "") +
         "</div></td>" +
       "</tr>";
     }).join("");
@@ -763,81 +883,370 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  /* ================= 白名单 ================= */
-  function loadAdmins() {
-    clear($("adm-alerts"));
-    $("adm-body").innerHTML =
-      '<tr><td colspan="4" style="text-align:center;color:var(--text-subtle);"><span class="loading"></span> 读取中…</td></tr>';
+  /* ================= 人员管理 =================
+     role：owner = 执委会（能改活动 / 刊物 / 公告 / 人员）
+           teacher = 负责老师（能看名单、给分配给自己的活动签到、录小时）
+     is_student：这个人同时也是义工社学生成员（既是后台所有者又是学生）。 */
+  var CATEGORIES = ["学生事务处活动(SAO)", "教务处活动(AO)", "升学指导办公室活动(CAS)", "公益募捐", "未被框定(NTCLASSIFIED)"];
 
-    C.listAdmins().then(function (res) {
+  function roleLabel(r) { return r === "owner" ? "执委会" : "负责老师"; }
+  function roleClass(r) { return r === "owner" ? "st-approved" : "st-pending"; }
+
+  function loadPeople() {
+    var body = $("peo-body");
+    body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-subtle);"><span class="loading"></span> 读取中…</td></tr>';
+    clear($("peo-alerts"));
+
+    C.listMembers().then(function (res) {
       var rows = C.unwrap(res, "读取失败") || [];
       if (!rows.length) {
-        $("adm-body").innerHTML =
-          '<tr><td colspan="4" style="text-align:center;color:var(--text-subtle);">白名单为空。</td></tr>';
-        $("adm-count").textContent = "";
+        body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-subtle);">还没有任何成员。</td></tr>';
+        $("peo-stats").innerHTML = "";
+        $("peo-count").textContent = "";
         return;
       }
-      var me = String($("who-email").textContent || "").toLowerCase();
-      $("adm-body").innerHTML = rows.map(function (r) {
+      var me = String(ME.email || "").toLowerCase();
+      var nOwner = rows.filter(function (r) { return r.role === "owner"; }).length;
+      var nTeacher = rows.filter(function (r) { return r.role !== "owner"; }).length;
+      var nStudent = rows.filter(function (r) { return r.is_student; }).length;
+      var nBoth = rows.filter(function (r) { return r.is_student && r.role === "owner"; }).length;
+
+      $("peo-stats").innerHTML =
+        stat("共 " + rows.length + " 人", "", "is-plain") +
+        stat(nOwner, "执委会（可编辑）") +
+        stat(nTeacher, "负责老师（只读 + 签到）") +
+        stat(nStudent, "同时是学生") +
+        stat(nBoth, "既是学生又是执委会");
+
+      body.innerHTML = rows.map(function (r) {
         var isMe = String(r.email).toLowerCase() === me;
+        var tags = ['<span class="badge ' + roleClass(r.role) + '">' + roleLabel(r.role) + "</span>"];
+        if (r.is_student) tags.push('<span class="badge st-pending">学生</span>');
+        if (r.must_change_password) tags.push('<span class="badge badge-draft">待改密码</span>');
         return "<tr>" +
-          "<td>" + esc(r.email) + "</td>" +
+          "<td>" + esc(r.email) + (isMe ? '<span class="roster-flag">我</span>' : "") + "</td>" +
+          "<td>" + roleLabel(r.role) + "</td>" +
+          "<td>" + tags.join(" ") + "</td>" +
           "<td>" + esc(r.note) + "</td>" +
-          "<td>" + fmtDT(r.created_at) + "</td>" +
+          "<td>" + fmtDT(r.last_login_at) + "</td>" +
           '<td><div class="row-actions">' +
-            (isMe
-              ? '<span class="tbl-btn" style="opacity:.5;">当前账号</span>'
-              : '<button type="button" class="tbl-btn danger" data-deladmin="' + esc(r.email) + '">移除</button>') +
+            '<button type="button" class="tbl-btn" data-role-toggle="' + esc(r.email) + '" data-now="' + esc(r.role) + '">' +
+              (r.role === "owner" ? "改为老师" : "提为执委会") + "</button>" +
+            '<button type="button" class="tbl-btn" data-open-acct="' + esc(r.email) + '">开通账号</button>' +
+            (isMe ? "" : '<button type="button" class="tbl-btn danger" data-delmember="' + esc(r.email) + '">移除</button>') +
           "</div></td>" +
         "</tr>";
       }).join("");
-      $("adm-count").textContent = "共 " + rows.length + " 个已授权邮箱";
+
+      $("peo-count").textContent = "共 " + rows.length + " 人 · 执委会 " + nOwner +
+        " · 负责老师 " + nTeacher + " · 同时是学生 " + nStudent +
+        (nBoth ? "（其中 " + nBoth + " 人既是学生又是执委会）" : "");
     }).catch(function (err) {
-      $("adm-body").innerHTML = "";
-      alertIn($("adm-alerts"), "error", "读取失败：" + (err && err.message ? err.message : ""));
+      body.innerHTML = "";
+      alertIn($("peo-alerts"), "error", "读取失败：" + failMsg(err));
     });
   }
 
-  $("adm-refresh").addEventListener("click", loadAdmins);
+  function stat(n, label, cls) {
+    return '<div class="peo-stat ' + (cls || "") + '">' +
+      '<span class="peo-sv">' + esc(n) + "</span>" +
+      '<span class="peo-sl">' + esc(label) + "</span></div>";
+  }
 
-  $("adm-form").addEventListener("submit", function (e) {
+  $("peo-refresh").addEventListener("click", loadPeople);
+
+  $("peo-form").addEventListener("submit", function (e) {
     e.preventDefault();
-    var email = $("adm-email").value.trim().toLowerCase();
-    if (!email) { alertIn($("adm-alerts"), "error", "请填写邮箱。"); return; }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { alertIn($("adm-alerts"), "error", "邮箱格式看起来不对。"); return; }
+    var email = $("peo-email").value.trim().toLowerCase();
+    if (!email) { alertIn($("peo-alerts"), "error", "请填写邮箱。"); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { alertIn($("peo-alerts"), "error", "邮箱格式看起来不对。"); return; }
 
-    var btn = $("adm-submit");
+    var initial = $("peo-initial").value.trim();
+    var btn = $("peo-submit");
     btn.disabled = true;
 
-    C.addAdmin(email, $("adm-note").value.trim()).then(function (res) {
+    C.addMember({
+      email: email,
+      note: $("peo-note").value.trim() || null,
+      role: $("peo-role").value === "owner" ? "owner" : "teacher",
+      is_student: $("peo-is-student").checked,
+      must_change_password: !!initial
+    }).then(function (res) {
       C.unwrap(res, "添加失败");
       btn.disabled = false;
-      $("adm-email").value = "";
-      $("adm-note").value = "";
-      alertIn($("adm-alerts"), "ok", "已加入白名单：" + esc(email) + "。对方需访问 <b>admin.html?setup=1</b> 开通账号。");
-      loadAdmins();
+      $("peo-email").value = "";
+      $("peo-note").value = "";
+      $("peo-initial").value = "";
+      $("peo-is-student").checked = false;
+      alertIn($("peo-alerts"), "ok", "已加入人员名单：" + esc(email) +
+        "。下一步点列表里的「开通账号」给 TA 开一个能登录的账号。");
+      loadPeople();
     }).catch(function (err) {
       btn.disabled = false;
-      if (err && err.code === "23505") {
-        alertIn($("adm-alerts"), "warn", "这个邮箱已经在白名单里了。");
-      } else {
-        alertIn($("adm-alerts"), "error", "添加失败：" + (err && err.message ? err.message : ""));
-      }
+      if (err && err.code === "23505") alertIn($("peo-alerts"), "warn", "这个邮箱已经在名单里了。");
+      else alertIn($("peo-alerts"), "error", "添加失败：" + failMsg(err));
     });
   });
 
-  $("adm-body").addEventListener("click", function (e) {
+  /* ---------------- 开通账号 / 设初始密码 ----------------
+     云服务没有「后台建号」的接口，只能：发验证码到对方邮箱 → 验码 → signUp(密码)。
+     所以填了初始密码就得让对方把收到的 6 位验证码告诉我们（当面或电话都行）。
+     ⚠️ signUp() 会把当前会话切到新账号上，所以开通完必须退出、让执委会重新登录。 */
+  var openAcct = { email: "", verificationId: "", isExistingUser: false };
+
+  function paintOpenBox(html) { $("peo-alerts").innerHTML = html; }
+
+  function startOpenAcct(email, btn) {
+    openAcct = { email: email, verificationId: "", isExistingUser: false };
+    busyOn(btn, "发送中…");
+    C.auth.sendOtp({ email: email }).then(function (r) {
+      busyOff(btn);
+      if (r.error) { alertIn($("peo-alerts"), "error", "验证码发送失败：" + (r.error.message || "请稍后重试")); return; }
+      openAcct.verificationId = r.data.verificationId;
+      openAcct.isExistingUser = r.data.isExistingUser;
+      paintOpenBox(
+        '<div class="alert alert-info">' +
+        "<b>为 " + esc(email) + " 开通账号</b><br />" +
+        "验证码已发到这个邮箱。请让对方把收到的 6 位验证码告诉你，填在下面。" +
+        '<div class="peo-open-row">' +
+        '<input id="peo-code" type="text" inputmode="numeric" placeholder="对方邮箱里的 6 位验证码" />' +
+        '<input id="peo-pw" type="text" placeholder="给 TA 设的初始密码" />' +
+        '<button type="button" class="btn btn-primary" id="peo-open-go" style="padding:0.42rem 0.9rem;font-size:0.82rem;">开通并设密码</button>' +
+        "</div></div>");
+      $("peo-open-go").addEventListener("click", function () { doOpenAcct(this); });
+    }).catch(function () {
+      busyOff(btn);
+      alertIn($("peo-alerts"), "error", "验证码发送失败，请稍后重试。");
+    });
+  }
+
+  function doOpenAcct(btn) {
+    var code = String($("peo-code").value || "").trim();
+    var pw = String($("peo-pw").value || "").trim();
+    if (!code || !pw) { paintOpenBox('<div class="alert alert-error">验证码和初始密码都要填。</div>'); return; }
+    busyOn(btn, "开通中…");
+    C.auth.verifyOtp({
+      email: openAcct.email,
+      verificationId: openAcct.verificationId,
+      isExistingUser: openAcct.isExistingUser,
+      token: code
+    }).then(function (r) {
+      if (r.error) { busyOff(btn); paintOpenBox('<div class="alert alert-error">验证码不正确或已过期。</div>'); return; }
+      var vt = r.data && r.data.verificationToken;
+      if (!vt) { busyOff(btn); paintOpenBox('<div class="alert alert-error">没有拿到开通凭证，请重试。</div>'); return; }
+      return C.auth.signUp({ email: openAcct.email, password: pw, verificationToken: vt }).then(function (s) {
+        if (s.error) { busyOff(btn); paintOpenBox('<div class="alert alert-error">开通失败：' + esc(s.error.message || "") + "</div>"); return; }
+        C.updateMember(openAcct.email, { must_change_password: true }).catch(function () {});
+        /* signUp 已经把会话切成对方了，必须退出，否则接下来所有操作都是 TA 的身份 */
+        return C.auth.signOut().then(function () {
+          showLogin();
+          alertIn($("auth-alerts"), "ok",
+            "已为 " + esc(openAcct.email) + " 开通账号，初始密码：" + esc(pw) +
+            "。出于安全，刚才已自动退出，请用你自己的账号重新登录。对方首次登录会被要求改密码。");
+        });
+      });
+    }).catch(function (err) {
+      busyOff(btn);
+      paintOpenBox('<div class="alert alert-error">开通失败：' + esc(err && err.message) + "</div>");
+    });
+  }
+
+  $("peo-body").addEventListener("click", function (e) {
     var t = e.target;
     if (t.tagName !== "BUTTON") return;
-    var mail = t.getAttribute("data-deladmin");
-    if (!mail) return;
-    if (!window.confirm("确定把 " + mail + " 移出白名单吗？\n\n移除后对方会立刻失去后台访问权限（其已创建的活动与报名数据不会被删除）。")) return;
 
-    C.removeAdmin(mail).then(function () {
-      alertIn($("adm-alerts"), "ok", "已移出白名单。");
-      loadAdmins();
+    var toggle = t.getAttribute("data-role-toggle");
+    if (toggle) {
+      var now = t.getAttribute("data-now");
+      var next = now === "owner" ? "teacher" : "owner";
+      if (String(toggle).toLowerCase() === String(ME.email || "").toLowerCase() && next === "teacher") {
+        alertIn($("peo-alerts"), "warn", "不能把自己的角色降成负责老师 —— 否则你会立刻失去这个页面的权限。");
+        return;
+      }
+      busyOn(t, "…");
+      C.updateMember(toggle, { role: next }).then(function (res) {
+        busyOff(t);
+        var out = C.unwrap(res, "修改失败") || [];
+        if (!out.length) { alertIn($("peo-alerts"), "error", "没有改动 —— 只有执委会能改角色。"); return; }
+        loadPeople();
+        alertIn($("peo-alerts"), "ok", esc(toggle) + " 已改为" + roleLabel(next) + "。");
+      }).catch(function (err) { busyOff(t); alertIn($("peo-alerts"), "error", "修改失败：" + failMsg(err)); });
+      return;
+    }
+
+    var openMail = t.getAttribute("data-open-acct");
+    if (openMail) { startOpenAcct(openMail, t); return; }
+
+    var delMail = t.getAttribute("data-delmember");
+    if (delMail) {
+      if (!window.confirm("确定把 " + delMail + " 移出人员名单吗？\n\n移除后对方会立刻失去后台访问权限（其已创建的活动与报名数据不会被删除）。")) return;
+      C.removeMember(delMail).then(function () {
+        alertIn($("peo-alerts"), "ok", "已移出人员名单。");
+        loadPeople();
+      }).catch(function (err) {
+        alertIn($("peo-alerts"), "error", "移除失败：" + failMsg(err));
+      });
+    }
+  });
+
+  /* ---------------- 板块默认负责老师 ---------------- */
+  function loadManagerOptions() {
+    var sel = $("a-manager");
+    if (!sel) return;
+    C.listMembers().then(function (res) {
+      var rows = C.unwrap(res, "读取失败") || [];
+      var cur = sel.value;
+      sel.innerHTML = '<option value="">（用板块默认负责人）</option>' +
+        rows.map(function (r) {
+          return '<option value="' + esc(r.email) + '">' + esc(r.email) +
+            "（" + roleLabel(r.role) + "）</option>";
+        }).join("");
+      sel.value = cur;
+    }).catch(function () { /* 老师读不到成员表，下拉保持空即可 */ });
+  }
+
+  function loadCategoryManagers() {
+    var box = $("cat-rows");
+    if (!box) return;
+    C.listMembers().then(function (mr) {
+      var people = C.unwrap(mr, "读取失败") || [];
+      return C.listCategoryManagers().then(function (cr) {
+        var map = {};
+        (C.unwrap(cr, "读取失败") || []).forEach(function (c) {
+          map[c.category] = c.email || "";
+          if (c.email) catMgrs[c.category] = c.email;
+        });
+        box.innerHTML = CATEGORIES.map(function (c) {
+          return '<div class="field"><label>' + esc(c) + "</label>" +
+            '<select data-cat="' + esc(c) + '">' +
+            '<option value="">（未指定）</option>' +
+            people.map(function (p) {
+              var on = String(p.email).toLowerCase() === String(map[c] || "").toLowerCase();
+              return '<option value="' + esc(p.email) + '"' + (on ? " selected" : "") + ">" +
+                esc(p.email) + "</option>";
+            }).join("") +
+            "</select></div>";
+        }).join("");
+      });
     }).catch(function (err) {
-      alertIn($("adm-alerts"), "error", "移除失败：" + (err && err.message ? err.message : ""));
+      alertIn($("cat-alerts"), "error", "读取失败：" + failMsg(err));
+    });
+  }
+
+  $("cat-save").addEventListener("click", function () {
+    var btn = this;
+    var jobs = [];
+    Array.prototype.forEach.call(document.querySelectorAll("#cat-rows select"), function (s) {
+      jobs.push(C.setCategoryManager(s.getAttribute("data-cat"), s.value || null));
+    });
+    busyOn(btn, "保存中…");
+    Promise.all(jobs.map(function (p) {
+      return p.then(function (r) { C.unwrap(r, "保存失败"); return true; },
+                    function (e) { return e; });
+    })).then(function (outs) {
+      busyOff(btn);
+      var bad = outs.filter(function (o) { return o !== true; });
+      if (bad.length) alertIn($("cat-alerts"), "error", "有 " + bad.length + " 项没保存成功（只有执委会能改）。");
+      else alertIn($("cat-alerts"), "ok", "板块默认负责人已保存。");
+    });
+  });
+
+  /* ================= 学生名单 ================= */
+  var studentRows = [];
+
+  function loadStudents() {
+    var body = $("stu-body");
+    body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-subtle);"><span class="loading"></span> 读取中…</td></tr>';
+    C.listStudents().then(function (res) {
+      studentRows = C.unwrap(res, "读取失败") || [];
+      renderStudents();
+    }).catch(function (err) {
+      body.innerHTML = "";
+      alertIn($("stu-alerts"), "error", "读取失败：" + failMsg(err));
+    });
+  }
+
+  function renderStudents() {
+    var body = $("stu-body");
+    var q = String($("stu-search").value || "").trim().toLowerCase();
+    var list = studentRows.filter(function (r) {
+      if (!q) return true;
+      return [r.email, r.name, r.student_id, r.grade].join(" ").toLowerCase().indexOf(q) >= 0;
+    });
+    if (!list.length) {
+      body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-subtle);">' +
+        (studentRows.length ? "没有匹配的人。" : "名单还是空的 —— 用上面的框批量导入。") + "</td></tr>";
+      $("stu-count").textContent = "";
+      return;
+    }
+    body.innerHTML = list.slice(0, 400).map(function (r) {
+      return "<tr>" +
+        "<td>" + esc(r.email) + "</td>" +
+        "<td>" + esc(r.name) + "</td>" +
+        "<td>" + esc(r.grade) + "</td>" +
+        "<td>" + esc(r.student_id) + "</td>" +
+        "<td>" + (r.activated ? '<span class="ci-yes">已开通</span>' : '<span class="ci-no">未开通</span>') + "</td>" +
+        '<td><div class="row-actions">' +
+          '<button type="button" class="tbl-btn danger" data-delstudent="' + esc(r.email) + '">移除</button>' +
+        "</div></td>" +
+      "</tr>";
+    }).join("");
+    var nOn = studentRows.filter(function (r) { return r.activated; }).length;
+    $("stu-count").textContent = "共 " + studentRows.length + " 个邮箱 · 已开通 " + nOn +
+      " · 未开通 " + (studentRows.length - nOn) +
+      (list.length > 400 ? "（只显示前 400 条，用搜索缩小范围）" : "");
+  }
+
+  $("stu-refresh").addEventListener("click", loadStudents);
+  $("stu-search").addEventListener("input", renderStudents);
+
+  $("stu-import").addEventListener("click", function () {
+    var raw = $("stu-paste").value || "";
+    var lines = raw.split(/\r?\n/);
+    var rows = [];
+    var bad = 0;
+    lines.forEach(function (ln) {
+      var parts = ln.split(/[,\t，]/).map(function (s) { return s.trim(); });
+      var email = (parts[0] || "").toLowerCase();
+      if (!email) return;
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { bad++; return; }
+      rows.push({
+        email: email,
+        name: parts[1] || null,
+        grade: parts[2] || null,
+        student_id: parts[3] || null
+      });
+    });
+    if (!rows.length) {
+      alertIn($("stu-alerts"), "error", "没解析出任何有效邮箱。每行一条：邮箱, 姓名, 年级, 学号");
+      return;
+    }
+    var btn = this;
+    busyOn(btn, "导入中…");
+    C.importStudents(rows).then(function (res) {
+      busyOff(btn);
+      C.unwrap(res, "导入失败");
+      $("stu-paste").value = "";
+      alertIn($("stu-alerts"), "ok", "已导入 " + rows.length + " 个邮箱" +
+        (bad ? "（另 " + bad + " 行格式不对，已跳过）" : "") + "。");
+      loadStudents();
+    }).catch(function (err) {
+      busyOff(btn);
+      alertIn($("stu-alerts"), "error", "导入失败：" + failMsg(err));
+    });
+  });
+
+  $("stu-body").addEventListener("click", function (e) {
+    var t = e.target;
+    if (t.tagName !== "BUTTON") return;
+    var mail = t.getAttribute("data-delstudent");
+    if (!mail) return;
+    if (!window.confirm("把 " + mail + " 从学生名单里移除？\n\n移除后这个邮箱将无法再开通学生账号（已开通的账号不受影响）。")) return;
+    C.deleteStudent(mail).then(function () {
+      alertIn($("stu-alerts"), "ok", "已移除。");
+      loadStudents();
+    }).catch(function (err) {
+      alertIn($("stu-alerts"), "error", "移除失败：" + failMsg(err));
     });
   });
 
@@ -977,6 +1386,14 @@ document.addEventListener("DOMContentLoaded", function () {
   $("reg-body").addEventListener("change", function (e) {
     var t = e.target;
     if (!t || t.tagName !== "INPUT") return;
+
+    /* 义工小时：留空 = 用活动默认时长。只有负责这个活动的人（或执委会）能改。 */
+    var hid = t.getAttribute("data-hours");
+    if (hid != null) {
+      setHours(hid, t.value, t);
+      return;
+    }
+
     var id = t.getAttribute("data-pick");
     if (id == null) return;
     id = Number(id);
@@ -985,6 +1402,21 @@ document.addEventListener("DOMContentLoaded", function () {
     if (tr) tr.classList.toggle("is-picked", t.checked);
     syncPickBar();
   });
+
+  function setHours(id, val, input) {
+    clear($("reg-alerts"));
+    if (input) input.disabled = true;
+    C.setHours(id, val).then(function (res) {
+      C.unwrap(res, "保存失败");
+      var row = regRows.filter(function (r) { return String(r.id) === String(id); })[0];
+      if (row) row.hours = (val === "" || val == null) ? null : Number(val);
+      if (input) input.disabled = false;
+      alertIn($("reg-alerts"), "ok", val === "" ? "已恢复为活动默认时长。" : "已记为 " + Number(val) + " 小时。");
+    }).catch(function (err) {
+      if (input) input.disabled = false;
+      alertIn($("reg-alerts"), "error", failMsg(err, "保存失败"));
+    });
+  }
 
   /* 把勾选结果写成「报名成功名单」：
      1) 清掉这个活动下所有人的录取标记

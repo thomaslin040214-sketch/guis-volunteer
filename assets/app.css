@@ -880,6 +880,9 @@ table.data tr.is-picked { background: var(--brand-tint); }
   letter-spacing: -0.03em; font-variant-numeric: tabular-nums; color: var(--text-main);
 }
 .ci-metric.is-brand .ci-mv { color: var(--brand); }
+/* 义工小时是「已经产生的成果」，用偏暖的强调色和人数区分开 */
+.ci-metric.is-hours .ci-mv { color: var(--brand-deep); }
+.ci-metric.is-hours .ci-ml { max-width: 8em; line-height: 1.3; }
 .ci-ml { font-size: 0.76rem; color: var(--text-subtle); letter-spacing: 0.06em; }
 .ci-progress { flex: 1; min-width: 160px; display: flex; align-items: center; gap: 0.7rem; }
 .ci-bar { flex: 1; height: 8px; border-radius: 980px; background: rgba(0, 0, 0, 0.07); overflow: hidden; }
@@ -1011,4 +1014,109 @@ table.data tr.is-done { background: rgba(45, 138, 78, 0.045); }
 @media (max-width: 640px) {
   .ci-progress { min-width: 100%; }
   .scan-stage { aspect-ratio: 1 / 1; }
+}
+
+/* ============================================================
+   人员管理 / 学生名单 / 义工小时
+   ============================================================ */
+
+/* 顶部一排统计：一眼看到「几个执委会、几个老师、几个同时是学生」 */
+.peo-stats {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.8rem; margin-bottom: 1.25rem;
+}
+.peo-stats:empty { display: none; }
+.peo-stat {
+  padding: 0.85rem 1rem; border-radius: var(--radius-md);
+  border: 1px solid var(--card-border); background: var(--bg-soft);
+  display: flex; flex-direction: column; gap: 0.15rem;
+}
+.peo-sv {
+  font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums; color: var(--brand); line-height: 1.1;
+}
+.peo-stat.is-plain .peo-sv { color: var(--text-main); font-size: 1.15rem; }
+.peo-sl { font-size: 0.74rem; color: var(--text-subtle); }
+
+.peo-check {
+  display: flex; align-items: center; gap: 0.5rem;
+  font-size: 0.86rem; color: var(--text-soft); cursor: pointer;
+}
+.peo-check input { width: 16px; height: 16px; accent-color: var(--brand); cursor: pointer; }
+
+.peo-open-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.7rem; }
+.peo-open-row input {
+  flex: 1; min-width: 150px; font: inherit; font-size: 0.88rem;
+  padding: 0.5rem 0.7rem; border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-sm); background: #fff; color: var(--text-main);
+}
+
+/* 名单里的义工小时输入框 */
+.hours-in {
+  width: 74px; font: inherit; font-size: 0.86rem; padding: 0.3rem 0.45rem;
+  border: 1px solid var(--hairline-strong); border-radius: 8px;
+  background: #fff; color: var(--text-main); text-align: center;
+}
+.hours-in:focus { outline: none; border-color: var(--brand); }
+.hours-in::placeholder { color: var(--text-subtle); }
+
+/* 非执委会登录后顶部那句说明 */
+.role-note { margin-bottom: 1rem; }
+.role-note[hidden] { display: none; }
+
+/* ---------- 学生端：我的义工账户 ---------- */
+.me-wrap { max-width: 520px; margin: 0 auto; }
+.me-suffix {
+  display: flex; align-items: stretch; border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-sm); background: #fff; overflow: hidden;
+}
+.me-suffix input {
+  flex: 1; min-width: 0; border: 0; background: transparent;
+  font: inherit; font-size: 0.95rem; padding: 0.62rem 0.8rem; color: var(--text-main);
+}
+.me-suffix input:focus { outline: none; }
+.me-suffix .suf {
+  display: flex; align-items: center; padding: 0 0.8rem;
+  font-size: 0.86rem; color: var(--text-muted); background: var(--bg-soft);
+  border-left: 1px solid var(--hairline); white-space: nowrap; font-weight: 600;
+}
+.me-hero {
+  display: flex; align-items: center; gap: 1.1rem; flex-wrap: wrap;
+  padding: 1.15rem 1.3rem; margin-bottom: 1.25rem;
+  border: 1px solid var(--card-border); border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, #fff, var(--bg-soft)); box-shadow: var(--shadow-sm);
+}
+.me-avatar {
+  width: 56px; height: 56px; border-radius: 50%; flex: 0 0 auto;
+  display: grid; place-items: center; font-size: 1.3rem; font-weight: 700; color: #fff;
+  background: linear-gradient(135deg, var(--brand), var(--brand-sky));
+}
+.me-who { min-width: 0; }
+.me-who b { font-size: 1.05rem; font-weight: 650; }
+.me-who span { display: block; font-size: 0.8rem; color: var(--text-muted); }
+.me-hours {
+  margin-left: auto; text-align: right; flex: 0 0 auto;
+}
+.me-hours b {
+  display: block; font-size: clamp(1.8rem, 5vw, 2.3rem); font-weight: 700;
+  line-height: 1; color: var(--brand); font-variant-numeric: tabular-nums;
+}
+.me-hours span { font-size: 0.74rem; color: var(--text-subtle); }
+
+.svc-list { display: flex; flex-direction: column; gap: 0.7rem; }
+.svc {
+  display: flex; align-items: center; gap: 0.9rem; flex-wrap: wrap;
+  padding: 0.85rem 1.05rem; border: 1px solid var(--hairline);
+  border-radius: var(--radius-md); background: #fff;
+}
+.svc-main { min-width: 0; flex: 1; }
+.svc-title { font-size: 0.95rem; font-weight: 600; }
+.svc-sub { font-size: 0.78rem; color: var(--text-subtle); margin-top: 0.1rem; }
+.svc-right { flex: 0 0 auto; text-align: right; }
+.svc-hours { font-size: 0.95rem; font-weight: 650; color: var(--brand); font-variant-numeric: tabular-nums; }
+.svc-state { font-size: 0.74rem; color: var(--text-subtle); }
+.svc.is-in { border-color: rgba(45, 138, 78, 0.26); background: rgba(45, 138, 78, 0.04); }
+
+@media (max-width: 520px) {
+  .me-hours { margin-left: 0; text-align: left; }
 }

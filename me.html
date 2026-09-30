@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-ver="20260930r">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>我的义工账户 | GUIS 义工社</title>
+<meta name="description" content="GUIS 义工社学生账户：查看自己报名参加的义工活动、签到二维码与累计义工小时。" />
+<meta name="theme-color" content="#FFFFFF" />
+<meta name="robots" content="noindex, nofollow" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20260930r" />
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20260930r" />
+<meta http-equiv="Cache-Control" content="no-cache, must-revalidate" />
+<script>
+/* 文档自愈：托管服务器只给 last-modified，没有 Cache-Control / ETag，
+   浏览器会启发式复用旧版 HTML —— 旧版里引用的还是旧版本号的 CSS/JS，
+   于是点站内链接（全是裸路径）进去时整页退回旧设计。
+   这里比对 <html data-ver>：不是当前版本就带查询串重拉一次（查询串必定回源）。 */
+(function () {
+  var VER = "20260930r";
+  try {
+    var el = document.documentElement;
+    var healed = /[?&]_v=/.test(location.search);
+    if (el.getAttribute("data-ver") === VER) {
+      if (healed && history.replaceState) {
+        var q = location.search.replace(/[?&]_v=[^&]*/, "").replace(/[?&]cb=[^&]*/g, "").replace(/^\?&/, "?");
+        history.replaceState(null, "", location.pathname + (q === "?" ? "" : q) + location.hash);
+      }
+      return;
+    }
+    if (healed) return;                                          /* 带串进来还是旧的，别再跳 */
+    if (sessionStorage.getItem("guis-doc-ver") === VER) return;   /* 本次会话只试一次 */
+    sessionStorage.setItem("guis-doc-ver", VER);
+    var u = location.href.split("#")[0];
+    location.replace(u + (u.indexOf("?") >= 0 ? "&" : "?") + "_v=" + VER + "&cb=" + Date.now() + (location.hash || ""));
+  } catch (e) {}
+})();
+</script>
+<style>
+.nav-logo{display:flex;align-items:center;gap:.5rem}
+.footer-brand{display:flex;align-items:center;gap:.9rem}
+.nav-logo .logo-img,.nav-logo .logo-va{max-height:34px;width:auto}
+.footer-brand img{max-height:34px;width:auto}
+@media (max-width:640px){
+  .nav-logo .logo-img,.nav-logo .logo-va{max-height:26px}
+  .footer-brand img{max-height:26px}
+}
+@media (max-width:480px){
+  .nav-logo .logo-img,.nav-logo .logo-va{max-height:24px}
+  .footer-brand img{max-height:24px}
+}
+</style>
+<link rel="stylesheet" href="assets/site.css?v=20260930r" />
+<link rel="stylesheet" href="assets/app.css?v=20260930r" />
+<script>document.documentElement.classList.add("js");</script>
+</head>
+<body>
+
+<div class="bg" aria-hidden="true">
+  <div class="bg-mesh"></div>
+  <div class="bg-blob blob-a"></div>
+  <div class="bg-blob blob-b"></div>
+</div>
+
+<nav>
+  <a href="index.html" class="nav-logo">
+    <img class="logo-img" src="assets/logo/guis-ulc-lockup.png" alt="GUIS · Guangzhou Ulink International School | ULC · Ulink College" />
+    <span class="logo-div"></span>
+    <img class="logo-va" src="assets/logo/va-logo.png" alt="GUIS Volunteer Association" />
+    <span class="org">义工社 · 我的账户</span>
+  </a>
+  <div class="nav-links">
+    <a href="index.html">回到主页</a>
+    <a href="signup.html">报名活动</a>
+    <a href="me.html" class="is-active">我的义工账户</a>
+  </div>
+</nav>
+
+<main class="page-head">
+  <section style="padding-top:0;">
+    <div class="wrap">
+
+      <div class="origin-banner" id="origin-banner" hidden>
+        <b>当前访问地址未绑定到云服务。</b>
+        登录与数据读写只在应用的正式域名上生效。请改用
+        <a id="origin-link" href="#"></a> 访问本页。
+      </div>
+
+      <!-- ============ 登录 / 开通 ============ -->
+      <div id="login-view" hidden>
+        <div class="me-wrap">
+          <div style="text-align:center;margin-bottom:1.75rem;">
+            <img src="assets/logo/guis-ulc-lockup.png" alt="GUIS | ULC" style="width:220px;margin:0 auto 1rem;" />
+            <p class="eyebrow">我的义工账户</p>
+            <h1 class="page-title">同学登录</h1>
+            <p class="page-lede" style="margin:0 auto;">用学校邮箱登录，可以看到自己报名的活动、签到二维码和累计义工小时。</p>
+          </div>
+
+          <div class="panel">
+            <div class="panel-body">
+              <div class="seg" id="me-seg">
+                <button type="button" class="is-on" data-mode="login">登录</button>
+                <button type="button" data-mode="activate">首次开通</button>
+              </div>
+
+              <div id="me-alerts"></div>
+
+              <!-- 登录 -->
+              <form id="me-login" novalidate>
+                <div class="field" style="margin-bottom:1rem;">
+                  <label for="me-user">学校邮箱</label>
+                  <div class="me-suffix">
+                    <input id="me-user" type="text" autocomplete="username" placeholder="例如 2510032" spellcheck="false" />
+                    <span class="suf">@guiscn.com</span>
+                  </div>
+                  <span class="hint">只用填 @ 前面的部分，后缀我们帮你补上。</span>
+                </div>
+                <div class="field" style="margin-bottom:1rem;">
+                  <label for="me-pass">密码</label>
+                  <input id="me-pass" type="password" autocomplete="current-password" />
+                </div>
+                <div class="form-actions" style="margin-top:0;">
+                  <button type="submit" class="btn btn-primary" id="me-login-go">登录</button>
+                  <button type="button" class="link-btn" id="me-goto-reset" style="align-self:center;">忘记密码？</button>
+                </div>
+              </form>
+
+              <!-- 首次开通 -->
+              <form id="me-activate" novalidate hidden>
+                <div class="field" style="margin-bottom:1rem;">
+                  <label for="me-new-user">学校邮箱</label>
+                  <div class="me-suffix">
+                    <input id="me-new-user" type="text" autocomplete="username" placeholder="例如 2510032" spellcheck="false" />
+                    <span class="suf">@guiscn.com</span>
+                  </div>
+                  <span class="hint">必须是学校已经登记进名单的邮箱，校外邮箱开不了。</span>
+                </div>
+                <div class="field" style="margin-bottom:1rem;">
+                  <label for="me-code">邮箱验证码</label>
+                  <input id="me-code" type="text" inputmode="numeric" placeholder="邮箱收到的 6 位验证码" />
+                </div>
+                <div class="field" style="margin-bottom:1rem;">
+                  <label for="me-new-pass">设置密码</label>
+                  <input id="me-new-pass" type="password" autocomplete="new-password" />
+                  <span class="hint">自己设一个记得住的密码，以后就用它登录。</span>
+                </div>
+                <div class="form-actions" style="margin-top:0;">
+                  <button type="button" class="btn btn-secondary" id="me-send">获取验证码</button>
+                  <button type="submit" class="btn btn-primary" id="me-activate-go">开通并登录</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ 已登录 ============ -->
+      <div id="app-view" hidden>
+        <div class="me-wrap">
+
+          <div class="admin-bar">
+            <div class="who">已登录：<b id="me-email"></b></div>
+            <button type="button" class="btn btn-secondary" id="me-logout" style="padding:0.5rem 1rem;font-size:0.82rem;">退出登录</button>
+          </div>
+
+          <!-- 被要求改密码时顶在最前面 -->
+          <div id="me-force"></div>
+
+          <div class="me-hero">
+            <div class="me-avatar" id="me-avatar">—</div>
+            <div class="me-who">
+              <b id="me-name">同学</b>
+              <span id="me-sub"></span>
+            </div>
+            <div class="me-hours">
+              <b id="me-total">0</b>
+              <span>累计义工小时</span>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>我的签到二维码</h2>
+                <div class="sub">活动现场出示给负责老师扫；也可以截图存起来。</div>
+              </div>
+              <button type="button" class="btn btn-primary" id="me-qr" style="padding:0.42rem 0.9rem;font-size:0.82rem;">显示二维码</button>
+            </div>
+            <div class="panel-body" id="me-qr-box">
+              <p class="hint" style="margin:0;">还没报名任何活动时不会有二维码。报名并被录取后，这里会自动出现你的码。</p>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>我参加的义工活动</h2>
+                <div class="sub">小时数在老师确认签到后计入。</div>
+              </div>
+              <button type="button" class="link-btn" id="me-refresh">刷新</button>
+            </div>
+            <div class="panel-body">
+              <div id="me-alerts2"></div>
+              <div id="me-loading" class="empty"><span class="loading"></span> 正在读取…</div>
+              <div class="svc-list" id="me-list" hidden></div>
+              <div id="me-empty" class="empty" hidden>还没有报名任何活动 —— <a href="signup.html" style="color:var(--brand);text-decoration:underline;">去看看现在有什么可以报</a>。</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap footer-inner">
+    <div class="footer-brand">
+      <img src="assets/logo/guis-ulc-lockup.png" alt="GUIS | ULC" />
+      <img class="footer-va" src="assets/logo/va-logo.png" alt="GUIS Volunteer Association" />
+      <span class="footer-org">广州优联国际学校义工社<br />我的义工账户</span>
+    </div>
+    <span>© 2026 GUIS 义工社</span>
+    <div class="footer-links">
+      <a href="index.html">回到主页</a>
+      <a href="signup.html">报名活动</a>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
+<script src="assets/cloud-config.js?v=20260930r"></script>
+<script src="assets/cloud.js?v=20260930r"></script>
+<script src="assets/qr.js?v=20260930r"></script>
+<script src="assets/me.js?v=20260930r"></script>
+</body>
+</html>

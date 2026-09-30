@@ -7,7 +7,17 @@
 
    谁能进这个页面：和后台同一套白名单（is_allowed_admin()）。
    名单里有同学的手机号和邮箱，所以不能做成匿名页面 ——
-   要把某位老师加进来，先去后台「白名单」页签加他的邮箱。
+   要把某位老师加进来，先去后台「人员管理」页签加他的邮箱并开通账号。
+
+   权限分两档（和后台一致，服务端才是边界）：
+     · owner   执委会：所有活动都能签到、都能改义工小时
+     · teacher 负责老师：全部活动的名单都能看（只读），
+                       只有「分配给自己的活动」才能扫码 / 打钩 / 改小时
+   活动归属 = 单个活动上指定的 manager_email，没有就用板块默认负责人
+   （category_managers），判断规则和后台 admin.js 里那套完全一致。
+
+   义工小时：活动自带默认时长（activities.hours），逐人可覆盖
+   （registrations.hours 留空 = 用默认）。老师只对自己负责的活动能改。
 
    签到码 check_token 是数据库建行时自动生成的，报名成功（selected）
    之后这个码就生效，不需要额外「生成」动作。
@@ -22,6 +32,46 @@ document.addEventListener("DOMContentLoaded", function () {
   var acts = [];               /* 全部活动（含已截止的，签到常常在活动当天才做） */
   var rows = [];               /* 当前活动的全部报名 */
   var curId = "";
+
+  /* 我是谁：owner = 执委会（什么都能改），teacher = 负责老师（只改自己负责的）。
+     和后台同一个 my_access()（SECURITY DEFINER），角色只有服务端说了算。 */
+  var ME = { email: "", role: "teacher" };
+  function isOwner() { return ME.role === "owner"; }
+
+  /* 板块默认负责人：活动上没单独指定人时用它兜底。 */
+  var catMgrs = {};
+  function loadCatMgrMap() {
+    return C.listCategoryManagers().then(function (res) {
+      catMgrs = {};
+      (C.unwrap(res, "读取失败") || []).forEach(function (c) {
+        if (c.email) catMgrs[c.category] = c.email;
+      });
+    }).catch(function () { catMgrs = {}; });
+  }
+  function effectiveManager(a) {
+    if (!a) return "";
+    return a.manager_email || catMgrs[a.category] || "";
+  }
+  function iManage(a) {
+    if (isOwner()) return true;
+    var m = effectiveManager(a);
+    return !!m && String(m).toLowerCase() === String(ME.email || "").toLowerCase();
+  }
+  function currentActivity() {
+    return acts.filter(function (a) { return String(a.id) === String(curId); })[0] || null;
+  }
+  function canManageCurrent() { return iManage(currentActivity()); }
+
+  function fmtH(n) {
+    if (n == null || isNaN(Number(n))) return "0";
+    return String(Math.round(Number(n) * 100) / 100);
+  }
+  /* 这个人最终记多少小时：自己覆盖过就用覆盖值，否则用活动默认时长 */
+  function hoursOf(r) {
+    var act = currentActivity();
+    if (r && r.hours != null) return Number(r.hours);
+    return act && act.hours != null ? Number(act.hours) : 0;
+  }
 
   /* ---------------- 通用工具 ---------------- */
   function esc(s) {
@@ -82,9 +132,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function showSignedIn(email) {
     me = email || "";
-    $("who-email").textContent = me;
+    $("who-email").textContent = me + (isOwner() ? " · 执委会" : " · 负责老师");
     loginView.hidden = true;
     appView.hidden = false;
+    C.touchLogin();
     loadActivities();
   }
   function showLogin() {
@@ -101,11 +152,18 @@ document.addEventListener("DOMContentLoaded", function () {
         C.auth.signOut();
         showLogin();
         alertIn($("auth-alerts"), "error",
-          "该邮箱（" + esc(email) + "）还没有加入后台白名单。请让义工社执委会先到后台「白名单」页签把邮箱加进来，再访问 admin.html?setup=1 开通账号。");
+          "该邮箱（" + esc(email) + "）还没有加入后台人员名单。请让义工社执委会先到后台「人员管理」页签把邮箱加进来并开通账号。");
         return false;
       }
-      showSignedIn(email);
-      return true;
+      /* 拿到角色再决定能改哪些活动。my_access() 是 SECURITY DEFINER，
+         负责老师也能读到自己的角色（allowed_admins 表的读策略只有执委会）。 */
+      return C.myAccess().then(function (ar) {
+        var row = (ar && ar.data && ar.data[0]) || {};
+        ME.email = row.email || email || "";
+        ME.role = row.role === "owner" ? "owner" : "teacher";
+        showSignedIn(ME.email);
+        return true;
+      });
     }).catch(function () {
       C.auth.signOut();
       showLogin();
@@ -193,22 +251,78 @@ document.addEventListener("DOMContentLoaded", function () {
 
   /* ---------------- 活动下拉 ---------------- */
   function loadActivities() {
-    C.listMyActivities().then(function (res) {
+    /* 先拿板块默认负责人 —— 「这个活动归谁」的判断要用它 */
+    loadCatMgrMap().then(function () {
+      return C.listMyActivities();
+    }).then(function (res) {
       acts = C.unwrap(res, "读取活动失败") || [];
       var sel = $("ci-activity");
       sel.innerHTML = '<option value="">选择活动…</option>' +
         acts.map(function (a) {
-          return '<option value="' + a.id + '">' + esc(a.title) + "</option>";
+          /* 我负责的活动前面加个 ★，老师一眼能找到自己的活儿 */
+          return '<option value="' + a.id + '">' +
+            (iManage(a) ? "★ " : "") + esc(a.title) +
+            (a.starts_at ? " · " + fmtDT(a.starts_at) : "") +
+            "</option>";
         }).join("");
+
+      var target = "";
       /* ?a=123 直接定位到某个活动（后台那边跳转过来时用） */
       var q = new URLSearchParams(location.search).get("a");
-      if (q && acts.some(function (a) { return String(a.id) === String(q); })) {
-        sel.value = q;
+      if (q && acts.some(function (a) { return String(a.id) === String(q); })) target = q;
+      if (!target) {
+        /* 「打开就能开始签到」：默认落在第一个我负责的活动上 */
+        var mine = acts.filter(iManage);
+        if (mine.length) target = String(mine[0].id);
+      }
+
+      if (target) {
+        sel.value = target;
         loadRoster();
+      } else if (!acts.length) {
+        alertIn($("ci-alerts"), "warn", "目前还没有任何活动。请先在后台「活动」页签创建。");
+      } else if (!isOwner()) {
+        alertIn($("ci-alerts"), "warn",
+          "还没有活动分配给你。可以在上面任选一个活动<b>查看名单（只读）</b>；" +
+          "要获得签到权限，请让执委会在后台「活动」里把负责老师填成你的邮箱，或在「人员管理」里把你设为某个板块的默认负责老师。");
       }
     }).catch(function (err) {
       alertIn($("ci-alerts"), "error", failMsg(err, "读取活动失败"));
     });
+  }
+
+  /* ---------- 这个活动我能不能动 ----------
+     看名单是所有人都可以（服务端 registrations 的读策略是 is_allowed_admin）；
+     签到 / 改小时只有负责人能操作。执委会一视同仁全都能改。 */
+  function applyGate() {
+    var box = $("ci-gate");
+    var act = currentActivity();
+    if (!act) {
+      if (box) { box.hidden = true; box.innerHTML = ""; }
+      return;
+    }
+    var can = canManageCurrent();
+    var mgr = effectiveManager(act);
+
+    if (box) {
+      box.hidden = false;
+      box.innerHTML = can
+        ? '<div class="alert alert-info">这个活动由你负责 —— 可以扫码、打钩、填写义工小时。' +
+          "默认时长 <b>" + fmtH(act.hours) + "</b> 小时/人。</div>"
+        : '<div class="alert alert-warn">这个活动由 <b>' + esc(mgr || "（还没指定负责老师）") +
+          "</b> 负责，你只能<b>查看名单</b>，不能扫码签到或修改义工小时。</div>";
+    }
+
+    /* 不是自己的活动：扫码入口和手输入口直接关掉，别让老师扫半天才发现写不进去 */
+    var scan = $("ci-scan-toggle");
+    if (scan) {
+      scan.disabled = !can;
+      scan.title = can ? "" : "只有负责这个活动的老师才能签到";
+    }
+    var man = $("ci-manual"), manGo = $("ci-manual-go");
+    if (man) man.disabled = !can;
+    if (manGo) manGo.disabled = !can;
+    if (!can && scanning) stopScan();
   }
 
   $("ci-activity").addEventListener("change", loadRoster);
@@ -246,9 +360,28 @@ document.addEventListener("DOMContentLoaded", function () {
     $("m-total").textContent = String(base.length);
     $("m-done").textContent = String(done);
     $("m-todo").textContent = String(base.length - done);
+
+    /* 已产生的义工小时 = 已签到的人各自记多少小时的和（逐人覆盖优先于活动默认） */
+    var hours = base.reduce(function (s, r) { return s + (r.checked_in ? hoursOf(r) : 0); }, 0);
+    $("m-hours").textContent = fmtH(hours);
+
     var pct = base.length ? Math.round(done / base.length * 100) : 0;
     $("m-bar-fill").style.width = pct + "%";
     $("m-pct").textContent = pct + "%";
+  }
+
+  /* 义工小时格子：能管的给输入框（留空 = 用活动默认时长），不能管的显示只读文本。 */
+  function hoursCell(r) {
+    var act = currentActivity();
+    var def = act && act.hours != null ? Number(act.hours) : 0;
+    var val = r.hours != null ? Number(r.hours) : null;
+    if (!canManageCurrent()) {
+      return '<span class="ci-no">' + fmtH(val != null ? val : def) + " 小时" +
+        (val == null ? "（默认）" : "") + "</span>";
+    }
+    return '<input type="number" class="hours-in" min="0" step="0.5" value="' +
+      (val != null ? val : "") + '" placeholder="' + fmtH(def) +
+      '" title="留空 = 用活动默认时长" data-hours="' + r.id + '" />';
   }
 
   function renderRoster() {
@@ -284,10 +417,13 @@ document.addEventListener("DOMContentLoaded", function () {
     $("ci-empty").hidden = true;
     $("ci-table-wrap").hidden = false;
 
+    var can = canManageCurrent();
+
     body.innerHTML = list.map(function (r, i) {
       return '<tr class="' + (r.checked_in ? "is-done" : "") + '" data-row="' + r.id + '">' +
         '<td class="tick-cell"><input type="checkbox" data-check="' + r.id + '"' +
-          (r.checked_in ? " checked" : "") + ' title="打钩 = 已签到" /></td>' +
+          (r.checked_in ? " checked" : "") + (can ? "" : " disabled") +
+          ' title="' + (can ? "打钩 = 已签到" : "只有负责这个活动的老师才能签到") + '" /></td>' +
         '<td class="num">' + (i + 1) + "</td>" +
         "<td><b>" + esc(r.name) + "</b>" + (r.selected ? '<span class="roster-flag">已录取</span>' : "") + "</td>" +
         "<td>" + esc(r.grade) + "</td>" +
@@ -297,16 +433,18 @@ document.addEventListener("DOMContentLoaded", function () {
         "<td>" + (r.checked_in
           ? '<span class="ci-yes">已签到</span> <span class="ci-when">' + fmtDT(r.checked_in_at) + "</span>"
           : '<span class="ci-no">未签到</span>') + "</td>" +
+        "<td>" + hoursCell(r) + "</td>" +
         '<td><div class="row-actions">' +
           '<button type="button" class="tbl-btn" data-qr="' + r.id + '">二维码</button>' +
-          (r.checked_in ? '<button type="button" class="tbl-btn danger" data-uncheck="' + r.id + '">撤销</button>' : "") +
+          (can && r.checked_in ? '<button type="button" class="tbl-btn danger" data-uncheck="' + r.id + '">撤销</button>' : "") +
         "</div></td>" +
       "</tr>";
     }).join("");
 
     var done = baseRows().filter(function (r) { return r.checked_in; }).length;
+    var hrs = baseRows().reduce(function (s, r) { return s + (r.checked_in ? hoursOf(r) : 0); }, 0);
     $("ci-count").textContent = (act ? "活动：" + act.title + " · " : "") +
-      "应到 " + baseRows().length + " 人 · 已签到 " + done + " 人";
+      "应到 " + baseRows().length + " 人 · 已签到 " + done + " 人 · 义工小时 " + fmtH(hrs);
     updateMetrics();
   }
 
@@ -314,6 +452,7 @@ document.addEventListener("DOMContentLoaded", function () {
     curId = $("ci-activity").value;
     rows = [];
     clear($("ci-alerts"));
+    applyGate();                       /* 换活动 = 换权限，先把门控刷一遍 */
     $("ci-table-wrap").hidden = true;
     $("ci-empty").hidden = true;
 
@@ -329,6 +468,7 @@ document.addEventListener("DOMContentLoaded", function () {
     C.listRegistrations(curId).then(function (res) {
       rows = C.unwrap(res, "读取失败") || [];
       $("ci-loading").hidden = true;
+      applyGate();
 
       /* 还没保存过录取名单时，名单口径退回「全部报名」，并明确告诉老师一声，
          免得他以为名单少了一半。 */
@@ -348,12 +488,18 @@ document.addEventListener("DOMContentLoaded", function () {
   /* ---------------- 手动打钩 ---------------- */
   function setChecked(rowId, on, btn) {
     clear($("ci-alerts"));
+    /* 不是自己负责的活动：名单能看，但不给写。 */
+    if (!canManageCurrent()) {
+      alertIn($("ci-alerts"), "error", "这个活动不是你负责的，只能查看名单，不能签到。");
+      return Promise.resolve(null);
+    }
     if (btn) busyOn(btn, "…");
     return C.setCheckedIn(rowId, on, me).then(function (res) {
       if (btn) busyOff(btn);
       var out = C.unwrap(res, "更新失败") || [];
       if (!out.length) {
-        alertIn($("ci-alerts"), "error", "没有改动 —— 服务端没有更新任何一行，请确认登录邮箱已在后台「白名单」页签里。");
+        alertIn($("ci-alerts"), "error",
+          "没有改动 —— 服务端没有更新任何一行。请确认登录邮箱已在后台「人员管理」里，并且是这个活动的负责老师。");
         return null;
       }
       var row = rows.filter(function (r) { return String(r.id) === String(rowId); })[0];
@@ -371,9 +517,52 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
+  /* ---------------- 逐人改义工小时 ----------------
+     输入框留空 = 用活动默认时长（库里 hours 存 null）。 */
+  function applyHours(rowId, input) {
+    clear($("ci-alerts"));
+    if (!canManageCurrent()) {
+      alertIn($("ci-alerts"), "error", "这个活动不是你负责的，只能查看名单，不能改义工小时。");
+      return;
+    }
+    var raw = String(input.value).trim();
+    var num = raw === "" ? null : Number(raw);
+    if (raw !== "" && (num == null || isNaN(num) || num < 0)) {
+      alertIn($("ci-alerts"), "error", "义工小时要填 0 或正数；留空表示用活动默认时长。");
+      return;
+    }
+    var oldVal = input.value;
+    input.disabled = true;
+    C.setHours(rowId, raw).then(function (res) {
+      input.disabled = false;
+      var out = C.unwrap(res, "保存失败") || [];
+      if (!out.length) {
+        alertIn($("ci-alerts"), "error", "没有改动 —— 服务端没有更新任何一行，请确认你是这个活动的负责老师。");
+        return;
+      }
+      var row = rows.filter(function (r) { return String(r.id) === String(rowId); })[0];
+      if (row) row.hours = out[0].hours;      /* null = 回落到活动默认时长 */
+      /* 不整表重画 —— 会打断老师继续输入，只刷上面的汇总数字 */
+      updateMetrics();
+      var done = baseRows().filter(function (r) { return r.checked_in; }).length;
+      var act = currentActivity();
+      $("ci-count").textContent = (act ? "活动：" + act.title + " · " : "") +
+        "应到 " + baseRows().length + " 人 · 已签到 " + done + " 人 · 义工小时 " +
+        fmtH(baseRows().reduce(function (s, r) { return s + (r.checked_in ? hoursOf(r) : 0); }, 0));
+    }).catch(function (err) {
+      input.disabled = false;
+      input.value = oldVal;
+      alertIn($("ci-alerts"), "error", failMsg(err, "保存失败"));
+    });
+  }
+
   $("ci-body").addEventListener("change", function (e) {
     var t = e.target;
     if (t.tagName !== "INPUT") return;
+
+    var hid = t.getAttribute("data-hours");
+    if (hid != null) { applyHours(hid, t); return; }
+
     var id = t.getAttribute("data-check");
     if (!id) return;
     var on = t.checked;
@@ -400,6 +589,11 @@ document.addEventListener("DOMContentLoaded", function () {
     if (qrId) {
       var row = rows.filter(function (r) { return String(r.id) === String(qrId); })[0];
       if (!row) return;
+      /* 只读老师：补码是一次写操作，不是自己的活动就不给补 */
+      if (!row.check_token && !canManageCurrent()) {
+        alertIn($("ci-alerts"), "warn", "这条记录还没有签到码，请联系这个活动的负责老师先打开一次。");
+        return;
+      }
       busyOn(t, "…");
       /* 万一这条记录是老数据、没有签到码，先补一个再画 */
       var ready = row.check_token
@@ -446,6 +640,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function startScan() {
     if (!curId) { alertIn(scanAlerts(), "warn", "先在上方选择要签到的活动，再开始扫描。"); return; }
+    if (!canManageCurrent()) {
+      alertIn(scanAlerts(), "warn", "这个活动不是你负责的，只能查看名单，不能扫码签到。");
+      return;
+    }
     if (!ctx) { alertIn(scanAlerts(), "error", "这个浏览器取不到图像上下文，请改用下面的名单手动打钩。"); return; }
     if (!window.isSecureContext) {
       alertIn(scanAlerts(), "error", "调用摄像头需要 HTTPS 页面。当前不是安全上下文，请改用下面的名单手动打钩。");
@@ -585,6 +783,10 @@ document.addEventListener("DOMContentLoaded", function () {
     var token = window.GUISQR.extractToken(raw);
     if (!token) { alertIn(scanAlerts(), "warn", "请先输入签到码。"); return; }
     if (!curId) { alertIn(scanAlerts(), "warn", "先在上方选择要签到的活动。"); return; }
+    if (!canManageCurrent()) {
+      alertIn(scanAlerts(), "warn", "这个活动不是你负责的，只能查看名单，不能签到。");
+      return;
+    }
     recent = null;
     onToken(token);
   });

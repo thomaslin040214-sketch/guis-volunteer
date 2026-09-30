@@ -19,6 +19,7 @@ window.SITE_I18N = {
     "nav.journey": "发展历程",
     "nav.contact": "联系我们",
     "nav.join": "社长欢迎信",
+    "nav.account": "我的义工账户",
 
     "ui.cv": "查看履历",
     "ui.when": "时间",
@@ -378,6 +379,7 @@ window.SITE_I18N = {
     "nav.journey": "Journey",
     "nav.contact": "Contact",
     "nav.join": "President's Welcome",
+    "nav.account": "My Service Account",
 
     "ui.cv": "View background",
     "ui.when": "When",

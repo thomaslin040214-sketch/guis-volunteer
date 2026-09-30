@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-ver="20260930q">
+<html lang="zh-CN" data-ver="20260930r">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,7 +10,7 @@
    于是点站内链接（全是裸路径）进去时整页退回旧设计。
    这里比对 <html data-ver>：不是当前版本就带查询串重拉一次（查询串必定回源）。 */
 (function () {
-  var VER = "20260930q";
+  var VER = "20260930r";
   try {
     var el = document.documentElement;
     var healed = /[?&]_v=/.test(location.search);
@@ -33,8 +33,8 @@
 <meta name="description" content="GUIS 义工组织后台管理：创建义工活动、查看报名名单、导出 Excel。" />
 <meta name="theme-color" content="#FFFFFF" />
 <meta name="robots" content="noindex, nofollow" />
-<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20260930q" />
-<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20260930q" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20260930r" />
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20260930r" />
 <!-- 品牌标志兜底样式（内联，随 HTML 一起下发）。
      即使 assets/site.css 被浏览器缓存成旧版本，标志也不会按图片原始尺寸撑破布局。
      这里只设尺寸上限（max-*），正常加载 site.css 时这些上限都不会生效。 -->
@@ -58,8 +58,8 @@
   .hero-brand .hero-va{max-height:40px}
 }
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20260930q" />
-<link rel="stylesheet" href="assets/app.css?v=20260930q" />
+<link rel="stylesheet" href="assets/site.css?v=20260930r" />
+<link rel="stylesheet" href="assets/app.css?v=20260930r" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
@@ -226,12 +226,19 @@
           <button type="button" class="tab-btn" data-tab="archive">过往活动</button>
           <button type="button" class="tab-btn" data-tab="journal">刊物</button>
           <button type="button" class="tab-btn" data-tab="announce">公告</button>
-          <button type="button" class="tab-btn" data-tab="admins">白名单</button>
+          <button type="button" class="tab-btn" data-tab="people">人员管理</button>
+          <button type="button" class="tab-btn" data-tab="students">学生名单</button>
         </div>
+
+        <!-- 不是执委会的人（负责老师）登录后看到的说明。
+             这些页签要不要显示由 admin.js 按角色决定，不是靠这里藏起来就完事 ——
+             真正的边界在数据库策略里：activities / articles / announcements / allowed_admins
+             的写入都只认 is_owner()。 -->
+        <div class="role-note" id="role-note" hidden></div>
 
         <!-- ---------- 活动管理 ---------- -->
         <div id="tab-acts">
-          <div class="panel">
+          <div class="panel" id="act-form-panel">
             <div class="panel-head">
               <div>
                 <h2 id="act-form-title">新建义工活动</h2>
@@ -302,6 +309,18 @@
                       <option value="closed">停止报名</option>
                       <option value="draft">草稿（学生不可见）</option>
                     </select>
+                  </div>
+
+                  <div class="field">
+                    <label for="a-manager">负责老师</label>
+                    <select id="a-manager"><option value="">（用板块默认负责人）</option></select>
+                    <span class="hint">这位老师登录后可以直接给这个活动签到；不指定就用板块默认值。</span>
+                  </div>
+
+                  <div class="field">
+                    <label for="a-hours">本次服务时长（小时）</label>
+                    <input id="a-hours" type="number" min="0" step="0.5" value="2" />
+                    <span class="hint">同学签到后按这个时长计入义工小时；个别情况可在名单里单独改。</span>
                   </div>
 
                   <div class="field span-2">
@@ -396,6 +415,7 @@
                       <th>备注</th>
                       <th>状态</th>
                       <th>签到</th>
+                      <th style="width:96px;">义工小时</th>
                       <th>报名时间</th>
                       <th style="width:190px;">操作</th>
                     </tr>
@@ -616,45 +636,130 @@
           </div>
         </div>
 
-        <!-- ---------- 白名单 ---------- -->
-        <div id="tab-admins" hidden>
+        <!-- ---------- 人员管理 ---------- -->
+        <div id="tab-people" hidden>
           <div class="panel">
             <div class="panel-head">
               <div>
-                <h2>后台白名单</h2>
-                <div class="sub">只有列表里的邮箱能登录后台、创建活动并查看报名名单。</div>
+                <h2>人员管理</h2>
+                <div class="sub">执委会（owner）能改活动 / 刊物 / 公告；负责老师（teacher）只能看名单和签到。</div>
               </div>
-              <button type="button" class="link-btn" id="adm-refresh">刷新</button>
+              <button type="button" class="link-btn" id="peo-refresh">刷新</button>
             </div>
             <div class="panel-body">
-              <div id="adm-alerts"></div>
 
-              <form id="adm-form" novalidate style="margin-bottom:1.5rem;">
+              <div class="peo-stats" id="peo-stats"></div>
+              <div id="peo-alerts"></div>
+
+              <form id="peo-form" novalidate style="margin-bottom:1.5rem;">
                 <div class="form-grid">
                   <div class="field">
-                    <label for="adm-email">邮箱 <span class="req">*</span></label>
-                    <input id="adm-email" type="email" placeholder="name@guiscn.com" required />
+                    <label for="peo-email">邮箱 <span class="req">*</span></label>
+                    <input id="peo-email" type="email" placeholder="name@guiscn.com" required />
                   </div>
                   <div class="field">
-                    <label for="adm-note">备注</label>
-                    <input id="adm-note" type="text" placeholder="例如：社区关怀组组长" />
+                    <label for="peo-note">备注</label>
+                    <input id="peo-note" type="text" placeholder="例如：社区关怀组组长 / 教务处李老师" />
+                  </div>
+                  <div class="field">
+                    <label for="peo-role">角色</label>
+                    <select id="peo-role">
+                      <option value="teacher">负责老师（只能看名单 + 签到）</option>
+                      <option value="owner">执委会（可改活动 / 刊物 / 公告）</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="peo-initial">初始密码（可选）</label>
+                    <input id="peo-initial" type="text" placeholder="留空则由对方自己设" />
+                    <span class="hint">填了就要走「现场取验证码」开通：让对方把邮箱里的 6 位验证码告诉你。</span>
+                  </div>
+                  <div class="field span-2">
+                    <label class="peo-check">
+                      <input type="checkbox" id="peo-is-student" />
+                      <span>这个人同时也是义工社学生成员（登录后可看到自己的义工账户）</span>
+                    </label>
                   </div>
                 </div>
                 <div class="form-actions" style="margin-top:1rem;">
-                  <button type="submit" class="btn btn-primary" id="adm-submit">加入白名单</button>
-                  <span class="hint" style="align-self:center;">加入后，对方需访问 <b>admin.html?setup=1</b> 开通账号。</span>
+                  <button type="submit" class="btn btn-primary" id="peo-submit">加入人员名单</button>
+                  <span class="hint" style="align-self:center;">加入后对方才有权登录；账号仍需开通一次。</span>
                 </div>
               </form>
 
               <div class="table-scroll">
-                <table class="data" style="min-width:520px;">
+                <table class="data" style="min-width:640px;">
                   <thead>
-                    <tr><th>邮箱</th><th>备注</th><th>加入时间</th><th style="width:90px;">操作</th></tr>
+                    <tr>
+                      <th>邮箱</th><th>角色</th><th>标签</th><th>备注</th>
+                      <th>最后登录</th><th style="width:230px;">操作</th>
+                    </tr>
                   </thead>
-                  <tbody id="adm-body"></tbody>
+                  <tbody id="peo-body"></tbody>
                 </table>
               </div>
-              <p class="hint" id="adm-count" style="margin-top:0.85rem;"></p>
+              <p class="hint" id="peo-count" style="margin-top:0.85rem;"></p>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>板块默认负责老师</h2>
+                <div class="sub">单个活动上另外指定了负责人的，以单个活动的指定为准。</div>
+              </div>
+              <button type="button" class="btn btn-primary" id="cat-save" style="padding:0.42rem 0.9rem;font-size:0.82rem;">保存</button>
+            </div>
+            <div class="panel-body">
+              <div id="cat-alerts"></div>
+              <div class="form-grid" id="cat-rows"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ---------- 学生名单 ---------- -->
+        <div id="tab-students" hidden>
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>导入学生邮箱名单</h2>
+                <div class="sub">只有名单里的邮箱才能开通学生账号 —— 相当于一道开通白名单。</div>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div id="stu-alerts"></div>
+              <div class="field">
+                <label for="stu-paste">每行一条，用逗号或制表符分隔：邮箱, 姓名, 年级, 学号</label>
+                <textarea id="stu-paste" placeholder="2510032@guiscn.com, 陈同学, G10, 2510032&#10;2510033@guiscn.com, 李同学, G11, 2510033" style="min-height:150px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:0.84rem;"></textarea>
+                <span class="hint">可以直接从 Excel 复制一整列粘进来。重复导入同一份名单不会报错，只会刷新姓名年级。</span>
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn btn-primary" id="stu-import">导入名单</button>
+                <span class="hint" style="align-self:center;" id="stu-import-hint"></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>学生名单</h2>
+                <div class="sub">已开通 = 这个邮箱已经注册过账号。</div>
+              </div>
+              <div style="display:flex;gap:0.7rem;align-items:center;">
+                <input type="search" id="stu-search" placeholder="搜索邮箱 / 姓名 / 学号…" style="max-width:260px;" />
+                <button type="button" class="link-btn" id="stu-refresh">刷新</button>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="table-scroll">
+                <table class="data" style="min-width:560px;">
+                  <thead>
+                    <tr><th>邮箱</th><th>姓名</th><th>年级</th><th>学号</th><th>已开通</th><th style="width:90px;">操作</th></tr>
+                  </thead>
+                  <tbody id="stu-body"></tbody>
+                </table>
+              </div>
+              <p class="hint" id="stu-count" style="margin-top:0.85rem;"></p>
             </div>
           </div>
         </div>
@@ -676,6 +781,7 @@
     <div class="footer-links">
       <a href="index.html">回到主页</a>
       <a href="signup.html">报名页面</a>
+      <a href="me.html">我的义工账户</a>
     </div>
   </div>
 </footer>
@@ -684,13 +790,13 @@
 <!-- 导出 Excel：ExcelJS 才能往表里插 logo（SheetJS 社区版写不了图片），加载失败时用 SheetJS 降级 -->
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="assets/cloud-config.js?v=20260930q"></script>
-<script src="assets/cloud.js?v=20260930q"></script>
-<script src="assets/qr.js?v=20260930q"></script>
-<script src="assets/board.js?v=20260930q"></script>
-<script src="assets/export.js?v=20260930q"></script>
-<script src="assets/editor.js?v=20260930q"></script>
-<script src="assets/feed.js?v=20260930q"></script>
-<script src="assets/admin.js?v=20260930q"></script>
+<script src="assets/cloud-config.js?v=20260930r"></script>
+<script src="assets/cloud.js?v=20260930r"></script>
+<script src="assets/qr.js?v=20260930r"></script>
+<script src="assets/board.js?v=20260930r"></script>
+<script src="assets/export.js?v=20260930r"></script>
+<script src="assets/editor.js?v=20260930r"></script>
+<script src="assets/feed.js?v=20260930r"></script>
+<script src="assets/admin.js?v=20260930r"></script>
 </body>
 </html>
