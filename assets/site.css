@@ -664,13 +664,27 @@ html.js .reveal.is-in { opacity: 1; transform: none; }
   box-shadow: var(--shadow-sm); padding: clamp(1.6rem, 4vw, 2.8rem); margin-top: 2.2rem;
 }
 .board-num-wrap { text-align: center; }
+.board-figure { display: flex; align-items: baseline; justify-content: center; }
 .board-num {
   font-size: clamp(3.4rem, 9vw, 5.6rem); font-weight: 700; letter-spacing: -0.05em; line-height: 1;
   font-variant-numeric: tabular-nums;
   background: linear-gradient(180deg, var(--red) 12%, #c27276 100%);
   -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
 }
+/* 量词「个」紧跟大数字，同样用品牌红（英文无量词，词典给空串时会整个隐藏）。
+   字号要给足 —— 太小的话「个」的笔画会细到像一个箭头图标。 */
+.board-unit {
+  font-size: clamp(2.1rem, 5.4vw, 3.2rem); font-weight: 700;
+  letter-spacing: 0; line-height: 1; color: var(--red); margin-left: 0.08em;
+}
 .board-num-label { margin-top: 0.55rem; color: var(--text-muted); font-size: 0.88rem; line-height: 1.5; }
+/* 没有活动开放报名时，用红字说明替代数字 */
+.board-none {
+  color: var(--red); font-weight: 700; line-height: 1.4; letter-spacing: -0.01em;
+  font-size: clamp(1.15rem, 3.2vw, 1.7rem);
+}
+/* hidden 属性要能压过上面这些 display —— 作者样式会盖掉 UA 的 [hidden]{display:none} */
+.board[hidden], .board-figure[hidden], .board-none[hidden], .board-num-label[hidden] { display: none; }
 .board-actions { margin-top: 1.5rem; display: flex; gap: 0.75rem; flex-wrap: wrap; }
 
 .tl-legend { display: flex; flex-direction: column; gap: 0.7rem; }

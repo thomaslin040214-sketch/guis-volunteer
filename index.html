@@ -42,8 +42,8 @@
   .letter-brand img{max-width:100px}
 }
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20260930b" />
-<link rel="stylesheet" href="assets/app.css?v=20260930b" />
+<link rel="stylesheet" href="assets/site.css?v=20260930c" />
+<link rel="stylesheet" href="assets/app.css?v=20260930c" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
@@ -254,8 +254,11 @@
 
       <div id="su-board" class="board reveal" hidden>
         <div class="board-num-wrap">
-          <div class="board-num"><span id="su-count">0</span></div>
-          <div class="board-num-label" data-i18n="su.boardNumLabel">个活动正在开放报名</div>
+          <div class="board-figure" id="su-figure">
+            <span class="board-num" id="su-count">0</span><span class="board-unit" id="su-unit" data-i18n="su.unit">个</span>
+          </div>
+          <div class="board-num-label" id="su-num-label" data-i18n="su.boardNumLabel">正在开放报名</div>
+          <div class="board-none" id="su-none" hidden data-i18n="su.boardNone">目前暂时没有开放报名的活动</div>
         </div>
         <div>
           <div id="su-legend" class="tl-legend"></div>
@@ -619,14 +622,14 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
-<script src="assets/cloud-config.js?v=20260930b"></script>
-<script src="assets/cloud.js?v=20260930b"></script>
-<script src="assets/i18n.js?v=20260930b"></script>
-<script src="assets/board.js?v=20260930b"></script>
-<script src="assets/team.js?v=20260930b"></script>
-<script src="assets/team-render.js?v=20260930b"></script>
-<script src="assets/queue.js?v=20260930b"></script>
-<script src="assets/main.js?v=20260930b"></script>
+<script src="assets/cloud-config.js?v=20260930c"></script>
+<script src="assets/cloud.js?v=20260930c"></script>
+<script src="assets/i18n.js?v=20260930c"></script>
+<script src="assets/board.js?v=20260930c"></script>
+<script src="assets/team.js?v=20260930c"></script>
+<script src="assets/team-render.js?v=20260930c"></script>
+<script src="assets/queue.js?v=20260930c"></script>
+<script src="assets/main.js?v=20260930c"></script>
 <script>
 /* ---------- 首页「活动报名」板块：读取云端开放报名的活动 ---------- */
 document.addEventListener("DOMContentLoaded", function () {
@@ -637,6 +640,10 @@ document.addEventListener("DOMContentLoaded", function () {
   var board = document.getElementById("su-board");
   var legend = document.getElementById("su-legend");
   var countEl = document.getElementById("su-count");
+  var figure = document.getElementById("su-figure");
+  var unitEl = document.getElementById("su-unit");
+  var numLabel = document.getElementById("su-num-label");
+  var noneEl = document.getElementById("su-none");
   var E = window.GUISEnter;   /* main.js 暴露的进场触发 + 计数动画 */
   var B = window.GUISBoard;   /* 红绿灯判定，见 assets/board.js */
   if (!board || !B) return;
@@ -672,17 +679,29 @@ document.addEventListener("DOMContentLoaded", function () {
     loading.hidden = true;
 
     var counts = B.countLights(cached);
+    var n = counts.green;
     legend.innerHTML = B.legendHTML(counts);
     board.hidden = false;
+
+    /* 量词「个」紧跟数字；英文没有量词，词典给空串时整个隐藏 */
+    unitEl.textContent = t("su.unit", "个");
+    unitEl.hidden = !unitEl.textContent;
+
+    /* 一个都没有时不显示数字，直接给一句红字说明 */
+    figure.hidden = (n === 0);
+    numLabel.hidden = (n === 0);
+    noneEl.hidden = (n !== 0);
+
+    if (n === 0) return;
 
     /* 数字动画：滚动到看板时从 0 滚到实际数量。
        数据在 DOMContentLoaded 之后才回来，所以要在这里补注册一次进场触发。 */
     if (!countBound) {
       countBound = true;
-      if (E) E.register(countEl, function (node) { E.countTo(node, counts.green); }, 0.2);
-      else countEl.textContent = String(counts.green);
+      if (E) E.register(countEl, function (node) { E.countTo(node, n); }, 0.2);
+      else countEl.textContent = String(n);
     } else {
-      countEl.textContent = String(counts.green);
+      countEl.textContent = String(n);
     }
   }
 
