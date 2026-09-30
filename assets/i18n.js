@@ -18,7 +18,6 @@ window.SITE_I18N = {
     "nav.team": "部门成员",
     "nav.journey": "发展历程",
     "nav.contact": "联系我们",
-    "nav.join": "社长欢迎信",
     "nav.account": "我的义工账户",
     "nav.login": "登录",
 
@@ -57,7 +56,7 @@ window.SITE_I18N = {
     "hero.badge": "广州优联国际学校 · 学生志愿服务组织",
     "hero.title": "同一个世界，<span class=\"grad\">同一种爱</span>。",
     "hero.sub": "GUIS 义工组织由学生自主运营。我们在校园与南沙社区之间，把想法变成有回响的行动 —— 一次探访、一场活动、一次成功举办的义卖。",
-    "hero.cta1": "阅读社长欢迎信",
+    "hero.cta1": "浏览服务项目",
     "hero.cta2": "加入我们",
     "hero.scroll": "向下浏览",
 
@@ -403,7 +402,6 @@ window.SITE_I18N = {
     "nav.team": "Departments",
     "nav.journey": "Journey",
     "nav.contact": "Contact",
-    "nav.join": "President's Welcome",
     "nav.account": "My Service Account",
     "nav.login": "Sign in",
 
@@ -442,7 +440,7 @@ window.SITE_I18N = {
     "hero.badge": "Guangzhou Ulink International School · Student-led service",
     "hero.title": "One Love, <span class=\"grad\">One Heart</span>.",
     "hero.sub": "GUIS Volunteer Service is run by students. Between our campus and the Nansha community, we turn good intentions into things that actually happen — a visit, an event, a charity sale that came together.",
-    "hero.cta1": "Read the president's welcome",
+    "hero.cta1": "Explore our programmes",
     "hero.cta2": "Get involved",
     "hero.scroll": "Scroll",
 
