@@ -15,7 +15,7 @@
 (function (global) {
   "use strict";
 
-  var BRAND = "9C2126";
+  var BRAND = "144C90";
   var TITLE = "义工组织官方人员导出名单";
   var SIGNER_NOTE = "义工组织后台导出账号";
 

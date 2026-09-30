@@ -6,8 +6,8 @@
 <title>活动报名 | GUIS 义工社</title>
 <meta name="description" content="GUIS 义工社义工活动报名 —— 广州优联国际学校学生志愿服务组织。" />
 <meta name="theme-color" content="#FFFFFF" />
-<link rel="icon" type="image/png" href="assets/logo/favicon.png" />
-<link rel="apple-touch-icon" href="assets/logo/favicon.png" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20260930m" />
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20260930m" />
 <!-- 品牌标志兜底样式（内联，随 HTML 一起下发）。
      即使 assets/site.css 被浏览器缓存成旧版本，标志也不会按图片原始尺寸撑破布局。
      这里只设尺寸上限（max-*），正常加载 site.css 时这些上限都不会生效。 -->
@@ -15,28 +15,24 @@
 .nav-logo{display:flex;align-items:center;gap:.5rem}
 .hero-brand{display:flex;align-items:center;justify-content:center;gap:.9rem}
 .footer-brand{display:flex;align-items:center;gap:.9rem}
-.letter-brand{display:flex;justify-content:center}
 .nav-logo .logo-img,.nav-logo .logo-va{max-height:34px;width:auto}
-.hero-brand .hero-logo{max-width:126px;height:auto}
+.hero-brand .hero-logo{max-width:360px;height:auto}
 .hero-brand .hero-va{max-height:96px;width:auto}
 .footer-brand img{max-height:34px;width:auto}
-.letter-brand img{max-width:210px;height:auto}
 @media (max-width:640px){
   .nav-logo .logo-img,.nav-logo .logo-va{max-height:26px}
-  .hero-brand .hero-logo{max-width:76px}
+  .hero-brand .hero-logo{max-width:210px}
   .hero-brand .hero-va{max-height:48px}
   .footer-brand img{max-height:26px}
-  .letter-brand img{max-width:116px}
 }
 @media (max-width:480px){
   .nav-logo .logo-img,.nav-logo .logo-va{max-height:24px}
-  .hero-brand .hero-logo{max-width:66px}
+  .hero-brand .hero-logo{max-width:175px}
   .hero-brand .hero-va{max-height:40px}
-  .letter-brand img{max-width:100px}
 }
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20260930l" />
-<link rel="stylesheet" href="assets/app.css?v=20260930l" />
+<link rel="stylesheet" href="assets/site.css?v=20260930m" />
+<link rel="stylesheet" href="assets/app.css?v=20260930m" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
@@ -46,13 +42,19 @@
   <div class="bg-blob blob-a"></div>
   <div class="bg-blob blob-b"></div>
   <div class="bg-blob blob-c"></div>
-  <img class="bg-emblem" src="assets/logo/guis-emblem.png" alt="" />
+  <!-- 合并背景：左边 GUIS 凤凰出血约半个，右边 ULC 标记出血约半个 -->
+  <img class="bg-phoenix" src="assets/logo/guis-phoenix-blue.png" alt="" />
+  <svg class="bg-ulc" viewBox="0 0 406 389">
+    <polygon fill="#144C90" points="24,381 163,242 242,242 381,381" />
+    <polygon fill="#2C68AC" points="6,6 146,146 146,225 6,365" />
+    <polygon fill="#54B4D8" points="259,146 398,7 398,364 259,225" />
+  </svg>
 </div>
 <div class="spotlight" id="spotlight"></div>
 
 <nav>
   <a href="index.html" class="nav-logo">
-    <img class="logo-img" src="assets/logo/guis-logo-h.png" alt="Guangzhou Ulink International School" />
+    <img class="logo-img" src="assets/logo/guis-ulc-lockup.png" alt="GUIS · Guangzhou Ulink International School | ULC · Ulink College" />
     <span class="logo-div"></span>
     <img class="logo-va" src="assets/logo/va-logo.png" alt="GUIS Volunteer Association" />
     <span class="org" data-i18n="nav.org">义工社</span>
@@ -200,7 +202,7 @@
 <footer>
   <div class="wrap footer-inner">
     <div class="footer-brand">
-      <img src="assets/logo/guis-wordmark.png" alt="GUIS" />
+      <img src="assets/logo/guis-ulc-lockup.png" alt="GUIS | ULC" />
       <img class="footer-va" src="assets/logo/va-logo.png" alt="GUIS Volunteer Association" />
       <span class="footer-org" data-i18n="footer.org">广州优联国际学校义工社<br />Guangzhou Ulink International School Volunteer Service</span>
     </div>
@@ -213,12 +215,12 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
-<script src="assets/cloud-config.js?v=20260930l"></script>
-<script src="assets/cloud.js?v=20260930l"></script>
-<script src="assets/i18n.js?v=20260930l"></script>
-<script src="assets/board.js?v=20260930l"></script>
-<script src="assets/main.js?v=20260930l"></script>
-<script src="assets/queue.js?v=20260930l"></script>
+<script src="assets/cloud-config.js?v=20260930m"></script>
+<script src="assets/cloud.js?v=20260930m"></script>
+<script src="assets/i18n.js?v=20260930m"></script>
+<script src="assets/board.js?v=20260930m"></script>
+<script src="assets/main.js?v=20260930m"></script>
+<script src="assets/queue.js?v=20260930m"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   "use strict";

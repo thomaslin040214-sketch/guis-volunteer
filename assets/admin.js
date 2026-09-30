@@ -589,7 +589,8 @@ document.addEventListener("DOMContentLoaded", function () {
     var capEl = $("pick-capacity");
     if (capEl) {
       capEl.textContent = cap ? "（计划招募 " + cap + " 人" + (n > cap ? " · 已超出 " + (n - cap) + " 人" : "") + "）" : "";
-      capEl.style.color = (cap && n > cap) ? "#B3261E" : "";
+      /* 超出名额是「警告」语义，用和 .alert-error 同一支的 --danger，不跟品牌色走 */
+      capEl.style.color = (cap && n > cap) ? "var(--danger, #C0392B)" : "";
     }
     /* 表头的全选框：全选打勾、部分选中打横杠 */
     var all = $("pick-all");
