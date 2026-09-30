@@ -182,7 +182,7 @@ window.SITE_I18N = {
     "co.alt": "阅读社长欢迎信",
     "co.l1k": "例会时间", "co.l1v": "学期间每周三 16:30",
     "co.l2k": "招募窗口", "co.l2v": "每学期开学后两周",
-    "co.l3k": "指导单位", "co.l3v": "GUIS 学生事务处",
+    "co.l3k": "指导单位", "co.l3v": "GUIS-ULC 学生事务处",
     "co.meta": "广州 · 南沙区伟立路 8 号 · 广州优联国际学校校园内",
 
     "footer.org": "广州优联国际学校义工社<br />Guangzhou Ulink International School Volunteer Service",
