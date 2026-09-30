@@ -35,8 +35,8 @@
   .letter-brand img{max-width:100px}
 }
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20260930" />
-<link rel="stylesheet" href="assets/app.css?v=20260930" />
+<link rel="stylesheet" href="assets/site.css?v=20260930b" />
+<link rel="stylesheet" href="assets/app.css?v=20260930b" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
@@ -213,11 +213,12 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
-<script src="assets/cloud-config.js?v=20260930"></script>
-<script src="assets/cloud.js?v=20260930"></script>
-<script src="assets/i18n.js?v=20260930"></script>
-<script src="assets/main.js?v=20260930"></script>
-<script src="assets/queue.js?v=20260930"></script>
+<script src="assets/cloud-config.js?v=20260930b"></script>
+<script src="assets/cloud.js?v=20260930b"></script>
+<script src="assets/i18n.js?v=20260930b"></script>
+<script src="assets/board.js?v=20260930b"></script>
+<script src="assets/main.js?v=20260930b"></script>
+<script src="assets/queue.js?v=20260930b"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   "use strict";
@@ -268,8 +269,10 @@ document.addEventListener("DOMContentLoaded", function () {
     return bits;
   }
 
+  /* 只有绿灯还能报名；黄灯（过了截止时间）和红灯（已邮件通知）都不能。
+     判定统一走 assets/board.js，避免和首页看板、后台各写一套。 */
   function isClosed(a) {
-    return a.signup_deadline && new Date(a.signup_deadline).getTime() < Date.now();
+    return !window.GUISBoard.isOpen(a);
   }
 
   /* ---------- 载入活动 ---------- */
@@ -316,6 +319,15 @@ document.addEventListener("DOMContentLoaded", function () {
           sum.textContent = a.summary;
           left.appendChild(sum);
         }
+        /* 非绿灯时用完整状态语，让同学知道下一步该做什么（等邮件 / 查收邮箱） */
+        if (window.GUISBoard.lightOf(a) !== "green") {
+          var st = document.createElement("div");
+          st.className = "d";
+          st.style.marginTop = "0.3rem";
+          st.style.color = "var(--text-muted)";
+          st.textContent = window.GUISBoard.labelOf(window.GUISBoard.lightOf(a));
+          left.appendChild(st);
+        }
         left.appendChild(meta);
 
         var right = document.createElement("div");
@@ -324,10 +336,10 @@ document.addEventListener("DOMContentLoaded", function () {
         right.style.alignItems = "center";
         right.style.gap = "0.6rem";
 
-        var badge = document.createElement("span");
-        badge.className = "badge " + (closed ? "badge-closed" : "badge-open");
-        badge.textContent = closed ? t("sg.closed", "已截止") : t("sg.open", "报名中");
-        right.appendChild(badge);
+        /* 红绿灯取代原来的「报名中 / 已截止」文字徽章 */
+        var lamp = document.createElement("span");
+        lamp.innerHTML = window.GUISBoard.lampOf(a, { short: true });
+        right.appendChild(lamp);
 
         var radio = document.createElement("input");
         radio.type = "radio";

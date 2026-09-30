@@ -35,8 +35,8 @@
   .letter-brand img{max-width:100px}
 }
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20260930" />
-<link rel="stylesheet" href="assets/app.css?v=20260930" />
+<link rel="stylesheet" href="assets/site.css?v=20260930b" />
+<link rel="stylesheet" href="assets/app.css?v=20260930b" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
@@ -427,8 +427,9 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="assets/cloud-config.js?v=20260930"></script>
-<script src="assets/cloud.js?v=20260930"></script>
+<script src="assets/cloud-config.js?v=20260930b"></script>
+<script src="assets/cloud.js?v=20260930b"></script>
+<script src="assets/board.js?v=20260930b"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   "use strict";
@@ -710,6 +711,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
       var html = "";
       rows.forEach(function (a) {
+        /* 看板灯色：绿 = 报名中｜黄 = 已截止、待通知｜红 = 已邮件通知（人工标记） */
+        var B = window.GUISBoard;
+        var light = B ? B.lightOf(a) : "green";
         var badgeCls = a.status === "open" ? "badge-open" : a.status === "closed" ? "badge-closed" : "badge-draft";
         var badgeTxt = a.status === "open" ? "开放报名" : a.status === "closed" ? "停止报名" : "草稿";
         var when = a.starts_at ? fmtDT(a.starts_at) : "待定";
@@ -721,7 +725,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
         html += '<div class="act-item">' +
           '<div class="act-main">' +
-            '<div class="act-title">' + esc(a.title) + ' <span class="badge ' + badgeCls + '">' + badgeTxt + '</span></div>' +
+            '<div class="act-title">' + esc(a.title) +
+              ' <span class="badge ' + badgeCls + '">' + badgeTxt + '</span>' +
+              (B ? ' ' + B.lampHTML(light, { short: true }) : '') +
+            '</div>' +
             (a.summary ? '<div class="act-summary">' + esc(a.summary) + '</div>' : '') +
             '<div class="act-meta"><span>' + when + '</span>' +
               meta.map(function (m) { return '<span>' + m + '</span>'; }).join("") +
@@ -731,6 +738,9 @@ document.addEventListener("DOMContentLoaded", function () {
             '<div class="row-actions">' +
               '<button type="button" class="tbl-btn" data-edit="' + a.id + '">编辑</button>' +
               '<button type="button" class="tbl-btn" data-toggle="' + a.id + '">' + (a.status === "open" ? "停止报名" : "开放报名") + '</button>' +
+              /* 红灯由后台人工点出来；再点一次撤销，回到按截止时间自动判定的绿 / 黄 */
+              '<button type="button" class="tbl-btn" data-notify="' + a.id + '">' +
+                (light === "red" ? "撤销邮件通知" : "标记已邮件通知") + '</button>' +
               '<button type="button" class="tbl-btn danger" data-del="' + a.id + '">删除</button>' +
             '</div>' +
             '<a class="tbl-btn" style="text-align:center;" href="signup.html?activity=' + a.id + '">查看报名页</a>' +
@@ -753,6 +763,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (t.tagName !== "BUTTON") return;
     var editId = t.getAttribute("data-edit");
     var toggleId = t.getAttribute("data-toggle");
+    var notifyId = t.getAttribute("data-notify");
     var delId = t.getAttribute("data-del");
 
     if (editId) {
@@ -787,6 +798,25 @@ document.addEventListener("DOMContentLoaded", function () {
         loadActivities();
         loadActivityOptions();
       }).catch(function (err) {
+        alertIn($("act-alerts"), "error", "更新失败：" + (err && err.message ? err.message : ""));
+      });
+    }
+
+    /* 标记 / 撤销「已邮件通知」—— 即看板上的红灯，只由后台手动操作 */
+    if (notifyId) {
+      var na = myActivities.filter(function (x) { return String(x.id) === String(notifyId); })[0];
+      if (!na) return;
+      var goingRed = !(window.GUISBoard && window.GUISBoard.lightOf(na) === "red");
+      var btn = t;
+      btn.disabled = true;
+      C.setActivityNotified(notifyId, goingRed).then(function (res) {
+        var affected = C.unwrap(res, "更新失败") || [];
+        btn.disabled = false;
+        if (!affected.length) { alertIn($("act-alerts"), "error", "没有改动 —— 该活动可能不是你创建的。"); return; }
+        alertIn($("act-alerts"), "ok", goingRed ? "已标记为「已邮件通知」，前台看板会亮红灯。" : "已撤销，前台恢复到按截止时间判定的状态。");
+        loadActivities();
+      }).catch(function (err) {
+        btn.disabled = false;
         alertIn($("act-alerts"), "error", "更新失败：" + (err && err.message ? err.message : ""));
       });
     }

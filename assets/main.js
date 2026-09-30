@@ -80,12 +80,10 @@
      scroll/resize check is the safety net (headless or exotic
      environments where IO callbacks may never fire). */
   var enterTasks = [];
-
-  function registerEnter(el, fn, ratio) {
-    var task = { el: el, fn: fn, ratio: ratio || 0.15, done: false };
-    enterTasks.push(task);
-    return task;
-  }
+  var enterIO = null;
+  var patrolId = 0;
+  var engineStarted = false;
+  var sweepQueued = false;
 
   function runTask(task) {
     if (task.done) return;
@@ -93,47 +91,65 @@
     task.fn(task.el);
   }
 
-  function initEnterEngine() {
-    var useIO = "IntersectionObserver" in window;
+  // Fallback sweep (also covers environments where IO never calls back)
+  function sweep() {
+    sweepQueued = false;
+    var vh = window.innerHeight || document.documentElement.clientHeight || 0;
+    enterTasks.forEach(function (t) {
+      if (t.done) return;
+      var r = t.el.getBoundingClientRect();
+      var trigger = vh * 0.95;
+      if (r.top < trigger && r.bottom > -40) runTask(t);
+    });
+  }
 
-    if (useIO) {
-      var io = new IntersectionObserver(function (entries) {
+  function requestSweep() {
+    if (sweepQueued) return;
+    sweepQueued = true;
+    window.requestAnimationFrame(sweep);
+  }
+
+  function startPatrol() {
+    if (patrolId) return;
+    patrolId = window.setInterval(function () {
+      var pending = false;
+      enterTasks.forEach(function (t) { if (!t.done) pending = true; });
+      if (!pending) { window.clearInterval(patrolId); patrolId = 0; return; }
+      sweep();
+    }, 900);
+  }
+
+  function registerEnter(el, fn, ratio) {
+    var task = { el: el, fn: fn, ratio: ratio || 0.15, done: false };
+    enterTasks.push(task);
+    /* 引擎启动之后才补注册的任务（例如活动数据异步加载完再加的计数动画）
+       必须补上 observe 并重启巡逻，否则它可能永远等不到触发。 */
+    if (engineStarted) {
+      if (enterIO) enterIO.observe(el);
+      startPatrol();
+      requestSweep();
+    }
+    return task;
+  }
+
+  function initEnterEngine() {
+    if ("IntersectionObserver" in window) {
+      enterIO = new IntersectionObserver(function (entries) {
         entries.forEach(function (en) {
           if (!en.isIntersecting) return;
           enterTasks.forEach(function (t) {
-            if (t.el === en.target) { runTask(t); io.unobserve(en.target); }
+            if (t.el === en.target) { runTask(t); enterIO.unobserve(en.target); }
           });
         });
       }, { threshold: 0.05, rootMargin: "0px 0px -6% 0px" });
-      enterTasks.forEach(function (t) { io.observe(t.el); });
+      enterTasks.forEach(function (t) { enterIO.observe(t.el); });
     }
 
-    // Fallback sweep (also covers environments where IO never calls back)
-    var queued = false;
-    function sweep() {
-      queued = false;
-      var vh = window.innerHeight || document.documentElement.clientHeight || 0;
-      enterTasks.forEach(function (t) {
-        if (t.done) return;
-        var r = t.el.getBoundingClientRect();
-        var trigger = vh * 0.95;
-        if (r.top < trigger && r.bottom > -40) runTask(t);
-      });
-    }
-    function requestSweep() {
-      if (queued) return;
-      queued = true;
-      window.requestAnimationFrame(sweep);
-    }
     window.addEventListener("scroll", requestSweep, { passive: true });
     window.addEventListener("resize", requestSweep);
     window.addEventListener("load", requestSweep);
-    var patrol = window.setInterval(function () {
-      var pending = false;
-      enterTasks.forEach(function (t) { if (!t.done) pending = true; });
-      if (!pending) { window.clearInterval(patrol); return; }
-      sweep();
-    }, 900);
+    engineStarted = true;
+    startPatrol();
     requestSweep();
   }
 
@@ -166,24 +182,28 @@
   }
 
   /* ---------- Number counters ---------- */
+  function countTo(node, target, suffix, dur) {
+    suffix = suffix || "";
+    dur = dur || 1300;
+    var start = null;
+    function step(ts) {
+      if (start === null) start = ts;
+      var p = Math.min((ts - start) / dur, 1);
+      var eased = 1 - Math.pow(1 - p, 3);
+      node.textContent = Math.round(target * eased).toLocaleString("en-US") + (p === 1 ? suffix : "");
+      if (p < 1) window.requestAnimationFrame(step);
+    }
+    window.requestAnimationFrame(step);
+    // Guarantee the final number even if frames are starved
+    window.setTimeout(function () {
+      node.textContent = target.toLocaleString("en-US") + suffix;
+    }, dur + 400);
+  }
+
   function initCounters() {
     document.querySelectorAll("[data-count]").forEach(function (el) {
       registerEnter(el, function (node) {
-        var target = parseInt(node.getAttribute("data-count"), 10) || 0;
-        var suffix = node.getAttribute("data-suffix") || "";
-        var dur = 1300, start = null;
-        function step(ts) {
-          if (start === null) start = ts;
-          var p = Math.min((ts - start) / dur, 1);
-          var eased = 1 - Math.pow(1 - p, 3);
-          node.textContent = Math.round(target * eased).toLocaleString("en-US") + (p === 1 ? suffix : "");
-          if (p < 1) window.requestAnimationFrame(step);
-        }
-        window.requestAnimationFrame(step);
-        // Guarantee the final number even if frames are starved
-        window.setTimeout(function () {
-          node.textContent = target.toLocaleString("en-US") + suffix;
-        }, dur + 400);
+        countTo(node, parseInt(node.getAttribute("data-count"), 10) || 0, node.getAttribute("data-suffix") || "");
       }, 0.2);
     });
   }
@@ -278,6 +298,9 @@
       else if (e.key === "ArrowRight") show(index + 1);
     });
   }
+
+  /* 对外暴露：供异步渲染复用（首页活动看板在云端数据回来后才补计数动画） */
+  window.GUISEnter = { register: registerEnter, countTo: countTo };
 
   document.addEventListener("DOMContentLoaded", function () {
     initLang();

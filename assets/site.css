@@ -626,6 +626,58 @@ html.js .reveal.is-in { opacity: 1; transform: none; }
 .d1 { transition-delay: 0.08s; } .d2 { transition-delay: 0.16s; } .d3 { transition-delay: 0.24s; }
 .d4 { transition-delay: 0.32s; } .d5 { transition-delay: 0.40s; } .d6 { transition-delay: 0.48s; }
 
+/* ---------- 活动状态看板（红绿灯 / 首页大数字） ----------
+   绿 = 正在开放报名｜黄 = 已结束报名、等待邮件通知｜红 = 已邮件通知、请查收邮箱
+   判定逻辑统一放在 assets/board.js，这里只负责外观。 */
+.tl { display: inline-flex; align-items: center; gap: 0.5rem; white-space: nowrap; }
+.tl-lamp {
+  width: 0.6rem; height: 0.6rem; border-radius: 50%; flex: 0 0 auto;
+  background: rgba(0, 0, 0, 0.09);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+  transition: background 0.35s ease, box-shadow 0.35s ease;
+}
+/* 点亮时把自身颜色写进 color，光晕用 currentColor 取同一色 */
+.tl-lamp.tl-green.is-on { background: #2E9E5B; color: #2E9E5B; }
+.tl-lamp.tl-yellow.is-on { background: #E0A126; color: #E0A126; }
+.tl-lamp.tl-red.is-on { background: #D1392F; color: #D1392F; }
+.tl-lamp.is-on { animation: tl-breathe 2.4s ease-in-out infinite; }
+@keyframes tl-breathe {
+  0%, 100% { box-shadow: 0 0 0 0.15rem rgba(0, 0, 0, 0.03), 0 0 0.45rem 0.02rem currentColor; filter: brightness(1); }
+  50%      { box-shadow: 0 0 0 0.2rem rgba(0, 0, 0, 0.03), 0 0 0.95rem 0.16rem currentColor; filter: brightness(1.14); }
+}
+@media (prefers-reduced-motion: reduce) { .tl-lamp.is-on { animation: none; } }
+
+.tl-text { font-size: 0.78rem; font-weight: 500; color: var(--text-muted); }
+.tl-big .tl-lamp { width: 0.78rem; height: 0.78rem; }
+.tl-compact { gap: 0; }
+
+.tl-dot { display: inline-block; width: 0.55rem; height: 0.55rem; border-radius: 50%; vertical-align: middle; }
+.tl-dot.tl-green { background: #2E9E5B; }
+.tl-dot.tl-yellow { background: #E0A126; }
+.tl-dot.tl-red { background: #D1392F; }
+
+/* 看板卡片：左边大数字，右边三色图例 + 按钮 */
+.board {
+  display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  gap: clamp(1.4rem, 3.4vw, 3rem); align-items: center;
+  background: #fff; border: 1px solid var(--card-border); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm); padding: clamp(1.6rem, 4vw, 2.8rem); margin-top: 2.2rem;
+}
+.board-num-wrap { text-align: center; }
+.board-num {
+  font-size: clamp(3.4rem, 9vw, 5.6rem); font-weight: 700; letter-spacing: -0.05em; line-height: 1;
+  font-variant-numeric: tabular-nums;
+  background: linear-gradient(180deg, var(--red) 12%, #c27276 100%);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.board-num-label { margin-top: 0.55rem; color: var(--text-muted); font-size: 0.88rem; line-height: 1.5; }
+.board-actions { margin-top: 1.5rem; display: flex; gap: 0.75rem; flex-wrap: wrap; }
+
+.tl-legend { display: flex; flex-direction: column; gap: 0.7rem; }
+.tl-legend-row { display: flex; align-items: center; gap: 0.7rem; font-size: 0.85rem; }
+.tl-legend-num { font-weight: 700; font-variant-numeric: tabular-nums; min-width: 1.9rem; text-align: right; }
+.tl-legend-label { color: var(--text-muted); line-height: 1.45; }
+
 /* ---------- Responsive ---------- */
 @media (max-width: 1000px) {
   .gallery { grid-template-columns: repeat(3, 1fr); }
@@ -646,6 +698,10 @@ html.js .reveal.is-in { opacity: 1; transform: none; }
   .gallery { grid-template-columns: repeat(2, 1fr); grid-auto-rows: 150px; }
   .shot.wide { grid-column: span 2; }
   .letter-header { align-items: flex-start; }
+  /* 看板在窄屏改为上下堆叠，大数字居中 */
+  .board { grid-template-columns: 1fr; text-align: center; }
+  .board-actions { justify-content: center; }
+  .tl-legend-row { justify-content: flex-start; }
 }
 /* 手机端：联合标志整体收小，VA 标志不再喧宾夺主 */
 @media (max-width: 640px) {

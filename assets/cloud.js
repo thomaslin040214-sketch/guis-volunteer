@@ -46,7 +46,7 @@
     listOpenActivities: function () {
       return db
         .from("activities")
-        .select("id, title, summary, category, location, starts_at, ends_at, signup_deadline, capacity, status, created_at")
+        .select("id, title, summary, category, location, starts_at, ends_at, signup_deadline, capacity, status, notified_at, created_at")
         .eq("status", "open")
         .order("starts_at", { ascending: true, nullsFirst: false });
     },
@@ -54,7 +54,7 @@
     listMyActivities: function () {
       return db
         .from("activities")
-        .select("id, title, summary, category, location, starts_at, ends_at, signup_deadline, capacity, contact, notes, status, created_at")
+        .select("id, title, summary, category, location, starts_at, ends_at, signup_deadline, capacity, contact, notes, status, notified_at, created_at")
         .order("created_at", { ascending: false });
     },
 
@@ -68,6 +68,16 @@
 
     deleteActivity: function (id) {
       return db.from("activities").delete().eq("id", id).select();
+    },
+
+    /* 后台把活动标成「已邮件通知」（看板上的红灯）。
+       传 false 撤销 —— 撤销后回到按截止时间自动判定的绿 / 黄灯。 */
+    setActivityNotified: function (id, notified) {
+      return db
+        .from("activities")
+        .update({ notified_at: notified ? new Date().toISOString() : null })
+        .eq("id", id)
+        .select();
     },
 
     /* ---------- 报名 ---------- */

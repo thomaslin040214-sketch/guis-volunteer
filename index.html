@@ -42,8 +42,8 @@
   .letter-brand img{max-width:100px}
 }
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20260930" />
-<link rel="stylesheet" href="assets/app.css?v=20260930" />
+<link rel="stylesheet" href="assets/site.css?v=20260930b" />
+<link rel="stylesheet" href="assets/app.css?v=20260930b" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
@@ -244,18 +244,26 @@
     <div class="wrap">
       <div class="reveal">
         <p class="eyebrow" data-i18n="su.eyebrow">活动报名</p>
-        <h2 class="section-title" data-i18n="su.title">正在开放报名的活动</h2>
-        <p class="lede" data-i18n="su.lede">下面是可以报名的义工活动。选一个点进去，填一张表就好 —— 不需要经验，但需要守时。</p>
+        <h2 class="section-title" data-i18n="su.boardTitle">活动看板</h2>
+        <p class="lede" data-i18n="su.boardLede">一眼看清现在有哪些活动在开放报名。点下面的按钮进报名页，选一个活动、填一张表就好 —— 不需要经验，但需要守时。</p>
       </div>
 
-      <!-- 活动由后台创建，这里自动读取云端数据 -->
+      <!-- 数字与三色状态由后台数据自动读取；主页只给看板，不再直接列出活动 -->
       <div id="su-origin" hidden></div>
       <div id="su-loading" class="empty" style="margin-top:2.2rem;"><span class="loading"></span> <span data-i18n="su.loading">正在读取活动列表…</span></div>
-      <div id="su-empty" class="empty" style="margin-top:2.2rem;" hidden data-i18n="su.empty">目前没有开放报名的活动。可以写信告诉我们你想参加哪个板块。</div>
-      <div id="su-list" class="act-list" style="margin-top:2.2rem;" hidden></div>
 
-      <div style="margin-top:1.6rem;">
-        <a href="signup.html" class="btn btn-secondary" data-i18n="su.all">打开报名页</a>
+      <div id="su-board" class="board reveal" hidden>
+        <div class="board-num-wrap">
+          <div class="board-num"><span id="su-count">0</span></div>
+          <div class="board-num-label" data-i18n="su.boardNumLabel">个活动正在开放报名</div>
+        </div>
+        <div>
+          <div id="su-legend" class="tl-legend"></div>
+          <div class="board-actions">
+            <a href="signup.html" class="btn btn-primary" data-i18n="su.all">打开报名页</a>
+            <a href="#contact" class="btn btn-secondary" data-i18n="su.ask">想参加别的板块？告诉我们</a>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -611,13 +619,14 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
-<script src="assets/cloud-config.js?v=20260930"></script>
-<script src="assets/cloud.js?v=20260930"></script>
-<script src="assets/i18n.js?v=20260930"></script>
-<script src="assets/team.js?v=20260930"></script>
-<script src="assets/team-render.js?v=20260930"></script>
-<script src="assets/queue.js?v=20260930"></script>
-<script src="assets/main.js?v=20260930"></script>
+<script src="assets/cloud-config.js?v=20260930b"></script>
+<script src="assets/cloud.js?v=20260930b"></script>
+<script src="assets/i18n.js?v=20260930b"></script>
+<script src="assets/board.js?v=20260930b"></script>
+<script src="assets/team.js?v=20260930b"></script>
+<script src="assets/team-render.js?v=20260930b"></script>
+<script src="assets/queue.js?v=20260930b"></script>
+<script src="assets/main.js?v=20260930b"></script>
 <script>
 /* ---------- 首页「活动报名」板块：读取云端开放报名的活动 ---------- */
 document.addEventListener("DOMContentLoaded", function () {
@@ -625,26 +634,17 @@ document.addEventListener("DOMContentLoaded", function () {
   if (!C) return;
 
   var loading = document.getElementById("su-loading");
-  var emptyBox = document.getElementById("su-empty");
-  var list = document.getElementById("su-list");
-  if (!list) return;
+  var board = document.getElementById("su-board");
+  var legend = document.getElementById("su-legend");
+  var countEl = document.getElementById("su-count");
+  var E = window.GUISEnter;   /* main.js 暴露的进场触发 + 计数动画 */
+  var B = window.GUISBoard;   /* 红绿灯判定，见 assets/board.js */
+  if (!board || !B) return;
 
   function t(key, fallback) {
     var lang = (document.documentElement.lang === "en") ? "en" : "zh";
     var pack = (window.SITE_I18N && window.SITE_I18N[lang]) || {};
     return pack[key] != null ? pack[key] : (fallback || key);
-  }
-  function pad(n) { return n < 10 ? "0" + n : "" + n; }
-  function fmtDT(iso) {
-    if (!iso) return "";
-    var d = new Date(iso);
-    if (isNaN(d.getTime())) return iso;
-    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
-  }
-  function esc(s) {
-    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
-    });
   }
 
   var cached = [];
@@ -663,43 +663,27 @@ document.addEventListener("DOMContentLoaded", function () {
       '<a href="' + C.endpoint + '/signup.html"><b>' + C.endpoint + "/signup.html</b></a></div>";
     box.hidden = false;
     loading.hidden = true;
-    emptyBox.hidden = true;
+    board.hidden = true;
   }
 
+  /* 看板只显示：正在开放报名的数量 + 三色状态图例 */
+  var countBound = false;
   function render() {
-    if (!cached.length) {
-      loading.hidden = true;
-      list.hidden = true;
-      emptyBox.hidden = false;
-      return;
-    }
     loading.hidden = true;
-    emptyBox.hidden = true;
 
-    list.innerHTML = cached.map(function (a) {
-      var closed = a.signup_deadline && new Date(a.signup_deadline).getTime() < Date.now();
-      var bits = [];
-      if (a.starts_at) bits.push(fmtDT(a.starts_at));
-      if (a.location) bits.push(esc(a.location));
-      if (a.capacity) bits.push(a.capacity + " " + t("su.people", "人"));
-      if (a.signup_deadline) bits.push(t("su.deadline", "截止") + " " + fmtDT(a.signup_deadline));
+    var counts = B.countLights(cached);
+    legend.innerHTML = B.legendHTML(counts);
+    board.hidden = false;
 
-      return '<div class="act-item">' +
-        '<div class="act-main">' +
-          '<div class="act-title">' + esc(a.title) +
-            ' <span class="badge ' + (closed ? "badge-closed" : "badge-open") + '">' +
-            (closed ? t("su.closed", "已截止") : t("su.open", "报名中")) + "</span></div>" +
-          (a.summary ? '<div class="act-summary">' + esc(a.summary) + "</div>" : "") +
-          '<div class="act-meta">' + bits.map(function (b) { return "<span>" + b + "</span>"; }).join("") + "</div>" +
-        "</div>" +
-        '<div class="act-side">' +
-          (closed
-            ? '<span class="tbl-btn" style="text-align:center;opacity:.6;">' + t("su.closed", "已截止") + "</span>"
-            : '<a class="btn btn-primary" style="padding:0.55rem 1.2rem;font-size:0.85rem;" href="signup.html?activity=' + a.id + '">' + t("su.btn", "去报名") + "</a>") +
-        "</div>" +
-      "</div>";
-    }).join("");
-    list.hidden = false;
+    /* 数字动画：滚动到看板时从 0 滚到实际数量。
+       数据在 DOMContentLoaded 之后才回来，所以要在这里补注册一次进场触发。 */
+    if (!countBound) {
+      countBound = true;
+      if (E) E.register(countEl, function (node) { E.countTo(node, counts.green); }, 0.2);
+      else countEl.textContent = String(counts.green);
+    } else {
+      countEl.textContent = String(counts.green);
+    }
   }
 
   /* 排队界面的重试倒计时，按当前语言渲染 */
