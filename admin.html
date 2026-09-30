@@ -35,8 +35,8 @@
   .letter-brand img{max-width:100px}
 }
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20260930d" />
-<link rel="stylesheet" href="assets/app.css?v=20260930d" />
+<link rel="stylesheet" href="assets/site.css?v=20260930e" />
+<link rel="stylesheet" href="assets/app.css?v=20260930e" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
@@ -292,12 +292,15 @@
           <div class="panel">
             <div class="panel-head">
               <div>
-                <h2>我创建的活动</h2>
-                <div class="sub">只有你自己创建的活动会出现在这里。</div>
+                <h2>活动列表</h2>
+                <div class="sub">白名单里的管理员可以共同管理这里的所有活动。</div>
               </div>
               <button type="button" class="link-btn" id="act-refresh">刷新</button>
             </div>
             <div class="panel-body">
+              <!-- 行内操作（停止报名 / 标记已邮件通知 / 删除）的成败提示放这里，
+                   就在按钮上方——以前写在上面表单区的 #act-alerts，视线盯着列表时根本看不见。 -->
+              <div id="act-list-alerts"></div>
               <div id="act-list-loading" class="empty"><span class="loading"></span> 正在读取…</div>
               <div id="act-list" class="act-list" hidden></div>
               <div id="act-list-empty" class="empty" hidden>还没有创建任何活动。用上面的表单建一个吧。</div>
@@ -427,9 +430,9 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="assets/cloud-config.js?v=20260930d"></script>
-<script src="assets/cloud.js?v=20260930d"></script>
-<script src="assets/board.js?v=20260930d"></script>
+<script src="assets/cloud-config.js?v=20260930e"></script>
+<script src="assets/cloud.js?v=20260930e"></script>
+<script src="assets/board.js?v=20260930e"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   "use strict";
@@ -453,6 +456,35 @@ document.addEventListener("DOMContentLoaded", function () {
     el.innerHTML = '<div class="alert alert-' + kind + '">' + msg + "</div>";
   }
   function clear(el) { el.innerHTML = ""; }
+
+  /* 行内按钮的忙碌态：禁用 + 换文案。
+     以前点了没任何视觉变化，用户会以为没反应。then / catch 两条路都必须调 busyOff(btn)。 */
+  function busyOn(btn, label) {
+    if (!btn) return;
+    btn.setAttribute("data-busy-label", btn.textContent);
+    btn.disabled = true;
+    btn.classList.add("is-busy");
+    if (label) btn.textContent = label;
+  }
+  function busyOff(btn) {
+    if (!btn) return;
+    btn.disabled = false;
+    btn.classList.remove("is-busy");
+    var old = btn.getAttribute("data-busy-label");
+    if (old != null) { btn.textContent = old; btn.removeAttribute("data-busy-label"); }
+  }
+  /* 把 Postgres / PostgREST 的错误翻成人话，并指出排查方向。 */
+  function failMsg(err, fallback) {
+    var m = (err && err.message) ? err.message : "";
+    var code = err && (err.code || (err.raw && err.raw.code));
+    if (code === "42501" || /row-level security|violates row-level/i.test(m)) {
+      return "权限不足：服务端拒绝了这次写入。请确认当前登录邮箱已在「白名单」页签里。";
+    }
+    if (code === "23503") return "删除失败：还有其它数据关联着它。";
+    if (code === "23505") return "已经存在重复记录了。";
+    if (!m && !code) return (fallback || "操作失败") + "。";
+    return (fallback || "操作失败") + "：" + m;
+  }
 
   function pad(n) { return n < 10 ? "0" + n : "" + n; }
   function fmtDT(iso) {
@@ -700,6 +732,7 @@ document.addEventListener("DOMContentLoaded", function () {
   function loadActivities() {
     $("act-list-loading").hidden = false;
     $("act-list").hidden = true;
+    $("act-list").innerHTML = "";   /* 不清的话，活动被删光后旧的 DOM 还留在隐藏容器里 */
     $("act-list-empty").hidden = true;
 
     C.listMyActivities().then(function (res) {
@@ -792,13 +825,18 @@ document.addEventListener("DOMContentLoaded", function () {
       var cur = myActivities.filter(function (x) { return String(x.id) === String(toggleId); })[0];
       if (!cur) return;
       var next = cur.status === "open" ? "closed" : "open";
+      clear($("act-list-alerts"));
+      busyOn(t, "处理中…");
       C.updateActivity(toggleId, { status: next }).then(function (res) {
         var affected = C.unwrap(res, "更新失败") || [];
-        if (!affected.length) { alertIn($("act-alerts"), "error", "没有改动 —— 该活动可能不是你创建的。"); return; }
+        busyOff(t);
+        if (!affected.length) { alertIn($("act-list-alerts"), "error", "没有改动 —— 服务端没有更新任何一行，请刷新列表后重试。"); return; }
+        alertIn($("act-list-alerts"), "ok", next === "closed" ? "已停止报名，前台报名页不再显示该活动。" : "已重新开放报名。");
         loadActivities();
         loadActivityOptions();
       }).catch(function (err) {
-        alertIn($("act-alerts"), "error", "更新失败：" + (err && err.message ? err.message : ""));
+        busyOff(t);
+        alertIn($("act-list-alerts"), "error", failMsg(err, "更新失败"));
       });
     }
 
@@ -807,17 +845,17 @@ document.addEventListener("DOMContentLoaded", function () {
       var na = myActivities.filter(function (x) { return String(x.id) === String(notifyId); })[0];
       if (!na) return;
       var goingRed = !(window.GUISBoard && window.GUISBoard.lightOf(na) === "red");
-      var btn = t;
-      btn.disabled = true;
+      clear($("act-list-alerts"));
+      busyOn(t, goingRed ? "标记中…" : "撤销中…");
       C.setActivityNotified(notifyId, goingRed).then(function (res) {
         var affected = C.unwrap(res, "更新失败") || [];
-        btn.disabled = false;
-        if (!affected.length) { alertIn($("act-alerts"), "error", "没有改动 —— 该活动可能不是你创建的。"); return; }
-        alertIn($("act-alerts"), "ok", goingRed ? "已标记为「已邮件通知」，前台看板会亮红灯。" : "已撤销，前台恢复到按截止时间判定的状态。");
+        busyOff(t);
+        if (!affected.length) { alertIn($("act-list-alerts"), "error", "没有改动 —— 服务端没有更新任何一行，请刷新列表后重试。"); return; }
+        alertIn($("act-list-alerts"), "ok", goingRed ? "已标记为「已邮件通知」，前台看板会亮红灯。" : "已撤销，前台恢复到按截止时间判定的状态。");
         loadActivities();
       }).catch(function (err) {
-        btn.disabled = false;
-        alertIn($("act-alerts"), "error", "更新失败：" + (err && err.message ? err.message : ""));
+        busyOff(t);
+        alertIn($("act-list-alerts"), "error", failMsg(err, "更新失败"));
       });
     }
 
@@ -825,14 +863,19 @@ document.addEventListener("DOMContentLoaded", function () {
       var target = myActivities.filter(function (x) { return String(x.id) === String(delId); })[0];
       if (!target) return;
       if (!window.confirm("确定删除活动「" + target.title + "」吗？\n该活动下的所有报名记录也会一并删除，且无法恢复。")) return;
+      clear($("act-list-alerts"));
+      busyOn(t, "删除中…");
       C.deleteActivity(delId).then(function (res) {
         var removed = C.unwrap(res, "删除失败") || [];
-        if (!removed.length) { alertIn($("act-alerts"), "error", "删除失败 —— 该活动可能不是你创建的。"); return; }
+        busyOff(t);
+        if (!removed.length) { alertIn($("act-list-alerts"), "error", "删除失败 —— 服务端没有删除任何一行，请刷新列表后重试。"); return; }
+        alertIn($("act-list-alerts"), "ok", "已删除「" + esc(target.title) + "」。");
         if (editingId === Number(delId)) resetForm();
         loadActivities();
         loadActivityOptions();
       }).catch(function (err) {
-        alertIn($("act-alerts"), "error", "删除失败：" + (err && err.message ? err.message : ""));
+        busyOff(t);
+        alertIn($("act-list-alerts"), "error", failMsg(err, "删除失败"));
       });
     }
   });
@@ -878,14 +921,14 @@ document.addEventListener("DOMContentLoaded", function () {
     req.then(function (res) {
       var out = C.unwrap(res, "保存失败") || [];
       btn.disabled = false; btn.textContent = label;
-      if (!out.length) { alertIn($("act-alerts"), "error", "没有改动 —— 该活动可能不是你创建的。"); return; }
+      if (!out.length) { alertIn($("act-alerts"), "error", "没有改动 —— 服务端没有写入任何一行，请确认登录邮箱已在「白名单」页签里。"); return; }
       alertIn($("act-alerts"), "ok", editingId ? "已保存修改。" : "活动已创建，学生现在可以在报名页看到它。");
       resetForm();
       loadActivities();
       loadActivityOptions();
     }).catch(function (err) {
       btn.disabled = false; btn.textContent = label;
-      alertIn($("act-alerts"), "error", "保存失败：" + (err && err.message ? err.message : ""));
+      alertIn($("act-alerts"), "error", failMsg(err, "保存失败"));
     });
   });
 
@@ -994,12 +1037,16 @@ document.addEventListener("DOMContentLoaded", function () {
     var del = t.getAttribute("data-delreg");
 
     function setStatus(id, st) {
+      clear($("reg-alerts"));
+      busyOn(t, "处理中…");
       C.setRegistrationStatus(id, st).then(function (res) {
         var out = C.unwrap(res, "更新失败") || [];
-        if (!out.length) { alertIn($("reg-alerts"), "error", "没有改动 —— 这条记录可能不属于你创建的活动。"); return; }
+        busyOff(t);
+        if (!out.length) { alertIn($("reg-alerts"), "error", "没有改动 —— 服务端没有更新任何一行，请确认登录邮箱已在「白名单」页签里。"); return; }
         loadRegs();
       }).catch(function (err) {
-        alertIn($("reg-alerts"), "error", "更新失败：" + (err && err.message ? err.message : ""));
+        busyOff(t);
+        alertIn($("reg-alerts"), "error", failMsg(err, "更新失败"));
       });
     }
 
@@ -1008,12 +1055,18 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (del) {
       if (!window.confirm("确定删除这条报名记录吗？该操作无法撤销。")) return;
+      clear($("reg-alerts"));
+      busyOn(t, "删除中…");
       C.deleteRegistration(del).then(function (res) {
         var out = C.unwrap(res, "删除失败") || [];
-        if (!out.length) { alertIn($("reg-alerts"), "error", "删除失败 —— 这条记录可能不属于你创建的活动。"); return; }
+        busyOff(t);
+        if (!out.length) { alertIn($("reg-alerts"), "error", "删除失败 —— 服务端没有删除任何一行，请确认登录邮箱已在「白名单」页签里。"); return; }
         loadRegs();
+        /* loadRegs 开头会 clear(reg-alerts)，所以成功提示必须在它之后再写 */
+        alertIn($("reg-alerts"), "ok", "已删除该条报名记录。");
       }).catch(function (err) {
-        alertIn($("reg-alerts"), "error", "删除失败：" + (err && err.message ? err.message : ""));
+        busyOff(t);
+        alertIn($("reg-alerts"), "error", failMsg(err, "删除失败"));
       });
     }
   });

@@ -131,6 +131,18 @@ table.data .row-actions { display: flex; gap: 0.35rem; flex-wrap: wrap; }
 .tbl-btn.danger:hover { border-color: #B3261E; color: #B3261E; }
 .tbl-btn.ok:hover { border-color: #2C7A4B; color: #2C7A4B; }
 
+/* 行内操作的忙碌态：点了要立刻看得见「在处理」，避免被当成没反应 */
+.tbl-btn:disabled,
+.tbl-btn.is-busy {
+  cursor: progress;
+  opacity: 0.62;
+  border-color: var(--hairline-strong);
+  color: var(--text-subtle);
+  background: var(--surface-muted, #FAFAFA);
+}
+.tbl-btn:disabled:hover,
+.tbl-btn.is-busy:hover { border-color: var(--hairline-strong); color: var(--text-subtle); }
+
 /* ---------- 后台布局 ---------- */
 .admin-bar {
   display: flex; align-items: center; justify-content: space-between;
