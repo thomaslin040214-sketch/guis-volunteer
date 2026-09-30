@@ -13,8 +13,9 @@
      · owner   执委会：所有活动都能签到、都能改义工小时
      · teacher 负责老师：全部活动的名单都能看（只读），
                        只有「分配给自己的活动」才能扫码 / 打钩 / 改小时
-   活动归属 = 单个活动上指定的 manager_email，没有就用板块默认负责人
-   （category_managers），判断规则和后台 admin.js 里那套完全一致。
+   活动归属 = 每个活动单独指定的 manager_email（activities 表上的一列）。
+   2026-09-30 之前还有一层「板块默认负责人」（category_managers）兜底，已删除；
+   判断规则和后台 admin.js 里那套必须保持一致。
 
    义工小时：活动自带默认时长（activities.hours），逐人可覆盖
    （registrations.hours 留空 = 用默认）。老师只对自己负责的活动能改。
@@ -38,19 +39,11 @@ document.addEventListener("DOMContentLoaded", function () {
   var ME = { email: "", role: "teacher" };
   function isOwner() { return ME.role === "owner"; }
 
-  /* 板块默认负责人：活动上没单独指定人时用它兜底。 */
-  var catMgrs = {};
-  function loadCatMgrMap() {
-    return C.listCategoryManagers().then(function (res) {
-      catMgrs = {};
-      (C.unwrap(res, "读取失败") || []).forEach(function (c) {
-        if (c.email) catMgrs[c.category] = c.email;
-      });
-    }).catch(function () { catMgrs = {}; });
-  }
+  /* 2026-09-30 起取消「板块默认负责人」，改成单一口径：
+     一个活动归谁管，只看它自己身上写的 activities.manager_email。
+     （同一个判断在后台 admin.js 里还有一份，改规则两边都要改。） */
   function effectiveManager(a) {
-    if (!a) return "";
-    return a.manager_email || catMgrs[a.category] || "";
+    return a && a.manager_email ? String(a.manager_email) : "";
   }
   function iManage(a) {
     if (isOwner()) return true;
@@ -251,10 +244,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   /* ---------------- 活动下拉 ---------------- */
   function loadActivities() {
-    /* 先拿板块默认负责人 —— 「这个活动归谁」的判断要用它 */
-    loadCatMgrMap().then(function () {
-      return C.listMyActivities();
-    }).then(function (res) {
+    C.listMyActivities().then(function (res) {
       acts = C.unwrap(res, "读取活动失败") || [];
       var sel = $("ci-activity");
       sel.innerHTML = '<option value="">选择活动…</option>' +
@@ -284,7 +274,7 @@ document.addEventListener("DOMContentLoaded", function () {
       } else if (!isOwner()) {
         alertIn($("ci-alerts"), "warn",
           "还没有活动分配给你。可以在上面任选一个活动<b>查看名单（只读）</b>；" +
-          "要获得签到权限，请让执委会在后台「活动」里把负责老师填成你的邮箱，或在「人员管理」里把你设为某个板块的默认负责老师。");
+          "要获得签到权限，请让执委会在后台「活动」里把这个活动的负责老师选成你。");
       }
     }).catch(function (err) {
       alertIn($("ci-alerts"), "error", failMsg(err, "读取活动失败"));

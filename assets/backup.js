@@ -15,15 +15,16 @@
   "use strict";
 
   /* 要导出的表。顺序按「重建时要先建谁」排：
-     活动 → 报名 → 刊物 → 公告 → 人员 → 学生名单 → 板块负责人 */
+     活动 → 报名 → 刊物 → 公告 → 人员 → 学生名单
+     （category_managers「板块默认负责人」2026-09-30 起停用，
+       负责老师改成按活动指定，不再导出。） */
   var TABLES = [
     "activities",
     "registrations",
     "articles",
     "announcements",
     "allowed_admins",
-    "student_directory",
-    "category_managers"
+    "student_directory"
   ];
 
   function pad(n) { return n < 10 ? "0" + n : "" + n; }

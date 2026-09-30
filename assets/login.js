@@ -116,8 +116,11 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }).catch(function () {});
 
-  /* ---------------- 三种方式切换 ---------------- */
-  var forms = { pass: $("form-pass"), otp: $("form-otp"), neu: $("form-new") };
+  /* ---------------- 两种方式切换 ----------------
+     曾经还有「验证码登录」这一档：它和「首次开通」的第二半步完全重复
+     （都是「发 6 位码到邮箱 → 填码」），多一个入口只是多一种走错的可能，
+     2026-09-30 由用户决定删掉。要找回就看 git 历史里的 mode:"otp"。 */
+  var forms = { pass: $("form-pass"), neu: $("form-new") };
   function showForm(name) {
     Object.keys(forms).forEach(function (k) { forms[k].hidden = k !== name; });
     Array.prototype.forEach.call($("lg-seg").children, function (b) {
@@ -145,44 +148,9 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  /* ---------------- 验证码登录 ---------------- */
-  var pendingOtp = null;
-  $("lg-otp-send").addEventListener("click", function () {
-    var email = fullEmail($("lg-otp-email").value);
-    if (!email) { alertIn($("lg-alerts"), "error", t("lg.email", "邮箱")); return; }
-    busyOn(this, "…");
-    C.auth.sendOtp({ email: email }).then(function (r) {
-      busyOff($("lg-otp-send"));
-      if (r.error) { alertIn($("lg-alerts"), "error", "验证码发送失败：" + (r.error.message || "请稍后重试")); return; }
-      pendingOtp = { email: email, verificationId: r.data.verificationId, isExistingUser: r.data.isExistingUser };
-      alertIn($("lg-alerts"), "ok", "验证码已发到 " + esc(email) + "，请查收邮箱（含垃圾邮件）。");
-    }).catch(function () {
-      busyOff($("lg-otp-send"));
-      alertIn($("lg-alerts"), "error", "验证码发送失败，请稍后重试。");
-    });
-  });
-
-  $("form-otp").addEventListener("submit", function (e) {
-    e.preventDefault();
-    var code = $("lg-otp-code").value.trim();
-    if (!pendingOtp) { alertIn($("lg-alerts"), "error", "请先点「获取验证码」。"); return; }
-    if (!code) { alertIn($("lg-alerts"), "error", "请填写邮箱里的验证码。"); return; }
-    busyOn($("lg-otp-go"), "…");
-    C.auth.verifyOtp({
-      email: pendingOtp.email,
-      verificationId: pendingOtp.verificationId,
-      isExistingUser: pendingOtp.isExistingUser,
-      token: code
-    }).then(function (r) {
-      if (r.error) { busyOff($("lg-otp-go")); alertIn($("lg-alerts"), "error", "验证码不正确或已过期。"); return; }
-      go(pendingOtp.email);
-    }).catch(function () {
-      busyOff($("lg-otp-go"));
-      alertIn($("lg-alerts"), "error", "验证失败，请重试。");
-    });
-  });
-
-  /* ---------------- 首次开通（仅学生） ---------------- */
+  /* ---------------- 首次开通（仅学生） ----------------
+     「获取验证码」按钮就摆在验证码输入框右边（.inp-row），
+     所以这一步会先拿 student_directory 核对名单，通过了才发码。 */
   var pendingNew = null;
   $("lg-new-send").addEventListener("click", function () {
     var email = fullEmail($("lg-new-email").value);

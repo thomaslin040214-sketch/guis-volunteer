@@ -171,10 +171,6 @@ document.addEventListener("DOMContentLoaded", function () {
     loadActivities();
     loadActivityOptions();
     loadManagerOptions();
-    /* 板块默认负责人要先拿到，「我管不管这个活动」的判断要用它 */
-    loadCatMgrMap().then(function () {
-      if (isOwner()) loadCategoryManagers();
-    });
   }
 
   function showLogin() {
@@ -377,7 +373,7 @@ document.addEventListener("DOMContentLoaded", function () {
   var TAB_IDS = ["acts", "calendar", "regs", "live", "archive", "journal", "announce", "people", "students"];
   var TAB_ENTER = {
     calendar: function () { if (isOwner()) loadAdminCalendar(true); },
-    people: function () { if (isOwner()) { loadPeople(); loadCategoryManagers(); } },
+    people: function () { if (isOwner()) { loadPeople(); loadManagerOptions(); } },
     students: function () { if (isOwner()) loadStudents(); },
     live: function () { loadLive(true); },
     archive: function () {
@@ -499,7 +495,10 @@ document.addEventListener("DOMContentLoaded", function () {
       $("act-reset").hidden = false;
       $("a-title").value = a.title || "";
       $("a-summary").value = a.summary || "";
-      $("a-category").value = a.category || "社区关怀";
+      /* 有些早期活动的 category 不在这五个选项里（比如「社区关怀」），
+         直接赋不存在的值会让下拉变成空值、再被写回数据库，所以兜回第一项。 */
+      var cats = Array.prototype.map.call($("a-category").options, function (o) { return o.value; });
+      $("a-category").value = cats.indexOf(a.category) >= 0 ? a.category : cats[0];
       $("a-location").value = a.location || "";
       $("a-starts").value = toLocalInput(a.starts_at);
       $("a-ends").value = toLocalInput(a.ends_at);
@@ -802,22 +801,12 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   /* ---------- 这个活动归谁管 ----------
-     单个活动上指定的 manager_email 优先，没有就用板块默认负责人。
-     执委会管所有活动；负责老师只能动分配给自己的活动。 */
-  var catMgrs = {};
-
-  function loadCatMgrMap() {
-    return C.listCategoryManagers().then(function (res) {
-      catMgrs = {};
-      (C.unwrap(res, "读取失败") || []).forEach(function (c) {
-        if (c.email) catMgrs[c.category] = c.email;
-      });
-    }).catch(function () { catMgrs = {}; });
-  }
-
+     2026-09-30 起取消「板块默认负责人」，改成**每个活动单独指定一位负责老师**：
+     唯一口径就是 activities.manager_email，没有第二来源。
+     （这个概念在 checkin.js 里有一份同名实现，改规则两边都要改。）
+     执委会管所有活动；负责老师只能动 manager_email 等于自己邮箱的活动。 */
   function effectiveManager(a) {
-    if (!a) return "";
-    return a.manager_email || catMgrs[a.category] || "";
+    return (a && a.manager_email) ? String(a.manager_email) : "";
   }
   function iManage(a) {
     if (isOwner()) return true;
@@ -1061,8 +1050,6 @@ document.addEventListener("DOMContentLoaded", function () {
      role：owner = 执委会（能改活动 / 刊物 / 公告 / 人员）
            teacher = 负责老师（能看名单、给分配给自己的活动签到、录小时）
      is_student：这个人同时也是义工社学生成员（既是后台所有者又是学生）。 */
-  var CATEGORIES = ["学生事务处活动(SAO)", "教务处活动(AO)", "升学指导办公室活动(CAS)", "公益募捐", "未被框定(NTCLASSIFIED)"];
-
   function roleLabel(r) { return r === "owner" ? "执委会" : "负责老师"; }
   function roleClass(r) { return r === "owner" ? "st-approved" : "st-pending"; }
 
@@ -1263,14 +1250,17 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  /* ---------------- 板块默认负责老师 ---------------- */
+  /* ---------------- 活动表单里的「负责老师」下拉 ----------------
+     候选人来自「人员管理」的名单（执委会 + 负责老师都列出来，自由选一个人）。
+     ⚠️ 曾经这里还有一个「板块默认负责人」面板（category_managers），
+        2026-09-30 由用户决定删掉 —— 现在负责老师只按活动指定，不再按板块兜底。 */
   function loadManagerOptions() {
     var sel = $("a-manager");
     if (!sel) return;
     C.listMembers().then(function (res) {
       var rows = C.unwrap(res, "读取失败") || [];
       var cur = sel.value;
-      sel.innerHTML = '<option value="">（用板块默认负责人）</option>' +
+      sel.innerHTML = '<option value="">（先加到「人员管理」，再来这里选）</option>' +
         rows.map(function (r) {
           return '<option value="' + esc(r.email) + '">' + esc(r.email) +
             "（" + roleLabel(r.role) + "）</option>";
@@ -1278,52 +1268,6 @@ document.addEventListener("DOMContentLoaded", function () {
       sel.value = cur;
     }).catch(function () { /* 老师读不到成员表，下拉保持空即可 */ });
   }
-
-  function loadCategoryManagers() {
-    var box = $("cat-rows");
-    if (!box) return;
-    C.listMembers().then(function (mr) {
-      var people = C.unwrap(mr, "读取失败") || [];
-      return C.listCategoryManagers().then(function (cr) {
-        var map = {};
-        (C.unwrap(cr, "读取失败") || []).forEach(function (c) {
-          map[c.category] = c.email || "";
-          if (c.email) catMgrs[c.category] = c.email;
-        });
-        box.innerHTML = CATEGORIES.map(function (c) {
-          return '<div class="field"><label>' + esc(c) + "</label>" +
-            '<select data-cat="' + esc(c) + '">' +
-            '<option value="">（未指定）</option>' +
-            people.map(function (p) {
-              var on = String(p.email).toLowerCase() === String(map[c] || "").toLowerCase();
-              return '<option value="' + esc(p.email) + '"' + (on ? " selected" : "") + ">" +
-                esc(p.email) + "</option>";
-            }).join("") +
-            "</select></div>";
-        }).join("");
-      });
-    }).catch(function (err) {
-      alertIn($("cat-alerts"), "error", "读取失败：" + failMsg(err));
-    });
-  }
-
-  $("cat-save").addEventListener("click", function () {
-    var btn = this;
-    var jobs = [];
-    Array.prototype.forEach.call(document.querySelectorAll("#cat-rows select"), function (s) {
-      jobs.push(C.setCategoryManager(s.getAttribute("data-cat"), s.value || null));
-    });
-    busyOn(btn, "保存中…");
-    Promise.all(jobs.map(function (p) {
-      return p.then(function (r) { C.unwrap(r, "保存失败"); return true; },
-                    function (e) { return e; });
-    })).then(function (outs) {
-      busyOff(btn);
-      var bad = outs.filter(function (o) { return o !== true; });
-      if (bad.length) alertIn($("cat-alerts"), "error", "有 " + bad.length + " 项没保存成功（只有执委会能改）。");
-      else alertIn($("cat-alerts"), "ok", "板块默认负责人已保存。");
-    });
-  });
 
   /* ================= 学生名单 ================= */
   var studentRows = [];

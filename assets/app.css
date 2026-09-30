@@ -1080,6 +1080,16 @@ table.data tr.is-done { background: rgba(45, 138, 78, 0.045); }
   font-size: 0.86rem; color: var(--text-muted); background: var(--bg-soft);
   border-left: 1px solid var(--hairline); white-space: nowrap; font-weight: 600;
 }
+
+/* 验证码输入框 + 「获取验证码」按钮同一行 */
+.inp-row { display: flex; gap: 0.5rem; align-items: stretch; }
+.inp-row input { flex: 1 1 auto; min-width: 0; }
+.inp-row .btn { flex: 0 0 auto; padding: 0.62rem 1rem; font-size: 0.88rem; }
+@media (max-width: 420px) { .inp-row { flex-wrap: wrap; } }
+
+/* 页脚里的三个入口链接（登录页专用，原来写在登录卡底部） */
+.footer-entries { flex-basis: 100%; text-align: center; margin: 0; }
+.footer-entries a { color: var(--brand); text-decoration: underline; }
 .me-hero {
   display: flex; align-items: center; gap: 1.1rem; flex-wrap: wrap;
   padding: 1.15rem 1.3rem; margin-bottom: 1.25rem;

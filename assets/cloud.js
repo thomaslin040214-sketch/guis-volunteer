@@ -105,18 +105,11 @@
         .order("created_at", { ascending: false });
     },
 
-    /* 活动负责人：单活动的指定优先，没有就用板块的默认负责人。
-       category_managers 提供板块默认值，有效负责人 = COALESCE(单活动, 板块)。 */
-    listCategoryManagers: function () {
-      return db.from("category_managers").select("category, email, updated_at").order("category", { ascending: true });
-    },
-
-    setCategoryManager: function (category, email) {
-      return db.from("category_managers").upsert(
-        { category: category, email: email || null, updated_at: new Date().toISOString() },
-        { onConflict: "category" }
-      );
-    },
+    /* 2026-09-30 之前这里有 listCategoryManagers / setCategoryManager 一对
+       「板块默认负责人」的读写。用户决定改成「每个活动单独选一位负责老师」，
+       面板和调用都删了，所以这两个接口也一起删掉 —— 需要找回看 git 历史。
+       ⚠️ category_managers 这张表前端已经不再读写（备份表里也摘掉了），
+          只剩数据库里那点历史数据，什么时候想清理 DROP 掉不影响业务。 */
 
     createActivity: function (payload) {
       return db.from("activities").insert(payload).select();
