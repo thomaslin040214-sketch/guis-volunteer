@@ -674,8 +674,8 @@ html.js .reveal.is-in { opacity: 1; transform: none; }
 /* 量词「个」紧跟大数字，同样用品牌红（英文无量词，词典给空串时会整个隐藏）。
    字号要给足 —— 太小的话「个」的笔画会细到像一个箭头图标。 */
 .board-unit {
-  font-size: clamp(2.1rem, 5.4vw, 3.2rem); font-weight: 700;
-  letter-spacing: 0; line-height: 1; color: var(--red); margin-left: 0.08em;
+  font-size: clamp(2.6rem, 6.8vw, 4.2rem); font-weight: 700;
+  letter-spacing: -0.01em; line-height: 1; color: var(--red); margin-left: 0.06em;
 }
 .board-num-label { margin-top: 0.55rem; color: var(--text-muted); font-size: 0.88rem; line-height: 1.5; }
 /* 没有活动开放报名时，用红字说明替代数字 */
