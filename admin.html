@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-ver="20261002a">
+<html lang="zh-CN" data-ver="20261002b">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,7 +10,7 @@
    于是点站内链接（全是裸路径）进去时整页退回旧设计。
    这里比对 <html data-ver>：不是当前版本就带查询串重拉一次（查询串必定回源）。 */
 (function () {
-  var VER = "20261002a";
+  var VER = "20261002b";
   try {
     var el = document.documentElement;
     var healed = /[?&]_v=/.test(location.search);
@@ -49,8 +49,8 @@
 <meta name="description" content="GUIS 义工组织后台管理：创建义工活动、查看报名名单、导出 Excel。" />
 <meta name="theme-color" content="#FFFFFF" />
 <meta name="robots" content="noindex, nofollow" />
-<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261002a" />
-<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261002a" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261002b" />
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261002b" />
 <!-- 品牌标志兜底样式（内联，随 HTML 一起下发）。
      即使 assets/site.css 被浏览器缓存成旧版本，标志也不会按图片原始尺寸撑破布局。
      这里只设尺寸上限（max-*），正常加载 site.css 时这些上限都不会生效。 -->
@@ -74,8 +74,8 @@
   .hero-brand .hero-va{max-height:40px}
 }
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20261002a" />
-<link rel="stylesheet" href="assets/app.css?v=20261002a" />
+<link rel="stylesheet" href="assets/site.css?v=20261002b" />
+<link rel="stylesheet" href="assets/app.css?v=20261002b" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
@@ -260,7 +260,7 @@
             <div class="panel-head">
               <div>
                 <h2 id="act-form-title">新建义工活动</h2>
-                <div class="sub">创建后学生即可在报名页看到并报名；校内日程只出现在日历里。</div>
+                <div class="sub">创建后学生即可在报名页看到并报名；切到「校内日程」就只剩名称、地点、时间、备注四项，像日历那样建。</div>
               </div>
               <button type="button" class="link-btn" id="act-reset" hidden>取消编辑</button>
             </div>
@@ -282,16 +282,16 @@
                   </div>
 
                   <div class="field span-2">
-                    <label for="a-title">活动名称 <span class="req">*</span></label>
+                    <label for="a-title" id="a-title-label">活动名称 <span class="req">*</span></label>
                     <input id="a-title" type="text" required placeholder="例如：教务处考场布置" />
                   </div>
 
-                  <div class="field">
+                  <div class="field only-signup">
                     <label for="a-summary">一句话简介</label>
                     <input id="a-summary" type="text" placeholder="会显示在报名列表里" />
                   </div>
 
-                  <div class="field">
+                  <div class="field only-signup">
                     <label for="a-category">所属板块</label>
                     <select id="a-category">
                       <option value="学生事务处活动(SAO)">学生事务处活动(SAO)</option>
@@ -305,7 +305,7 @@
                   <!-- 活动编号 = 前缀（板块代号）+ 流水号，前后两截拼起来显示，如 SAO + 26001 = SAO26001。
                        前三个板块的代号是固定的，跟着上面的「所属板块」自动填；
                        「公益募捐」「未被框定」没有固定代号，前缀留给自己写。 -->
-                  <div class="field">
+                  <div class="field only-signup">
                     <label for="a-code-no">活动编号</label>
                     <div class="code-box">
                       <input id="a-code-prefix" type="text" maxlength="8" placeholder="SAO" aria-label="编号前缀" />
@@ -321,16 +321,23 @@
 
                   <!-- 开始与结束合成一个时间框，中间一条短横线 —— 不再分两个孤立的格子。
                        注意：两个 input 的 id 保持 a-starts / a-ends，admin.js 照旧读写。 -->
+                  <!-- 时间这段两种类型都用，所以不带 only-signup：
+                       苹果日历的建法 —— 先决定是不是「全天」，再填开始 / 结束。
+                       勾了全天，两个框就从「日期 + 时刻」变成「只要日期」。 -->
                   <div class="field">
-                    <label for="a-starts">活动时间 <span class="req">*</span></label>
+                    <label for="a-starts" id="a-time-label">活动时间 <span class="req">*</span></label>
+                    <label class="check-line" id="a-allday-line">
+                      <input type="checkbox" id="a-all-day" />
+                      全天（不写几点，日历里整天都占着）
+                    </label>
                     <div class="range-box">
-                      <span class="range-cap start">活动开始时间</span>
+                      <span class="range-cap start" id="a-time-cap-start">活动开始时间</span>
                       <input id="a-starts" type="datetime-local" />
                       <span class="range-dash" aria-hidden="true">–</span>
-                      <span class="range-cap end">活动结束时间</span>
+                      <span class="range-cap end" id="a-time-cap-end">活动结束时间</span>
                       <input id="a-ends" type="datetime-local" />
                     </div>
-                    <span class="hint">同一个活动跨天的话，日历里每一天都会画出来。</span>
+                    <span class="hint" id="a-time-hint">同一个活动跨天的话，日历里每一天都会画出来。</span>
                   </div>
 
                   <div class="field only-signup">
@@ -386,7 +393,7 @@
                   </div>
 
                   <div class="field span-2">
-                    <label for="a-notes">备注（排班说明、集合地点等）</label>
+                    <label for="a-notes" id="a-notes-label">备注（排班说明、集合地点等）</label>
                     <textarea id="a-notes" placeholder="会显示在后台，学生看不到"></textarea>
                   </div>
                 </div>
@@ -859,17 +866,17 @@
 <!-- 导出 Excel：ExcelJS 才能往表里插 logo（SheetJS 社区版写不了图片），加载失败时用 SheetJS 降级 -->
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="assets/cloud-config.js?v=20261002a"></script>
-<script src="assets/cloud.js?v=20261002a"></script>
-<script src="assets/navfit.js?v=20261002a"></script>
-<script src="assets/session.js?v=20261002a"></script>
-<script src="assets/qr.js?v=20261002a"></script>
-<script src="assets/board.js?v=20261002a"></script>
-<script src="assets/calendar.js?v=20261002a"></script>
-<script src="assets/export.js?v=20261002a"></script>
-<script src="assets/editor.js?v=20261002a"></script>
-<script src="assets/feed.js?v=20261002a"></script>
-<script src="assets/backup.js?v=20261002a"></script>
-<script src="assets/admin.js?v=20261002a"></script>
+<script src="assets/cloud-config.js?v=20261002b"></script>
+<script src="assets/cloud.js?v=20261002b"></script>
+<script src="assets/navfit.js?v=20261002b"></script>
+<script src="assets/session.js?v=20261002b"></script>
+<script src="assets/qr.js?v=20261002b"></script>
+<script src="assets/board.js?v=20261002b"></script>
+<script src="assets/calendar.js?v=20261002b"></script>
+<script src="assets/export.js?v=20261002b"></script>
+<script src="assets/editor.js?v=20261002b"></script>
+<script src="assets/feed.js?v=20261002b"></script>
+<script src="assets/backup.js?v=20261002b"></script>
+<script src="assets/admin.js?v=20261002b"></script>
 </body>
 </html>

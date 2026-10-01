@@ -173,8 +173,24 @@ guis-volunteer/
 （`register_signup()` 会直接回 `not_signup`）。建法有两种：在后台活动表单顶部
 切类型，或者点日历某一天底部的「在这一天新建校内日程」。
 
-这四样东西落在数据库的这些地方：`activities` 多出
-`code_prefix / code_no / kind / show_positions` 四列、新表 `activity_positions`、
+切到「校内日程」之后表单**只剩四样**，跟苹果日历新建日程一样的建法：
+
+| 留着 | 收起来的（`.only-signup`） |
+|------|--------------------------|
+| 名称（label 变「日程名称」） | 一句话简介 |
+| 地点 | 所属板块 |
+| 时间（开始 – 结束，可勾「全天」） | 活动编号 |
+| 备注 | 报名开始时间 / 报名状态 / 计划招募人数 / 备选名额 / 义工时长 / 职位 / 负责老师 |
+
+日程不编号（`code_prefix`、`code_no` 存 null），后台列表里也不给它挂板块。
+
+**全天**（`activities.all_day`，对活动和日程都有效）：勾上之后两个时间框从
+`datetime-local` 变成 `date`，只选日期不选时刻；存库时补成整天 ——
+开始 `00:00`、结束 `23:59`。全天的条目不进当日时间轴（它没有时刻），
+列表和当天面板只写「全天」，跨天时再补一段日期区间。
+
+这五样东西落在数据库的这些地方：`activities` 多出
+`code_prefix / code_no / kind / show_positions / all_day` 五列、新表 `activity_positions`、
 `registrations` 多出 `position_id / position_name`，
 以及两个 SECURITY DEFINER 函数 `position_counts()` 和 `set_activity_hours()`。
 

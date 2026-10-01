@@ -54,7 +54,7 @@
   var ACT_COLS =
     "id, title, summary, category, location, starts_at, ends_at, signup_opens_at, " +
     "capacity, waitlist_capacity, status, notified_at, manager_email, hours, created_at, " +
-    "code_prefix, code_no, kind, show_positions";
+    "code_prefix, code_no, kind, show_positions, all_day";
 
   var api = {
     cloud: cloud,

@@ -1104,6 +1104,9 @@ html.js .reveal.is-in { opacity: 1; transform: none; }
   font: inherit; font-size: .84rem; padding: .35rem .45rem;
   border: 1px solid rgba(15, 23, 42, .16); border-radius: .5rem; background: #fff; color: #0F172A;
 }
+/* 「全天」那一格是勾选框，横排就好，别跟着上面竖排的标签走 */
+.cal-edit-grid label.cal-allday { flex-direction: row; align-items: center; gap: .4rem; }
+.cal-edit-grid .cal-allday input { width: auto; margin: 0; }
 .cal-item-actions { margin-top: .7rem; display: flex; gap: .5rem; flex-wrap: wrap; }
 #cal-admin-new { margin-top: 1rem; }
 

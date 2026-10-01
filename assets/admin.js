@@ -65,6 +65,13 @@ document.addEventListener("DOMContentLoaded", function () {
     if (isNaN(d.getTime())) return iso;
     return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
   }
+  /* 只要月日 —— 全天的活动在列表里用它配「全天」两个字 */
+  function fmtDay(iso) {
+    if (!iso) return "";
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return "";
+    return (d.getMonth() + 1) + "月" + d.getDate() + "日";
+  }
   function toLocalInput(iso) {
     if (!iso) return "";
     var d = new Date(iso);
@@ -75,6 +82,11 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!v) return null;
     var d = new Date(v);
     return isNaN(d.getTime()) ? null : d.toISOString();
+  }
+  /* 给 input 的值：全天只要 YYYY-MM-DD，否则连时刻一起要（datetime-local 的格式） */
+  function dayInputValue(iso, allDay) {
+    var v = toLocalInput(iso);
+    return allDay ? v.slice(0, 10) : v;
   }
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
@@ -453,6 +465,52 @@ document.addEventListener("DOMContentLoaded", function () {
   /* ---------------- 类型切换 ---------------- */
   var currentKind = "signup";
 
+  /* 「全天」：勾上之后两个时间框从 datetime-local 变成 date（只要日期），
+     跟苹果日历一样先决定是不是全天，再填开始 / 结束。
+     ⚠️ 换 type 之后浏览器会把不合格式的值清空，所以换之前先把值转成新格式再塞回去。 */
+  function dtToDate(v) { return String(v || "").slice(0, 10); }
+  function dateToDt(v, tail) { return v ? v + tail : ""; }
+
+  function setAllDay(on) {
+    var s = $("a-starts"), e = $("a-ends");
+    if (!s || !e) return;
+    var vs = s.value, ve = e.value;
+    if (on) {
+      s.type = "date"; e.type = "date";
+      s.value = dtToDate(vs); e.value = dtToDate(ve);
+    } else {
+      s.type = "datetime-local"; e.type = "datetime-local";
+      s.value = dateToDt(dtToDate(vs), "T09:00"); e.value = dateToDt(dtToDate(ve), "T17:00");
+    }
+    var hint = $("a-time-hint");
+    if (hint) {
+      hint.textContent = on
+        ? "整天都不标具体时刻；跨天的话，日历里每一天都会画出来。"
+        : "同一个活动跨天的话，日历里每一天都会画出来。";
+    }
+    var cs = $("a-time-cap-start"), ce = $("a-time-cap-end");
+    if (cs) cs.textContent = on ? "开始日期" : "活动开始时间";
+    if (ce) ce.textContent = on ? "结束日期" : "活动结束时间";
+  }
+
+  function allDayOn() { var c = $("a-all-day"); return !!(c && c.checked); }
+
+  /* 全天时把日期补成整天：开始 00:00，结束 23:59 */
+  function startEndPayload() {
+    var allDay = allDayOn();
+    var sv = $("a-starts").value, ev = $("a-ends").value;
+    if (allDay) {
+      var sd = dtToDate(sv), ed = dtToDate(ev) || dtToDate(sv);
+      return { starts_at: sd ? sd + "T00:00" : null, ends_at: ed ? ed + "T23:59" : null };
+    }
+    return { starts_at: fromLocalInput(sv), ends_at: fromLocalInput(ev) };
+  }
+
+  var allDayBox = $("a-all-day");
+  if (allDayBox) {
+    allDayBox.addEventListener("change", function () { setAllDay(allDayBox.checked); });
+  }
+
   function setKind(kind) {
     currentKind = kind === "event" ? "event" : "signup";
     var isEv = currentKind === "event";
@@ -464,6 +522,14 @@ document.addEventListener("DOMContentLoaded", function () {
     Array.prototype.forEach.call(document.querySelectorAll(".only-signup"), function (el) {
       el.hidden = isEv;
     });
+    /* 校内日程按苹果日历那套建法：名称 + 地点 + 时间 + 备注，
+       板块 / 编号 / 名额 / 时长 / 职位 / 负责老师整段收起（上面 .only-signup 干的事）。 */
+    var tl = $("a-title-label");
+    if (tl) tl.innerHTML = (isEv ? "日程名称" : "活动名称") + ' <span class="req">*</span>';
+    var nl = $("a-notes-label");
+    if (nl) nl.textContent = isEv ? "备注（可选）" : "备注（排班说明、集合地点等）";
+    var titleIn = $("a-title");
+    if (titleIn) titleIn.placeholder = isEv ? "例如：秋季运动会" : "例如：教务处考场布置";
     var t = $("act-form-title");
     if (t) t.textContent = editingId ? ("编辑" + (isEv ? "校内日程" : "活动")) : (isEv ? "新建校内日程" : "新建义工活动");
     var submit = $("act-submit");
@@ -683,9 +749,13 @@ document.addEventListener("DOMContentLoaded", function () {
         var code = fullCode(a);
         var badgeCls = isEv ? "badge-event" : a.status === "open" ? "badge-open" : a.status === "closed" ? "badge-closed" : "badge-draft";
         var badgeTxt = isEv ? "校内日程" : (a.status === "open" ? "开放报名" : a.status === "closed" ? "停止报名" : "草稿");
-        var when = a.starts_at ? fmtDT(a.starts_at) : "待定";
+        /* 全天的（日程或整天的活动）不印时刻，只印日期 + 「全天」 */
+        var when = a.all_day
+          ? (a.starts_at ? fmtDay(a.starts_at) + " · 全天" : "全天")
+          : (a.starts_at ? fmtDT(a.starts_at) : "待定");
         var meta = [];
-        if (a.category) meta.push(esc(a.category));
+        /* 校内日程没有板块 —— 板块是要报名的活动才分组用的 */
+        if (!isEv && a.category) meta.push(esc(a.category));
         if (a.location) meta.push(esc(a.location));
         if (!isEv && a.capacity) meta.push("计划 " + a.capacity + " 人" +
           (a.waitlist_capacity ? " · 备选 " + a.waitlist_capacity + " 人" : ""));
@@ -760,6 +830,9 @@ document.addEventListener("DOMContentLoaded", function () {
       $("a-location").value = a.location || "";
       $("a-starts").value = toLocalInput(a.starts_at);
       $("a-ends").value = toLocalInput(a.ends_at);
+      /* 全天要先设勾选再换框的类型：setAllDay 会把 datetime-local 的值截成日期 */
+      $("a-all-day").checked = !!a.all_day;
+      setAllDay(!!a.all_day);
       $("a-opens").value = toLocalInput(a.signup_opens_at);
       $("a-capacity").value = a.capacity || 30;
       $("a-waitlist").value = (a.waitlist_capacity == null ? 5 : a.waitlist_capacity);
@@ -848,6 +921,8 @@ document.addEventListener("DOMContentLoaded", function () {
     $("a-manager").value = "";
     $("a-hours").value = 2;
     $("a-show-pos").checked = true;
+    $("a-all-day").checked = false;
+    setAllDay(false);
     $("a-code-prefix").value = catPrefix($("a-category").value);
     $("a-code-prefix").dataset.touched = "0";
     suggestCode();
@@ -870,19 +945,22 @@ document.addEventListener("DOMContentLoaded", function () {
     /* ⚠️ a-contact（负责人联系方式）2026-10-02 起整段删掉了：表单里没有这个输入框了，
        所以 payload 里也别再写 contact —— 写了会把旧数据覆盖成空。 */
     var isEvent = currentKind === "event";
+    var span = startEndPayload();
     var payload = {
       title: title,
       summary: $("a-summary").value.trim() || null,
       category: $("a-category").value,
       location: $("a-location").value.trim() || null,
-      starts_at: fromLocalInput($("a-starts").value),
-      ends_at: fromLocalInput($("a-ends").value),
+      starts_at: span.starts_at,
+      ends_at: span.ends_at,
+      all_day: allDayOn(),
       notes: $("a-notes").value.trim() || null,
       hours: parseFloat($("a-hours").value),
-      code_prefix: $("a-code-prefix").value.trim().toUpperCase() || null,
-      code_no: $("a-code-no").value.trim() || null,
+      /* 校内日程不编号：编号是给要报名的活动排的，日程只有名字和时间 */
+      code_prefix: isEvent ? null : ($("a-code-prefix").value.trim().toUpperCase() || null),
+      code_no: isEvent ? null : ($("a-code-no").value.trim() || null),
       kind: isEvent ? "event" : "signup",
-      show_positions: $("a-show-pos").checked
+      show_positions: isEvent ? false : $("a-show-pos").checked
     };
     if (isNaN(payload.hours)) payload.hours = 2;
     if (!isEvent) {
@@ -991,8 +1069,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 : (window.GUISBoard ? window.GUISBoard.lampOf(a) : "")) +
           "</div>" +
           '<div class="cal-edit-grid">' +
-            "<label>活动开始<input type=\"datetime-local\" data-f=\"starts_at\" value=\"" + esc(toLocalInput(a.starts_at)) + "\" /></label>" +
-            "<label>活动结束<input type=\"datetime-local\" data-f=\"ends_at\" value=\"" + esc(toLocalInput(a.ends_at)) + "\" /></label>" +
+            '<label class="cal-allday"><input type="checkbox" data-f="all_day"' + (a.all_day ? " checked" : "") + " /> 全天</label>" +
+            "<label>活动开始<input type=\"" + (a.all_day ? "date" : "datetime-local") + "\" data-f=\"starts_at\" value=\"" + esc(dayInputValue(a.starts_at, a.all_day)) + "\" /></label>" +
+            "<label>活动结束<input type=\"" + (a.all_day ? "date" : "datetime-local") + "\" data-f=\"ends_at\" value=\"" + esc(dayInputValue(a.ends_at, a.all_day)) + "\" /></label>" +
             /* 校内日程没有报名，这三个字段留着只会让人以为填了会生效 */
             (ev ? "" :
             "<label>报名开始<input type=\"datetime-local\" data-f=\"signup_opens_at\" value=\"" + esc(toLocalInput(a.signup_opens_at)) + "\" /></label>" +
@@ -1042,10 +1121,20 @@ document.addEventListener("DOMContentLoaded", function () {
     var item = btn.closest(".cal-item");
     if (!item) return;
 
-    var patch = {};
+    var allBox = item.querySelector('[data-f="all_day"]');
+    var allDay = !!(allBox && allBox.checked);
+    var patch = { all_day: allDay };
     ["starts_at", "ends_at", "signup_opens_at"].forEach(function (f) {
       var input = item.querySelector('[data-f="' + f + '"]');
-      patch[f] = fromLocalInput(input ? input.value : "");
+      if (!input) return;                       /* 校内日程没有「报名开始」这一格 */
+      var v = input.value;
+      /* 全天：把日期补成整天，开始 00:00 / 结束 23:59 */
+      if (allDay && (f === "starts_at" || f === "ends_at")) {
+        var d = String(v || "").slice(0, 10);
+        patch[f] = d ? d + (f === "starts_at" ? "T00:00" : "T23:59") : null;
+        return;
+      }
+      patch[f] = fromLocalInput(v);
     });
     /* 名额与备选名额是数字，不走时间转换 */
     ["capacity", "waitlist_capacity"].forEach(function (f) {

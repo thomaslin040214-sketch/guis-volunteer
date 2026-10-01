@@ -316,6 +316,8 @@ window.SITE_I18N = {
     "cal.goSignup": "去报名",
     /* 2026-10-02：校内日程（不需要报名的日历条目） */
     "cal.event": "校内日程",
+    /* 全天的条目不印时刻，只写「全天」；跨天时后面接日期区间 */
+    "cal.allDay": "全天",
     "cal.adminHint": "点日历上的任意一天，然后在下面改这一天的活动开始 / 结束 / 报名开始时间。只有执委会能改。",
     "cal.save": "保存",
     "cal.saving": "保存中…",
@@ -736,6 +738,7 @@ window.SITE_I18N = {
     "cal.goSignup": "Sign up",
     /* 2026-10-02: school calendar entries (no sign-up needed) */
     "cal.event": "School event",
+    "cal.allDay": "All day",
     "cal.adminHint": "Pick a day on the calendar, then edit that day's start / end / sign-up opening time below. Only the executive committee can change it.",
     "cal.save": "Save",
     "cal.saving": "Saving…",

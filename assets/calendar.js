@@ -87,6 +87,15 @@
     var e = sameDay ? pad(d2.getHours()) + ":" + pad(d2.getMinutes()) : fmtDT(a.ends_at);
     return s + " → " + e;
   }
+  /* 只要月日，不要时刻 —— 全天的日程用它印日期区间 */
+  function fmtD(iso) {
+    if (!iso) return "";
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return "";
+    return lang() === "en"
+      ? MON_EN[d.getMonth()] + " " + d.getDate()
+      : (d.getMonth() + 1) + "月" + d.getDate() + "日";
+  }
   function fmtHM(iso) {
     if (!iso) return "";
     var d = new Date(iso);
@@ -142,9 +151,11 @@
   }
 
   function dayTimelineHTML(list, ymd) {
-    /* 只有「当天真的在进行」的活动进时间轴（没写开始时间的不画） */
+    /* 只有「当天真的在进行」的活动进时间轴（没写开始时间的不画）。
+       ⚠️ 全天的（all_day）不进时间轴 —— 它没有时刻，画进某一档反而误导，
+          跟日历应用一样整天占在当天列表里就好。 */
     var runs = (list || []).filter(function (it) {
-      return (!it.phase || it.phase === "run") && it.a && it.a.starts_at;
+      return (!it.phase || it.phase === "run") && it.a && it.a.starts_at && !it.a.all_day;
     });
     var isToday = ymd === dayKey(new Date());
     var mins = nowMinutes();
@@ -340,6 +351,7 @@
           /* 校内日程（kind = 'event'）不需要报名 —— 别再挂「去报名」按钮、
              也别显示报名开始时间和「已报名 x / y 人」这种只对系列活动有意义的数字。 */
           var isEv = a.kind === "event";
+          var allDay = !!a.all_day;
           var open = !isEv && (!window.GUISBoard || window.GUISBoard.isOpen(a));
           var code = String(a.code_prefix || "") + String(a.code_no || "");
           return '<div class="cal-item">' +
@@ -352,8 +364,14 @@
               (isEv ? "" : lamp(a)) +
             "</div>" +
             '<div class="cal-item-meta">' +
-              "<span>" + esc(t("cal.start", "开始")) + "：" + esc(fmtDT(a.starts_at) || t("cal.tbd", "待定")) + "</span>" +
-              "<span>" + esc(t("cal.end", "结束")) + "：" + esc(a.ends_at ? fmtHM(a.ends_at) : "—") + "</span>" +
+              (allDay
+                /* 全天：不印时刻，跨天的话把日期区间写出来 */
+                ? "<span>" + esc(t("cal.allDay", "全天")) +
+                    (a.starts_at && a.ends_at && dayKey(new Date(a.starts_at)) !== dayKey(new Date(a.ends_at))
+                      ? " · " + esc(fmtD(a.starts_at)) + " – " + esc(fmtD(a.ends_at)) : "") +
+                  "</span>"
+                : "<span>" + esc(t("cal.start", "开始")) + "：" + esc(fmtDT(a.starts_at) || t("cal.tbd", "待定")) + "</span>" +
+                  "<span>" + esc(t("cal.end", "结束")) + "：" + esc(a.ends_at ? fmtHM(a.ends_at) : "—") + "</span>") +
               (isEv ? "" :
               "<span>" + esc(t("cal.opens", "报名开始")) + "：" + esc(a.signup_opens_at ? fmtDT(a.signup_opens_at) : t("cal.opensNow", "建好即开放")) + "</span>" +
               "<span>" + esc(t("sg.taken", "已报名 {a} / {b} 人")
