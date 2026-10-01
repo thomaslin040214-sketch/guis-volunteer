@@ -138,6 +138,20 @@
     }).join("");
 
     wireAccordions();
+    ensureVisible();
+  }
+
+  /* ⚠️ 这些卡片是 render() 之后才插进 DOM 的，而 main.js 的 initReveal()
+     只在 DOMContentLoaded 扫一次 —— 带 .reveal 的卡片不会被注册，
+     于是永远停在 opacity:0（组织图「显示不出来」就是这个原因）。
+     这里补一次注册，和 board.js 的 ensureVisible 同一套做法。 */
+  function ensureVisible() {
+    var E = window.GUISEnter;
+    document.querySelectorAll("#dept-list .reveal, #lead-list .reveal").forEach(function (node) {
+      if (node.classList.contains("is-in")) return;
+      if (E && E.register) E.register(node, function (n) { n.classList.add("is-in"); }, 0.12);
+      else node.classList.add("is-in");
+    });
   }
 
   /* 折叠履历：为新生成的 .cv-head 绑定点击，并在展开时量高 */

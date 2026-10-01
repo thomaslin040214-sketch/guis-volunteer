@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-ver="20260930z">
+<html lang="zh-CN" data-ver="20261001b">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,7 +10,7 @@
    于是点站内链接（全是裸路径）进去时整页退回旧设计。
    这里比对 <html data-ver>：不是当前版本就带查询串重拉一次（查询串必定回源）。 */
 (function () {
-  var VER = "20260930z";
+  var VER = "20261001b";
   try {
     var el = document.documentElement;
     var healed = /[?&]_v=/.test(location.search);
@@ -33,8 +33,8 @@
 <meta name="description" content="GUIS 义工组织后台管理：创建义工活动、查看报名名单、导出 Excel。" />
 <meta name="theme-color" content="#FFFFFF" />
 <meta name="robots" content="noindex, nofollow" />
-<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20260930z" />
-<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20260930z" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261001b" />
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261001b" />
 <!-- 品牌标志兜底样式（内联，随 HTML 一起下发）。
      即使 assets/site.css 被浏览器缓存成旧版本，标志也不会按图片原始尺寸撑破布局。
      这里只设尺寸上限（max-*），正常加载 site.css 时这些上限都不会生效。 -->
@@ -58,8 +58,8 @@
   .hero-brand .hero-va{max-height:40px}
 }
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20260930z" />
-<link rel="stylesheet" href="assets/app.css?v=20260930z" />
+<link rel="stylesheet" href="assets/site.css?v=20261001b" />
+<link rel="stylesheet" href="assets/app.css?v=20261001b" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
@@ -295,14 +295,15 @@
                   </div>
 
                   <div class="field">
-                    <label for="a-deadline">报名截止时间</label>
-                    <input id="a-deadline" type="datetime-local" />
-                    <span class="hint">到点后学生侧会自动显示「已截止」。</span>
+                    <label for="a-capacity">计划招募人数</label>
+                    <input id="a-capacity" type="number" min="1" value="30" />
+                    <span class="hint">报满就自动停止报名 —— 没有截止时间这一项。</span>
                   </div>
 
                   <div class="field">
-                    <label for="a-capacity">计划招募人数</label>
-                    <input id="a-capacity" type="number" min="1" value="30" />
+                    <label for="a-waitlist">备选名额（waiting list）</label>
+                    <input id="a-waitlist" type="number" min="0" value="5" />
+                    <span class="hint">名额满了还能再收多少人进备选名单；填 0 就是满了直接停。</span>
                   </div>
 
                   <div class="field">
@@ -805,16 +806,16 @@
 <!-- 导出 Excel：ExcelJS 才能往表里插 logo（SheetJS 社区版写不了图片），加载失败时用 SheetJS 降级 -->
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="assets/cloud-config.js?v=20260930z"></script>
-<script src="assets/cloud.js?v=20260930z"></script>
-<script src="assets/session.js?v=20260930z"></script>
-<script src="assets/qr.js?v=20260930z"></script>
-<script src="assets/board.js?v=20260930z"></script>
-<script src="assets/calendar.js?v=20260930z"></script>
-<script src="assets/export.js?v=20260930z"></script>
-<script src="assets/editor.js?v=20260930z"></script>
-<script src="assets/feed.js?v=20260930z"></script>
-<script src="assets/backup.js?v=20260930z"></script>
-<script src="assets/admin.js?v=20260930z"></script>
+<script src="assets/cloud-config.js?v=20261001b"></script>
+<script src="assets/cloud.js?v=20261001b"></script>
+<script src="assets/session.js?v=20261001b"></script>
+<script src="assets/qr.js?v=20261001b"></script>
+<script src="assets/board.js?v=20261001b"></script>
+<script src="assets/calendar.js?v=20261001b"></script>
+<script src="assets/export.js?v=20261001b"></script>
+<script src="assets/editor.js?v=20261001b"></script>
+<script src="assets/feed.js?v=20261001b"></script>
+<script src="assets/backup.js?v=20261001b"></script>
+<script src="assets/admin.js?v=20261001b"></script>
 </body>
 </html>

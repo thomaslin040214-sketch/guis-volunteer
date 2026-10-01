@@ -9,8 +9,10 @@
      - 一周以**星期一**开头（不是周日）
      - 今天高亮
      - 以**月份**为单位切换：上一月 / 下一月 / 顶部 12 个月缩略条直接跳
-     - 点任意一天 → 下方列出当天的活动：开始时间、结束时间、报名截止时间、状态灯
+     - 点任意一天 → 下方列出当天在进行的活动：开始时间、结束时间、状态灯
      - 跨天活动会在它覆盖的每一天都出现
+     - ⚠️ 日历上只标**活动真正开始 / 结束**的日子。报名开始时间只是个时间点，
+       不再单独占一格（2026-10-01 改）；名额满不满由名额决定，也不进日历。
 
    用法：
      var cal = GUISCalendar.create(document.getElementById("cal-root"), {
@@ -51,9 +53,8 @@
   }
   function lightOf(a) {
     if (window.GUISBoard && window.GUISBoard.lightOf) return window.GUISBoard.lightOf(a);
-    // 没引 board.js 时的兜底：只看报名截止时间和 status
+    // 没引 board.js 时的兜底：只看是否标了已通知 / status
     if (a.notified_at) return "red";
-    if (a.signup_deadline && new Date(a.signup_deadline).getTime() < Date.now()) return "yellow";
     return a.status === "open" ? "green" : "yellow";
   }
   function dot(light, text) {
@@ -99,70 +100,98 @@
     return "";
   }
 
-  /* 当日进程：每 2 小时一档的时间轴
-     只排「活动当天真的在进行」的那些（phase = run），报名日不占时间格。
-     时间范围由当天活动的起止推出，并向两端各扩到偶数整点，最少 4 档。 */
+  /* ---------------- 当日时间轴 ----------------
+     2026-10-01 改成：**整天 0:00–24:00 常驻**，哪怕这一天一个活动都没有。
+     每 2 小时一档，活动按时间区间落进有交集的档；
+     「现在」那条红线由 tickNow() 每 30 秒挪一次，跟着系统时间走。 */
   var SLOT_HOURS = 2;
-  function dayTimelineHTML(list, ymd) {
-    var runs = (list || []).filter(function (it) {
-      return it.phase === "run" && it.a.starts_at;
-    });
-    if (!runs.length) return "";
+  var DAY_FROM = 0, DAY_TO = 24;
 
-    var minH = 24, maxH = 0, any = false;
-    runs.forEach(function (it) {
+  function nowMinutes() {
+    var d = new Date();
+    return d.getHours() * 60 + d.getMinutes();
+  }
+  function slotOf(min) { return Math.floor(min / 60 / SLOT_HOURS) * SLOT_HOURS; }
+
+  function chipsFor(runs, h) {
+    var s0 = h * 60, e0 = s0 + SLOT_HOURS * 60;
+    return runs.filter(function (it) {
       var s = new Date(it.a.starts_at);
       var e = it.a.ends_at ? new Date(it.a.ends_at) : s;
-      if (isNaN(s.getTime())) return;
+      if (isNaN(s.getTime())) return false;
       if (isNaN(e.getTime())) e = s;
-      any = true;
-      minH = Math.min(minH, s.getHours());
-      /* 结束时间落在整点上时不额外占下一档（10:00-11:00 归到 10 点档） */
-      var endH = e.getHours() + (e.getMinutes() > 0 ? 1 : 0);
-      maxH = Math.max(maxH, endH);
-    });
-    if (!any) return "";
+      var a0 = s.getHours() * 60 + s.getMinutes();
+      var a1 = e.getHours() * 60 + e.getMinutes();
+      if (a1 <= a0) a1 = a0 + 30;                    /* 没填结束时间就画一小段 */
+      return a0 < e0 && a1 > s0;                     /* 与该档有交集 */
+    }).map(function (it) {
+      var e = it.a.ends_at ? new Date(it.a.ends_at) : null;
+      return '<div class="cal-chip" role="listitem">' +
+        '<span class="cal-chip-time">' + esc(fmtHM(it.a.starts_at)) +
+          (e ? "–" + esc(fmtHM(it.a.ends_at)) : "") + "</span>" +
+        '<span class="cal-chip-title">' + esc(it.a.title || "") + "</span>" +
+      "</div>";
+    }).join("");
+  }
 
-    /* 向偶数整点对齐：开始向下取偶，结束向上取偶 */
-    var from = Math.max(0, Math.floor(minH / SLOT_HOURS) * SLOT_HOURS);
-    var to = Math.min(24, Math.ceil(maxH / SLOT_HOURS) * SLOT_HOURS);
-    if (to - from < SLOT_HOURS * 4) {          /* 至少给 4 档，太短不好看 */
-      var mid = Math.round((from + to) / 2 / SLOT_HOURS) * SLOT_HOURS;
-      from = Math.max(0, mid - SLOT_HOURS * 2);
-      to = Math.min(24, from + SLOT_HOURS * 4);
-      if (to - from < SLOT_HOURS * 4) from = Math.max(0, to - SLOT_HOURS * 4);
-    }
+  function nowLineHTML(h, mins) {
+    var pct = ((mins - h * 60) / (SLOT_HOURS * 60)) * 100;
+    return '<span class="cal-nowline" style="top:' + pct.toFixed(1) + '%">' +
+      '<span class="cal-nowlabel">' + esc(t("cal.now", "现在")) + " " +
+      pad(Math.floor(mins / 60)) + ":" + pad(mins % 60) + "</span></span>";
+  }
+
+  function dayTimelineHTML(list, ymd) {
+    /* 只有「当天真的在进行」的活动进时间轴（没写开始时间的不画） */
+    var runs = (list || []).filter(function (it) {
+      return (!it.phase || it.phase === "run") && it.a && it.a.starts_at;
+    });
+    var isToday = ymd === dayKey(new Date());
+    var mins = nowMinutes();
+    var nowSlot = isToday ? slotOf(mins) : -1;
 
     var html = '<div class="cal-timeline" role="list" aria-label="' +
       esc(t("cal.timeline", "当日时间轴")) + '">';
-    for (var h = from; h < to; h += SLOT_HOURS) {
-      var s0 = h * 60, e0 = s0 + SLOT_HOURS * 60;      /* 档位的分钟区间 */
-      var chips = runs.filter(function (it) {
-        var s = new Date(it.a.starts_at);
-        var e = it.a.ends_at ? new Date(it.a.ends_at) : s;
-        if (isNaN(e.getTime())) e = s;
-        var a0 = s.getHours() * 60 + s.getMinutes();
-        var a1 = e.getHours() * 60 + e.getMinutes();
-        if (a1 <= a0) a1 = a0 + 30;                    /* 没填结束时间就画一小段 */
-        return a0 < e0 && a1 > s0;                     /* 与该档有交集 */
-      }).map(function (it) {
-        var s = new Date(it.a.starts_at);
-        var e = it.a.ends_at ? new Date(it.a.ends_at) : null;
-        return '<div class="cal-chip" role="listitem">' +
-          '<span class="cal-chip-time">' + esc(fmtHM(it.a.starts_at)) +
-            (e ? "–" + esc(fmtHM(it.a.ends_at)) : "") + "</span>" +
-          '<span class="cal-chip-title">' + esc(it.a.title || "") + "</span>" +
-        "</div>";
-      }).join("");
-
-      html += '<div class="cal-slot' + (chips ? "" : " is-empty") + '">' +
+    for (var h = DAY_FROM; h < DAY_TO; h += SLOT_HOURS) {
+      var chips = chipsFor(runs, h);
+      var on = (h === nowSlot);
+      html += '<div class="cal-slot' + (chips ? "" : " is-empty") + (on ? " is-now" : "") +
+          '" data-h="' + h + '">' +
         '<span class="cal-slot-time">' + pad(h) + ":00</span>" +
-        '<div class="cal-slot-body">' + chips +
-          (chips ? "" : '<span class="cal-slot-none">·</span>') +
+        '<div class="cal-slot-body">' +
+          (chips || '<span class="cal-slot-none">·</span>') +
+          (on ? nowLineHTML(h, mins) : "") +
         "</div>" +
       "</div>";
     }
     return html + "</div>";
+  }
+
+  /* 只挪「现在」那条线，不整块重画（重画会打断 hover / 选中态） */
+  function tickNow(root, selKey) {
+    var tl = (root || document).querySelector(".cal-timeline");
+    if (!tl) return;
+    var mins = nowMinutes();
+    var h = slotOf(mins);
+    /* 选中的不是今天 → 把「现在」那条线收掉（时间轴本身照常显示） */
+    var isToday = !selKey || selKey === dayKey(new Date());
+    Array.prototype.forEach.call(tl.querySelectorAll(".cal-slot"), function (s) {
+      var sh = Number(s.getAttribute("data-h"));
+      var on = isToday && sh === h;
+      s.classList.toggle("is-now", on);
+      var line = s.querySelector(".cal-nowline");
+      if (!on) { if (line && line.parentNode) line.parentNode.removeChild(line); return; }
+      if (!line) {
+        line = document.createElement("span");
+        line.className = "cal-nowline";
+        line.innerHTML = '<span class="cal-nowlabel"></span>';
+        var body = s.querySelector(".cal-slot-body");
+        if (body) body.appendChild(line);
+      }
+      line.style.top = (((mins - h * 60) / (SLOT_HOURS * 60)) * 100).toFixed(1) + "%";
+      var lab = line.querySelector(".cal-nowlabel");
+      if (lab) lab.textContent = t("cal.now", "现在") + " " + pad(Math.floor(mins / 60)) + ":" + pad(mins % 60);
+    });
   }
 
   function create(root, opts) {
@@ -196,11 +225,11 @@
     var elGrid = root.querySelector("#cal-grid");
     var elDay = root.querySelector("#cal-day");
 
-    /* 一天里的一条记录：a = 活动本体，phase 说明这天为什么出现在日历上
-         run   = 活动本身在这天进行（跨天活动会在覆盖的每一天出现）
-         open  = 这一天开始报名
-         close = 这一天报名截止
-       同一天同时是「活动日」和「截止日」时，run 优先。 */
+    /* 一天里的一条记录：a = 活动本体，phase 说明这天为什么出现在日历上。
+         run = 活动本身在这天进行（跨天活动会在覆盖的每一天出现）
+       ⚠️ 以前还有 open / close 两种 phase（报名开始日 / 报名截止日各占一格），
+          2026-10-01 起按用户要求删掉：日历只标活动真正开始与结束的日子，
+          报名相关的时间点不再单独占格（也不再有「报名截止时间」这一列）。 */
     function addDay(k, a, phase) {
       var arr = (byDay[k] = byDay[k] || []);
       for (var i = 0; i < arr.length; i++) {
@@ -226,19 +255,6 @@
               addDay(dayKey(cur), a, "run");
               cur = new Date(cur.getFullYear(), cur.getMonth(), cur.getDate() + 1);
             }
-          }
-        }
-        /* ② 报名开始日 / 报名截止日也标进日历 */
-        if (a.signup_opens_at) {
-          var os = new Date(a.signup_opens_at);
-          if (!isNaN(os.getTime())) {
-            addDay(dayKey(os), a, "open");
-          }
-        }
-        if (a.signup_deadline) {
-          var dl = new Date(a.signup_deadline);
-          if (!isNaN(dl.getTime())) {
-            addDay(dayKey(dl), a, "close");
           }
         }
       });
@@ -307,12 +323,15 @@
       }
       elDay.innerHTML = defaultDayHTML(list, state.sel);
       elDay.hidden = false;
+      tickNow(elDay, state.sel);
     }
 
     function defaultDayHTML(list, key) {
       var head = '<div class="cal-day-head">' + esc(key) + "</div>";
+      /* 时间轴常驻：哪怕这一天没有活动，也把 0:00–24:00 摆出来 */
       if (!list.length) {
-        return head + '<div class="empty">' + esc(t("cal.none", "这一天没有安排活动。")) + "</div>";
+        return head + dayTimelineHTML([], key) +
+          '<div class="empty">' + esc(t("cal.none", "这一天没有安排活动。")) + "</div>";
       }
       return head +
         dayTimelineHTML(list, key) +
@@ -330,7 +349,9 @@
               "<span>" + esc(t("cal.start", "开始")) + "：" + esc(fmtDT(a.starts_at) || t("cal.tbd", "待定")) + "</span>" +
               "<span>" + esc(t("cal.end", "结束")) + "：" + esc(a.ends_at ? fmtHM(a.ends_at) : "—") + "</span>" +
               "<span>" + esc(t("cal.opens", "报名开始")) + "：" + esc(a.signup_opens_at ? fmtDT(a.signup_opens_at) : t("cal.opensNow", "建好即开放")) + "</span>" +
-              "<span>" + esc(t("cal.deadline", "报名截止")) + "：" + esc(a.signup_deadline ? fmtDT(a.signup_deadline) : "—") + "</span>" +
+              "<span>" + esc(t("sg.taken", "已报名 {a} / {b} 人")
+                  .replace("{a}", String(a._taken || 0))
+                  .replace("{b}", a.capacity ? String(a.capacity) : "∞")) + "</span>" +
               (a.location ? "<span>" + esc(t("cal.place", "地点")) + "：" + esc(a.location) + "</span>" : "") +
             "</div>" +
             /* 报名页认的是 ?activity=<id>（见 signup.html 内联脚本），不是 ?a= */
@@ -346,7 +367,15 @@
       renderWeek();
       renderGrid();
       renderDay();
+      tickNow(elDay, state.sel);
     }
+
+    /* 「现在」那条线每 30 秒挪一次 —— 时间轴跟着系统时间走，不用刷新页面 */
+    var ticker = setInterval(function () { tickNow(elDay, state.sel); }, 30000);
+    /* 切回标签页时也补一次（后台标签的定时器会被节流） */
+    document.addEventListener("visibilitychange", function () {
+      if (!document.hidden) tickNow(elDay, state.sel);
+    });
 
     root.addEventListener("click", function (e) {
       var btn = e.target.closest ? e.target.closest("[data-act],[data-month],[data-day]") : null;

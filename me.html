@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-ver="20260930z">
+<html lang="zh-CN" data-ver="20261001b">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,8 +7,8 @@
 <meta name="description" content="GUIS 义工社学生账户：查看自己报名参加的义工活动、签到二维码与累计义工小时。" />
 <meta name="theme-color" content="#FFFFFF" />
 <meta name="robots" content="noindex, nofollow" />
-<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20260930z" />
-<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20260930z" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261001b" />
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261001b" />
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate" />
 <script>
 /* 文档自愈：托管服务器只给 last-modified，没有 Cache-Control / ETag，
@@ -16,7 +16,7 @@
    于是点站内链接（全是裸路径）进去时整页退回旧设计。
    这里比对 <html data-ver>：不是当前版本就带查询串重拉一次（查询串必定回源）。 */
 (function () {
-  var VER = "20260930z";
+  var VER = "20261001b";
   try {
     var el = document.documentElement;
     var healed = /[?&]_v=/.test(location.search);
@@ -49,8 +49,8 @@
   .footer-brand img{max-height:24px}
 }
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20260930z" />
-<link rel="stylesheet" href="assets/app.css?v=20260930z" />
+<link rel="stylesheet" href="assets/site.css?v=20261001b" />
+<link rel="stylesheet" href="assets/app.css?v=20261001b" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
@@ -85,13 +85,16 @@
         <a id="origin-link" href="#"></a> 访问本页。
       </div>
 
+      <!-- 从统一登录页跳过来时，先显示这一行，不要闪一下登录表单 -->
+      <div id="me-boot" class="empty"><span class="loading"></span> 正在读取你的账户…</div>
+
       <!-- ============ 登录 / 开通 ============ -->
       <div id="login-view" hidden>
         <div class="me-wrap">
           <div style="text-align:center;margin-bottom:1.75rem;">
             <img src="assets/logo/guis-ulc-lockup.png" alt="GUIS | ULC" style="width:220px;margin:0 auto 1rem;" />
             <p class="eyebrow">我的义工账户</p>
-            <h1 class="page-title">同学登录</h1>
+            <h1 class="page-title">学生端</h1>
             <p class="page-lede" style="margin:0 auto;">用学校邮箱登录，可以看到自己报名的活动、签到二维码和累计义工小时。</p>
           </div>
 
@@ -229,10 +232,10 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
-<script src="assets/cloud-config.js?v=20260930z"></script>
-<script src="assets/cloud.js?v=20260930z"></script>
-<script src="assets/session.js?v=20260930z"></script>
-<script src="assets/qr.js?v=20260930z"></script>
-<script src="assets/me.js?v=20260930z"></script>
+<script src="assets/cloud-config.js?v=20261001b"></script>
+<script src="assets/cloud.js?v=20261001b"></script>
+<script src="assets/session.js?v=20261001b"></script>
+<script src="assets/qr.js?v=20261001b"></script>
+<script src="assets/me.js?v=20261001b"></script>
 </body>
 </html>

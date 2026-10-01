@@ -75,24 +75,17 @@
        ok        → 会话还在，返回 { email, role }
        transient → 网络 / 服务端临时出错，**不清登录态**，等下再试
        none      → 服务端明确说没有会话，清缓存、恢复「登录」按钮 */
-  function pickEmail(res) {
-    var d = res && res.data;
-    if (!d) return null;
-    var u = d.user || (d.session && d.session.user);
-    var email = u && (u.email || (u.user_metadata && u.user_metadata.email));
-    return email ? String(email) : null;
-  }
-
   function revalidate() {
-    /* 外面给的 C 可能是个半成品桩（测试环境 / SDK 没起来），
-       任何同步抛错都当成「网络抖了一下」，不要整页炸掉。 */
+    /* 邮箱统一走 C.sessionUser()（cloud.js）—— getSession() 自己不带邮箱，
+       以前在这里读 s.user.email 读出来永远是 undefined，头像就永远画不出来。 */
     var p;
-    try { p = C.getSession(); } catch (e) { return Promise.resolve({ state: "transient" }); }
+    try {
+      p = (typeof C.sessionUser === "function") ? C.sessionUser() : Promise.resolve(null);
+    } catch (e) { return Promise.resolve({ state: "transient" }); }
 
-    return Promise.resolve(p).then(function (res) {
-      if (res && res.error) return { state: "transient" };
-      var email = pickEmail(res);
-      if (!email) return { state: "none" };
+    return Promise.resolve(p).then(function (u) {
+      if (!u) return { state: "none" };
+      var email = u.email || "";
       if (typeof C.myAccess !== "function") return { state: "ok", email: email, role: "student" };
 
       /* 角色只有服务端说了算（my_access 是 SECURITY DEFINER）。

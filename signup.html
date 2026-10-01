@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-ver="20260930z" data-page-title="doc.signup.title">
+<html lang="zh-CN" data-ver="20261001b" data-page-title="doc.signup.title">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,7 +10,7 @@
    于是点站内链接（全是裸路径）进去时整页退回旧设计。
    这里比对 <html data-ver>：不是当前版本就带查询串重拉一次（查询串必定回源）。 */
 (function () {
-  var VER = "20260930z";
+  var VER = "20261001b";
   try {
     var el = document.documentElement;
     var healed = /[?&]_v=/.test(location.search);
@@ -32,8 +32,8 @@
 <title>活动报名 | GUIS 义工社</title>
 <meta name="description" content="GUIS 义工社义工活动报名 —— 广州优联国际学校学生志愿服务组织。" />
 <meta name="theme-color" content="#FFFFFF" />
-<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20260930z" />
-<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20260930z" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261001b" />
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261001b" />
 <!-- 品牌标志兜底样式（内联，随 HTML 一起下发）。
      即使 assets/site.css 被浏览器缓存成旧版本，标志也不会按图片原始尺寸撑破布局。
      这里只设尺寸上限（max-*），正常加载 site.css 时这些上限都不会生效。 -->
@@ -57,8 +57,8 @@
   .hero-brand .hero-va{max-height:40px}
 }
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20260930z" />
-<link rel="stylesheet" href="assets/app.css?v=20260930z" />
+<link rel="stylesheet" href="assets/site.css?v=20261001b" />
+<link rel="stylesheet" href="assets/app.css?v=20261001b" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
@@ -274,15 +274,15 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
-<script src="assets/cloud-config.js?v=20260930z"></script>
-<script src="assets/cloud.js?v=20260930z"></script>
-<script src="assets/i18n.js?v=20260930z"></script>
-<script src="assets/board.js?v=20260930z"></script>
-<script src="assets/calendar.js?v=20260930z"></script>
-<script src="assets/nav.js?v=20260930z"></script>
-<script src="assets/session.js?v=20260930z"></script>
-<script src="assets/main.js?v=20260930z"></script>
-<script src="assets/queue.js?v=20260930z"></script>
+<script src="assets/cloud-config.js?v=20261001b"></script>
+<script src="assets/cloud.js?v=20261001b"></script>
+<script src="assets/i18n.js?v=20261001b"></script>
+<script src="assets/board.js?v=20261001b"></script>
+<script src="assets/calendar.js?v=20261001b"></script>
+<script src="assets/nav.js?v=20261001b"></script>
+<script src="assets/session.js?v=20261001b"></script>
+<script src="assets/main.js?v=20261001b"></script>
+<script src="assets/queue.js?v=20261001b"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   "use strict";
@@ -328,15 +328,67 @@ document.addEventListener("DOMContentLoaded", function () {
     var bits = [];
     if (a.starts_at) bits.push("🕘 " + fmtDateTime(a.starts_at));
     if (a.location) bits.push("📍 " + a.location);
-    if (a.capacity) bits.push("👥 " + a.capacity + " " + t("sg.people", "人"));
-    if (a.signup_deadline) bits.push("⏳ " + t("sg.deadline", "截止") + " " + fmtDateTime(a.signup_deadline));
+    if (a.capacity) {
+      bits.push("👥 " + t("sg.taken", "已报名 {a} / {b} 人")
+        .replace("{a}", String(a._taken || 0)).replace("{b}", String(a.capacity)));
+    }
+    /* 没到报名开始时间时把时间写出来，别让人以为已经结束了 */
+    if (a.signup_opens_at && new Date(a.signup_opens_at).getTime() > Date.now()) {
+      bits.push("⏳ " + t("sg.opensAt", "报名开始") + " " + fmtDateTime(a.signup_opens_at));
+    }
     return bits;
   }
 
-  /* 只有绿灯还能报名；黄灯（过了截止时间）和红灯（已邮件通知）都不能。
+  /* 名额说了算：满了、备选也满了、还没开始、已通知 —— 都不能再报。
      判定统一走 assets/board.js，避免和首页看板、后台各写一套。 */
+  function board() { return window.GUISBoard; }
   function isClosed(a) {
-    return !window.GUISBoard.isOpen(a);
+    var B = board();
+    return B ? B.isClosed(a) : false;
+  }
+  function reasonOf(a) {
+    var B = board();
+    return B ? B.reasonOf(a) : "green";
+  }
+
+  /* ---------- 弹窗（名额 / 备选名单要用） ---------- */
+  function dialog(opts) {
+    return new Promise(function (resolve) {
+      var mask = document.createElement("div");
+      mask.className = "sg-modal-mask";
+      mask.innerHTML =
+        '<div class="sg-modal" role="dialog" aria-modal="true">' +
+          '<h3 class="sg-modal-title"></h3>' +
+          '<div class="sg-modal-body"></div>' +
+          '<div class="sg-modal-actions">' +
+            '<button type="button" class="btn btn-secondary" data-x="no"></button>' +
+            '<button type="button" class="btn btn-primary" data-x="yes"></button>' +
+          "</div>" +
+        "</div>";
+      mask.querySelector(".sg-modal-title").textContent = opts.title || "";
+      mask.querySelector(".sg-modal-body").textContent = opts.body || "";
+      mask.querySelector('[data-x="no"]').textContent = opts.cancel || t("sg.no", "算了");
+      mask.querySelector('[data-x="yes"]').textContent = opts.ok || t("sg.yes", "好的");
+      document.body.appendChild(mask);
+      requestAnimationFrame(function () { mask.classList.add("is-on"); });
+
+      function close(v) {
+        mask.classList.remove("is-on");
+        setTimeout(function () { if (mask.parentNode) mask.parentNode.removeChild(mask); }, 200);
+        resolve(v);
+      }
+      mask.addEventListener("click", function (e) {
+        if (e.target === mask) { close(false); return; }
+        var b = e.target.closest ? e.target.closest("[data-x]") : null;
+        if (!b) return;
+        close(b.getAttribute("data-x") === "yes");
+      });
+      document.addEventListener("keydown", function esc(e) {
+        if (e.key !== "Escape") return;
+        document.removeEventListener("keydown", esc);
+        close(false);
+      });
+    });
   }
 
   /* ---------- 载入活动 ---------- */
@@ -353,7 +405,11 @@ document.addEventListener("DOMContentLoaded", function () {
       cancelText: t("q.cancel", "稍后再来"),
       retryText: retryLine
     }).then(function (res) {
-      var data = C.unwrap(res, "读取活动失败");
+      var data = C.unwrap(res, "读取活动失败") || [];
+      /* 名额先并进来 —— 满没满、还剩几个位子都要用它 */
+      return (window.GUISBoard && window.GUISBoard.withCounts
+        ? window.GUISBoard.withCounts(C, data) : Promise.resolve(data));
+    }).then(function (data) {
       activities = data || [];
       pickLoading.hidden = true;
 
@@ -383,14 +439,24 @@ document.addEventListener("DOMContentLoaded", function () {
           sum.textContent = a.summary;
           left.appendChild(sum);
         }
-        /* 非绿灯时用完整状态语，让同学知道下一步该做什么（等邮件 / 查收邮箱） */
-        if (window.GUISBoard.lightOf(a) !== "green") {
+        /* 黄灯有好几种原因（满了 / 还没开始 / 已通知），文案要分开说 */
+        var reason = reasonOf(a);
+        if (reason !== "green") {
           var st = document.createElement("div");
           st.className = "d";
           st.style.marginTop = "0.3rem";
-          st.style.color = "var(--text-muted)";
-          st.textContent = window.GUISBoard.labelOf(window.GUISBoard.lightOf(a));
+          st.style.color = reason === "full" ? "var(--danger)" : "var(--text-muted)";
+          st.textContent = board() ? board().reasonText(a) : "";
           left.appendChild(st);
+        }
+        /* 名额满了但备选还有位子：先讲清楚，提交时还会再弹一次窗确认 */
+        if (reason === "wait") {
+          var wn = document.createElement("div");
+          wn.className = "d";
+          wn.style.marginTop = "0.3rem";
+          wn.style.color = "var(--danger)";
+          wn.textContent = t("sg.waitNotice", "名额已满 —— 现在提交会进入 waiting list 备选名单。");
+          left.appendChild(wn);
         }
         left.appendChild(meta);
 
@@ -472,7 +538,9 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
     if (isClosed(selected)) {
-      showAlert("warn", t("msg.closed", "这个活动已经截止报名了。"));
+      showAlert("warn", reasonOf(selected) === "full"
+        ? t("sg.full", "报名人数已满")
+        : t("msg.closed", "这个活动已经截止报名了。"));
       return;
     }
 
@@ -488,9 +556,30 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
-    var btn = $("submit-btn");
-    btn.disabled = true;
+    /* 名额满了但备选还有位子：先弹窗说清楚，学生自己决定要不要继续 */
+    var goSend = function () { sendSignup(btn, name, email); };
+    if (reasonOf(selected) === "wait") {
+      btn.disabled = true;
+      dialog({
+        title: t("sg.waitTitle", "你会进入 waiting list 备选名单"),
+        body: t("sg.waitBody", "「{a}」的 {b} 个名额已经报满了。你的报名我们照样收下，排在备选名单第 {c} 位；一旦有人退出，会按顺序递补并通过邮件通知你。")
+          .replace("{a}", selected.title)
+          .replace("{b}", String(selected.capacity || 0))
+          .replace("{c}", String((selected._waiting || 0) + 1)),
+        ok: t("sg.keepGoing", "继续报名"),
+        cancel: t("sg.no", "算了")
+      }).then(function (yes) {
+        btn.disabled = false;
+        if (yes) goSend();
+      });
+      return;
+    }
+    goSend();
+  });
+
+  function sendSignup(btn, name, email) {
     var original = btn.textContent;
+    btn.disabled = true;
     btn.textContent = t("f.submitting", "提交中…");
 
     var payload = {
@@ -519,14 +608,33 @@ document.addEventListener("DOMContentLoaded", function () {
         return !(e && /^(23505|42501)$/.test(String(e.code)));
       }
     }).then(function (res) {
-      C.unwrap(res, "提交失败");
+      var out = C.unwrap(res, "提交失败") || {};
+      /* register_signup() 回的不是一行数据，而是 { ok, status, waitlisted, position }
+         或 { ok:false, error } —— 满了 / 重复都在这里说清楚，不再靠报错码猜。 */
+      if (out.ok === false) {
+        btn.disabled = false;
+        btn.textContent = original;
+        if (out.error === "duplicate") showAlert("warn", t("msg.dup", "这个邮箱已经报名过该活动了，无需重复提交。"));
+        else if (out.error === "full") showAlert("warn", t("sg.full", "报名人数已满"));
+        else showAlert("error", t("msg.denied", "提交被拒绝：该活动可能已关闭报名。"));
+        return;
+      }
+
       btn.disabled = false;
       btn.textContent = original;
       pickPanel.hidden = true;
       formPanel.hidden = true;
       donePanel.hidden = false;
-      $("done-detail").textContent =
-        t("sg.doneLead", "我们已收到你对") + "「" + selected.title + "」" + t("sg.doneTail", "的报名，执委会会在活动前通过邮件与你确认排班。");
+
+      if (out.waitlisted) {
+        $("done-detail").textContent =
+          t("sg.waitDone", "已加入备选名单，排在第 {c} 位。").replace("{c}", String(out.position || 1)) +
+          " " + t("sg.doneTailWait", "有人退出时会按顺序递补，我们会发邮件通知你。");
+      } else {
+        $("done-detail").textContent =
+          t("sg.doneLead", "我们已收到你对") + "「" + selected.title + "」" +
+          t("sg.doneTail", "的报名，执委会会在活动前通过邮件与你确认排班。");
+      }
       donePanel.scrollIntoView({ behavior: "smooth", block: "start" });
     }).catch(function (err) {
       btn.disabled = false;
@@ -542,7 +650,7 @@ document.addEventListener("DOMContentLoaded", function () {
       }
       console.error("[GUIS] register failed", err && err.code);
     });
-  });
+  }
 
   /* ---------- 活动日历（过往活动 + 未来排期） ---------- */
   var calRoot = $("cal-root"), calLoading = $("cal-loading"), calFail = $("cal-fail");

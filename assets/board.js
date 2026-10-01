@@ -2,12 +2,17 @@
    GUIS 义工社 — 活动状态看板（红绿灯）
 
    三态：
-     绿灯  正在开放报名（开放中，且未过报名截止时间）
-     黄灯  已结束报名，等待邮件通知（过了 signup_deadline，由时间自动判定）
+     绿灯  正在开放报名（名额还有）
+     黄灯  名额已满 / 还没到报名开始时间 / 已满只剩备选位（总之不能按正常方式报）
      红灯  已邮件通知，请查收邮箱（后台在 admin.html 手动置 notified_at）
 
-   判定优先级：红灯（人工标记）> 黄灯（时间到点）> 绿灯。
-   撤销红灯后置回 null，重新回到按时间自动判定的绿 / 黄。
+   ⚠️ 2026-10-01 起**不再有报名截止时间**。报名什么时候停，只看名额：
+     · 已占名额 < capacity          → 正常报名（pending）
+     · 已满，但 waitlist_capacity 还有位子 → 报进去是「备选名单」（waiting）
+     · 两个都满了                    → 不能再报，报名页显示「报名人数已满」
+   名额由服务端 register_signup() 一次性算准，前端这份只用来显示。
+
+   判定优先级：红灯（人工标记）> 黄灯 > 绿灯。
 
    首页、报名页、后台三处共用这一份，避免各写一套判定。
    ============================================================ */
@@ -19,13 +24,21 @@
   /* 默认文案（i18n.js 里没有对应键时的兜底） */
   var FALLBACK = {
     green: "正在开放报名",
-    yellow: "已结束报名，等待邮件通知",
+    yellow: "名额已满",
     red: "已邮件通知，请查收邮箱"
   };
   var SHORT = {
     green: "报名中",
-    yellow: "等待通知",
+    yellow: "名额已满",
     red: "已通知"
+  };
+  /* 黄灯有好几种原因，文案要分开说，不然「还没开始」会被读成「已经满了」 */
+  var REASON = {
+    green: "正在开放报名",
+    full: "报名人数已满",
+    wait: "名额已满，可以继续报进备选名单",
+    notyet: "还没到报名开始时间",
+    notified: "已邮件通知，请查收邮箱"
   };
 
   function t(key, fallback) {
@@ -34,20 +47,62 @@
     return pack[key] != null ? pack[key] : fallback;
   }
 
+  /* ---------- 名额（_taken / _waiting 由 withCounts() 填进来） ---------- */
+  function taken(a) { return (a && a._taken) || 0; }
+  function waiting(a) { return (a && a._waiting) || 0; }
+
+  /* 名额满了没。没填 capacity（null / 0）当不限人数 */
+  function isFull(a) {
+    if (!a || !a.capacity || a.capacity <= 0) return false;
+    return taken(a) >= a.capacity;
+  }
+  /* 满了，但备选名单还有位子 —— 这时候还能报，只是进去是 waiting */
+  function waitlistOpen(a) {
+    if (!isFull(a)) return false;
+    var w = (a && a.waitlist_capacity) || 0;
+    return w > 0 && waiting(a) < w;
+  }
+  /* 还没到报名开始时间 */
+  function notStarted(a) {
+    if (!a || !a.signup_opens_at) return false;
+    var ms = new Date(a.signup_opens_at).getTime();
+    return !isNaN(ms) && ms > Date.now();
+  }
+
+  /* 完全不能报：已通知 / 状态不是 open / 没开始 / 名额与备选都满了 */
+  function isClosed(a) {
+    if (!a) return true;
+    if (a.notified_at) return true;
+    if (a.status && a.status !== "open") return true;
+    if (notStarted(a)) return true;
+    if (isFull(a) && !waitlistOpen(a)) return true;
+    return false;
+  }
+
+  /* 还能提交（正常报名，或者进备选名单） */
+  function isOpen(a) { return !isClosed(a); }
+
+  /* 这一场现在到底什么情况 —— 用来给灯配文案，别让「还没开始」说成「已满」 */
+  function reasonOf(a) {
+    if (!a) return "green";
+    if (a.notified_at) return "notified";
+    if (notStarted(a)) return "notyet";
+    if (isFull(a)) return waitlistOpen(a) ? "wait" : "full";
+    return "green";
+  }
+  function reasonText(a) {
+    return t("lt." + reasonOf(a), REASON[reasonOf(a)] || REASON.green);
+  }
+
   /* ---------- 判定 ---------- */
   function lightOf(a) {
     if (!a) return "green";
     /* 后台已标记「已邮件通知」→ 红灯，优先级最高 */
     if (a.notified_at) return "red";
-    var dl = a.signup_deadline ? new Date(a.signup_deadline).getTime() : NaN;
-    /* 过了报名截止时间 → 黄灯，等待执委会发邮件通知 */
-    if (!isNaN(dl) && dl < Date.now()) return "yellow";
+    if (isClosed(a)) return "yellow";
+    /* 满了但备选还有位：还能报，用黄灯提醒 */
+    if (waitlistOpen(a)) return "yellow";
     return "green";
-  }
-
-  /* 是否还能报名：只有绿灯可以 */
-  function isOpen(a) {
-    return lightOf(a) === "green";
   }
 
   function labelOf(light) {
@@ -55,6 +110,31 @@
   }
   function shortLabelOf(light) {
     return t("lt." + light + ".short", SHORT[light] || light);
+  }
+
+  /* 把每个活动的已占名额 / 备选人数并进活动对象（`_taken` / `_waiting`）。
+     匿名也能读（activity_counts 是 SECURITY DEFINER）。读失败就当 0，
+     绝不因为拿不到数字而把活动判成「已满」。 */
+  function withCounts(C, list) {
+    var arr = list || [];
+    if (!C || typeof C.counts !== "function") return Promise.resolve(arr);
+    return C.counts().then(function (res) {
+      var rows = (res && res.data) || [];
+      var map = {};
+      rows.forEach(function (r) { map[String(r.activity_id)] = r; });
+      arr.forEach(function (a) {
+        var m = map[String(a.id)];
+        a._taken = m ? Number(m.taken || 0) : 0;
+        a._waiting = m ? Number(m.waiting || 0) : 0;
+      });
+      return arr;
+    }, function () {
+      arr.forEach(function (a) {
+        if (a._taken == null) a._taken = 0;
+        if (a._waiting == null) a._waiting = 0;
+      });
+      return arr;
+    });
   }
 
   /* ---------- 渲染 ---------- */
@@ -290,7 +370,10 @@
       : C.listOpenActivities();
 
     runner.then(function (res) {
-      paintHomeBoard(C.unwrap(res, "读取失败") || []);
+      /* 名额数先并进活动对象，再看板上显示几个「可报名」——否则算不准 */
+      return withCounts(C, C.unwrap(res, "读取失败") || []);
+    }).then(function (list) {
+      paintHomeBoard(list);
     }).catch(function () {
       paintHomeBoard([]);
     });
@@ -304,6 +387,13 @@
   window.GUISBoard = {
     lightOf: lightOf,
     isOpen: isOpen,
+    isClosed: isClosed,
+    isFull: isFull,
+    waitlistOpen: waitlistOpen,
+    notStarted: notStarted,
+    reasonOf: reasonOf,
+    reasonText: reasonText,
+    withCounts: withCounts,
     labelOf: labelOf,
     shortLabelOf: shortLabelOf,
     lampHTML: lampHTML,

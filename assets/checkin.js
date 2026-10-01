@@ -165,10 +165,10 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  C.getSession().then(function (res) {
-    var s = res && res.data;
-    if (s && s.user && s.user.email) enterOrReject(s.user.email);
-    else if (s && s.user) enterOrReject("");
+  /* ⚠️ 用 C.sessionUser() 拿邮箱：getSession() 自己不带 email
+     （详见 cloud.js 的注释），读 s.user.email 会永远判成没登录。 */
+  C.sessionUser().then(function (u) {
+    if (u) enterOrReject(u.email || "");
     else showLogin();
   }).catch(showLogin);
 

@@ -106,14 +106,14 @@ document.addEventListener("DOMContentLoaded", function () {
     return fallback;
   }
 
-  /* ---------------- 已经登录过就直接走 ---------------- */
-  C.getSession().then(function (res) {
-    var s = res && res.data;
-    if (s && s.user && s.user.email) {
-      $("lg-email-known").textContent = s.user.email;
-      $("lg-known").hidden = false;
-      go(s.user.email);
-    }
+  /* ---------------- 已经登录过就直接走 ----------------
+     ⚠️ 邮箱必须走 C.sessionUser()：getSession() 的返回里没有 email，
+        以前在这里判 s.user.email 永远不成立，登录完还会被弹回表单。 */
+  C.sessionUser().then(function (u) {
+    if (!u || !u.email) return;
+    $("lg-email-known").textContent = u.email;
+    $("lg-known").hidden = false;
+    go(u.email);
   }).catch(function () {});
 
   /* ---------------- 两种方式切换 ----------------

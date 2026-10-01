@@ -199,6 +199,11 @@ nav {
   display: none; z-index: 20;
 }
 .nav-drop.is-open .nav-drop-menu { display: block; }
+/* 悬停桥：菜单离按钮有 0.9rem 的空隙，鼠标穿过那几像素时别把菜单关掉 */
+.nav-drop-menu::before {
+  content: ""; position: absolute; left: 0; right: 0;
+  top: -1rem; height: 1rem;
+}
 .nav-drop-menu a {
   display: block; padding: 0.44rem 0.7rem; border-radius: 6px;
   font-size: 0.8rem; color: var(--text-muted); white-space: nowrap;
@@ -872,6 +877,49 @@ html.js .reveal.is-in { opacity: 1; transform: none; }
 }
 
 /* ==========================================================================
+   手机端（2026-10-01 统一整理）
+   导航在窄屏会换成两行，所以 --nav-h 要跟着变大，否则锚点跳转 /
+   首屏顶部都会被那颗变高的导航盖住。
+   ========================================================================== */
+@media (max-width: 720px) {
+  :root { --nav-h: 104px; }
+  nav { padding: 0.5rem 0.9rem; row-gap: 0.3rem; }
+  .nav-links { gap: 0.7rem 0.95rem; }
+  /* 「义工社」这几个字在手机上最占地方，联合标志本身已经够了 */
+  .nav-logo .org { display: none; }
+  .nav-login { padding: 0.3rem 0.75rem; font-size: 0.74rem; }
+}
+@media (max-width: 560px) {
+  /* 12 个月缩略条改成横滑一行，别在手机上占三四行 */
+  .cal-months {
+    flex-wrap: nowrap; overflow-x: auto; padding-bottom: 0.25rem;
+    -webkit-overflow-scrolling: touch; scrollbar-width: thin;
+  }
+  .cal-month { flex: 0 0 auto; }
+  .cal-week, .cal-grid { gap: 0.22rem; }
+  .cal-cell { min-height: 2.4rem; padding: 0.25rem 0.1rem; border-radius: 0.5rem; }
+  .cal-num { font-size: 0.8rem; }
+  .cal-wd { font-size: 0.68rem; }
+  .cal-item { padding: 0.7rem 0.8rem; }
+  .cal-item-meta { gap: 0.3rem 0.8rem; font-size: 0.78rem; }
+  /* 时间轴整天 12 档，手机上压紧一点才不至于拖很长 */
+  .cal-slot-time { flex: 0 0 3.05rem; font-size: 0.68rem; padding-left: 0.55rem; }
+  .cal-slot-body { min-height: 1.9rem; padding: 0.3rem 0.55rem 0.3rem 0.15rem; }
+  .cal-chip { padding: 0.22rem 0.45rem; gap: 0.35rem; }
+  .cal-chip-title { font-size: 0.78rem; }
+  .cal-nowlabel { font-size: 0.6rem; top: -0.62rem; }
+  /* 报名列表：长标题会把单选框挤变形，窄屏改成上下排 */
+  .act-pick { align-items: flex-start; gap: 0.65rem; }
+  .act-pick input[type="radio"] { width: 18px; height: 18px; margin-top: 0.15rem; flex: 0 0 auto; }
+}
+@media (max-width: 640px) {
+  .footer-inner { flex-direction: column; gap: 0.85rem; text-align: center; }
+  .footer-links { flex-wrap: wrap; justify-content: center; gap: 0.75rem 1rem; }
+  .me-hero { padding: 1rem 1.1rem; gap: 0.85rem; }
+  .me-hours { width: 100%; text-align: left; }
+}
+
+/* ==========================================================================
    活动日历（assets/calendar.js）
    一周以星期一开头；今天高亮；12 个月缩略条可直接跳月。
    ========================================================================== */
@@ -997,6 +1045,49 @@ html.js .reveal.is-in { opacity: 1; transform: none; }
 }
 .cal-chip-time { font-size: .76rem; font-weight: 700; color: #144C90; font-variant-numeric: tabular-nums; }
 .cal-chip-title { font-size: .86rem; font-weight: 600; }
+
+/* 「现在」那条红线：跟着系统时间走（calendar.js 每 30 秒挪一次） */
+.cal-slot.is-now { background: rgba(20, 76, 144, .05); }
+.cal-slot.is-now .cal-slot-time { color: var(--brand); }
+.cal-slot-body { position: relative; }
+.cal-nowline {
+  position: absolute; left: 0; right: .2rem; height: 0;
+  border-top: 1.5px dashed rgba(209, 57, 47, .75);
+  pointer-events: none; z-index: 2;
+}
+.cal-nowline::before {
+  content: ""; position: absolute; left: 0; top: -3px;
+  width: 6px; height: 6px; border-radius: 50%; background: #D1392F;
+}
+.cal-nowlabel {
+  position: absolute; right: 0; top: -0.72rem;
+  font-size: .64rem; font-weight: 700; color: #B02D26;
+  background: rgba(255, 255, 255, .92); padding: 0 .3rem; border-radius: 4px;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+
+/* 报名页：名额 / 备选名单弹窗（signup.html 内联脚本动态创建） */
+.sg-modal-mask {
+  position: fixed; inset: 0; z-index: 120; display: flex;
+  align-items: center; justify-content: center; padding: 1.5rem;
+  background: rgba(15, 23, 42, .38); backdrop-filter: blur(3px);
+  opacity: 0; transition: opacity .2s ease;
+}
+.sg-modal-mask.is-on { opacity: 1; }
+.sg-modal {
+  width: 100%; max-width: 420px; background: #fff;
+  border-radius: 16px; padding: 1.4rem 1.5rem 1.2rem;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, .22);
+  transform: translateY(10px) scale(.98); transition: transform .2s ease;
+}
+.sg-modal-mask.is-on .sg-modal { transform: none; }
+.sg-modal-title { font-size: 1.05rem; font-weight: 700; margin: 0 0 .6rem; color: var(--text-main); }
+.sg-modal-body { font-size: .9rem; line-height: 1.65; color: var(--text-soft); }
+.sg-modal-actions { display: flex; gap: .6rem; justify-content: flex-end; margin-top: 1.2rem; flex-wrap: wrap; }
+@media (max-width: 420px) {
+  .sg-modal-actions { flex-direction: column-reverse; }
+  .sg-modal-actions .btn { width: 100%; }
+}
 
 /* 同一天既是活动日又是报名开始/截止日时，条目上的小徽标 */
 .cal-phase {

@@ -210,10 +210,10 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  C.getSession().then(function (res) {
-    var s = res && res.data;
-    if (s && s.user && s.user.email) enterOrReject(s.user.email);
-    else if (s && s.user) enterOrReject("");
+  /* ⚠️ 用 C.sessionUser() 拿邮箱：getSession() 自己不带 email
+     （详见 cloud.js 的注释），读 s.user.email 会永远判成没登录。 */
+  C.sessionUser().then(function (u) {
+    if (u) enterOrReject(u.email || "");
     else showLogin();
   }).catch(showLogin);
 
@@ -421,7 +421,11 @@ document.addEventListener("DOMContentLoaded", function () {
        否则徽章和按钮文案会停在旧状态。 */
     return C.listMyActivities().then(function (res) {
       var rows = C.unwrap(res, "读取失败") || [];
-      myActivities = rows;
+      /* 名额先并进活动对象，「已报名 x 人 / 备选 y 人」才显示得出来 */
+      return (window.GUISBoard && window.GUISBoard.withCounts
+        ? window.GUISBoard.withCounts(C, rows) : Promise.resolve(rows))
+        .then(function (list) { myActivities = list; return list; });
+    }).then(function (rows) {
       /* 报名名单的下拉框要等这里读完才有内容 —— 以前只在 showSignedIn 里调一次，
          那时 myActivities 还是空的，下拉框就一直是空的（得点刷新才有）。 */
       loadActivityOptions();
@@ -440,8 +444,12 @@ document.addEventListener("DOMContentLoaded", function () {
         var meta = [];
         if (a.category) meta.push(esc(a.category));
         if (a.location) meta.push(esc(a.location));
-        if (a.capacity) meta.push("计划 " + a.capacity + " 人");
-        if (a.signup_deadline) meta.push("截止 " + fmtDT(a.signup_deadline));
+        if (a.capacity) meta.push("计划 " + a.capacity + " 人" +
+          (a.waitlist_capacity ? " · 备选 " + a.waitlist_capacity + " 人" : ""));
+        var B0 = window.GUISBoard;
+        if (B0 && (a._taken || a._waiting)) {
+          meta.push("已报名 " + (a._taken || 0) + (a._waiting ? " · 备选 " + a._waiting : ""));
+        }
 
         html += '<div class="act-item">' +
           '<div class="act-main">' +
@@ -503,8 +511,8 @@ document.addEventListener("DOMContentLoaded", function () {
       $("a-starts").value = toLocalInput(a.starts_at);
       $("a-ends").value = toLocalInput(a.ends_at);
       $("a-opens").value = toLocalInput(a.signup_opens_at);
-      $("a-deadline").value = toLocalInput(a.signup_deadline);
       $("a-capacity").value = a.capacity || 30;
+      $("a-waitlist").value = (a.waitlist_capacity == null ? 5 : a.waitlist_capacity);
       $("a-contact").value = a.contact || "";
       $("a-status").value = a.status || "open";
       $("a-notes").value = a.notes || "";
@@ -580,6 +588,7 @@ document.addEventListener("DOMContentLoaded", function () {
     $("act-reset").hidden = true;
     $("act-form").reset();
     $("a-capacity").value = 30;
+    $("a-waitlist").value = 5;
     $("a-status").value = "open";
     $("a-manager").value = "";
     $("a-hours").value = 2;
@@ -600,8 +609,9 @@ document.addEventListener("DOMContentLoaded", function () {
       starts_at: fromLocalInput($("a-starts").value),
       ends_at: fromLocalInput($("a-ends").value),
       signup_opens_at: fromLocalInput($("a-opens").value),
-      signup_deadline: fromLocalInput($("a-deadline").value),
       capacity: parseInt($("a-capacity").value, 10) || null,
+      /* 名额满了还能收多少人进 waiting list；0 = 满了直接停 */
+      waitlist_capacity: Math.max(0, parseInt($("a-waitlist").value, 10) || 0),
       contact: $("a-contact").value.trim() || null,
       notes: $("a-notes").value.trim() || null,
       status: $("a-status").value,
@@ -696,7 +706,8 @@ document.addEventListener("DOMContentLoaded", function () {
             "<label>活动开始<input type=\"datetime-local\" data-f=\"starts_at\" value=\"" + esc(toLocalInput(a.starts_at)) + "\" /></label>" +
             "<label>活动结束<input type=\"datetime-local\" data-f=\"ends_at\" value=\"" + esc(toLocalInput(a.ends_at)) + "\" /></label>" +
             "<label>报名开始<input type=\"datetime-local\" data-f=\"signup_opens_at\" value=\"" + esc(toLocalInput(a.signup_opens_at)) + "\" /></label>" +
-            "<label>报名截止<input type=\"datetime-local\" data-f=\"signup_deadline\" value=\"" + esc(toLocalInput(a.signup_deadline)) + "\" /></label>" +
+            "<label>名额<input type=\"number\" min=\"1\" data-f=\"capacity\" value=\"" + esc(String(a.capacity || 30)) + "\" /></label>" +
+            "<label>备选名额<input type=\"number\" min=\"0\" data-f=\"waitlist_capacity\" value=\"" + esc(String(a.waitlist_capacity == null ? 5 : a.waitlist_capacity)) + "\" /></label>" +
           "</div>" +
           '<div class="cal-item-actions">' +
             '<button type="button" class="btn btn-primary btn-sm" data-save="' + a.id + '">保存</button>' +
@@ -729,9 +740,17 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!item) return;
 
     var patch = {};
-    ["starts_at", "ends_at", "signup_opens_at", "signup_deadline"].forEach(function (f) {
+    ["starts_at", "ends_at", "signup_opens_at"].forEach(function (f) {
       var input = item.querySelector('[data-f="' + f + '"]');
       patch[f] = fromLocalInput(input ? input.value : "");
+    });
+    /* 名额与备选名额是数字，不走时间转换 */
+    ["capacity", "waitlist_capacity"].forEach(function (f) {
+      var input = item.querySelector('[data-f="' + f + '"]');
+      if (!input) return;
+      var n = parseInt(input.value, 10);
+      if (isNaN(n)) return;
+      patch[f] = f === "waitlist_capacity" ? Math.max(0, n) : Math.max(1, n);
     });
 
     clear($("cal-admin-alerts"));

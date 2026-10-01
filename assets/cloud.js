@@ -41,6 +41,14 @@
 
   var db = cloud.database;
 
+  /* 活动查询统一用这一串字段。
+     ⚠️ 2026-10-01 起不再有「报名截止时间」：报名只按名额自动截止（见 register_signup）。
+        数据库里那个旧列还留着（历史数据），但前端不再读它、也不再写它。
+     ⚠️ 加 waitlist_capacity：名额满了还能收多少人进备选名单（waiting list）。 */
+  var ACT_COLS =
+    "id, title, summary, category, location, starts_at, ends_at, signup_opens_at, " +
+    "capacity, waitlist_capacity, status, notified_at, manager_email, hours, created_at";
+
   var api = {
     cloud: cloud,
     db: db,
@@ -51,6 +59,47 @@
     /* ---------- 会话 ---------- */
     getSession: function () {
       return cloud.auth.getSession();
+    },
+
+    /* ⚠️ 这个一定要用，不要自己读 getSession().data.user.email ——
+       登录响应里根本没有 email，getSession() 只回
+       { accessToken, refreshToken, expiresAt, user: { id, isAnonymous, raw } }。
+       邮箱要另外问一次 /v1/user/me（也就是 cloud.auth.getUser）。
+       以前四个页面（login / me / admin / checkin）各自写了
+       `s && s.user && s.user.email`，于是全都判成「没登录」——
+       表现就是：登录完跳到学生端却又弹回登录表单、右上角头像永远不出现。
+       返回 null（没有会话）或 { id, email }；email 拿不到时会是空串。 */
+    sessionUser: function () {
+      return cloud.auth.getSession().then(function (res) {
+        var s = res && res.data;
+        if (!s) {
+          /* ⚠️ getSession() 从来不抛异常，它把两种情况都塞进 data:null：
+               · 真的没会话   → error.kind === "unauthenticated" → 返回 null
+               · 网络 / 服务端临时出错 → kind 是 network / backend-unavailable …
+                 这种要**往外抛**，让调用方按「临时故障」处理（别把人踢下线）。
+             以前两种都返回 null，结果一断网头像就没了、还要重新登录。 */
+          var kind = res && res.error && res.error.kind;
+          if (kind && kind !== "unauthenticated") return Promise.reject(res.error);
+          return null;
+        }
+        var u = s.user || (s.session && s.session.user) || {};
+        var out = {
+          id: String(u.id || u.sub || (u.raw && u.raw.sub) || s.sub || ""),
+          email: ""
+        };
+        var direct = u.email || (u.user_metadata && u.user_metadata.email) ||
+          (u.raw && u.raw.email) || s.email || "";
+        if (direct) { out.email = String(direct); return out; }
+
+        if (!cloud.auth || typeof cloud.auth.getUser !== "function") return out;
+        /* 只是补一个邮箱，取不到不该把人踢出去 —— 会话本身是有效的 */
+        return cloud.auth.getUser().then(function (r) {
+          var m = r && r.data;
+          var e = m && (m.email || (m.user_metadata && m.user_metadata.email));
+          if (e) out.email = String(e);
+          return out;
+        }, function () { return out; });
+      });
     },
 
     /* ---------- 我是谁 ----------
@@ -83,7 +132,7 @@
     listOpenActivities: function () {
       return db
         .from("activities")
-        .select("id, title, summary, category, location, starts_at, ends_at, signup_opens_at, signup_deadline, capacity, status, notified_at, manager_email, hours, created_at")
+        .select(ACT_COLS)
         .eq("status", "open")
         .order("starts_at", { ascending: true, nullsFirst: false });
     },
@@ -94,14 +143,14 @@
     listCalendarActivities: function () {
       return db
         .from("activities")
-        .select("id, title, summary, category, location, starts_at, ends_at, signup_opens_at, signup_deadline, capacity, status, notified_at, archived, manager_email, hours, created_at")
+        .select(ACT_COLS.replace(" status,", " status, archived,"))
         .order("starts_at", { ascending: true, nullsFirst: false });
     },
 
     listMyActivities: function () {
       return db
         .from("activities")
-        .select("id, title, summary, category, location, starts_at, ends_at, signup_opens_at, signup_deadline, capacity, contact, notes, status, notified_at, recap_html, archived, archived_at, manager_email, hours, created_at")
+        .select(ACT_COLS.replace(" status,", " contact, notes, status, recap_html, archived, archived_at,"))
         .order("created_at", { ascending: false });
     },
 
@@ -133,13 +182,19 @@
         .select();
     },
 
-    /* ---------- 报名 ---------- */
-    /* 注意：这里故意不链 .select()。
-       报名是匿名提交，插入后回读表示会受 registrations 的 SELECT 策略限制
-       （匿名者读不到任何报名行），PostgREST 会报 42501。
-       重复报名由 (activity_id, email) 唯一约束返回 23505 来识别。 */
+    /* ---------- 报名 ----------
+       走 register_signup()（SECURITY DEFINER）而不是直接 INSERT，原因有两个：
+       1. 名额要在服务端一次性算准 —— 前端先数一遍再插入会撞车（两个人同时报第 30 位）；
+       2. 匿名读不到 registrations（SELECT 策略挡着），只能靠函数回话。
+       返回 { ok, status: 'pending' | 'waiting', waitlisted, position }，
+       或 { ok:false, error: 'duplicate' | 'full' | 'no_activity' | 'missing' }。 */
     register: function (payload) {
-      return db.from("registrations").insert(payload);
+      return db.rpc("register_signup", { p: payload });
+    },
+
+    /* 每个活动已占名额 / 备选人数 —— 匿名也能调，报名页和首页看板靠它判断满没满 */
+    counts: function () {
+      return db.rpc("activity_counts");
     },
 
     listRegistrations: function (activityId) {
@@ -229,7 +284,7 @@
     listArchivedActivities: function () {
       return db
         .from("activities")
-        .select("id, title, summary, category, location, starts_at, ends_at, signup_opens_at, signup_deadline, capacity, contact, notes, status, notified_at, recap_html, archived, archived_at, manager_email, hours, created_at")
+        .select(ACT_COLS.replace(" status,", " contact, notes, status, recap_html, archived, archived_at,"))
         .eq("archived", true)
         .order("starts_at", { ascending: false, nullsFirst: false });
     },
@@ -237,7 +292,7 @@
     getActivity: function (id) {
       return db
         .from("activities")
-        .select("id, title, summary, category, location, starts_at, ends_at, signup_opens_at, signup_deadline, capacity, contact, notes, status, notified_at, recap_html, archived, archived_at, manager_email, hours, created_at")
+        .select(ACT_COLS.replace(" status,", " contact, notes, status, recap_html, archived, archived_at,"))
         .eq("id", id)
         .limit(1);
     },

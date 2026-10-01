@@ -69,20 +69,52 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   })();
 
-  /* ---------------- 登录态 ---------------- */
+  /* ---------------- 登录态 ----------------
+     ⚠️ 从统一登录页（login.html）跳过来时，会话刚落地，SDK 这边偶尔会
+        先回一个「空会话」再补上 —— 直接据它判成「没登录」就会把人甩回
+        登录表单（用户看到的「点完登录又跳回登录页」就是这个）。
+        所以：查不到会话时不要立刻下结论，最多再试两次（约 1.2 秒内），
+        期间两个面板都先藏着，只显示「正在读取…」。 */
   var loginView = $("login-view"), appView = $("app-view");
+  var bootBox = $("me-boot");
+  var booted = false;
 
-  function showLogin() { appView.hidden = true; loginView.hidden = false; }
-  function showApp() { loginView.hidden = true; appView.hidden = false; }
+  function bootDone() { if (bootBox) bootBox.hidden = true; }
 
-  C.getSession().then(function (res) {
-    var s = res && res.data;
-    if (s && s.user && s.user.email) enter(s.user.email);
-    else showLogin();
-  }).catch(showLogin);
+  function showLogin() {
+    bootDone();
+    if (booted) return;        /* 已经进过账户了就别再被拉回登录表单 */
+    appView.hidden = true;
+    loginView.hidden = false;
+  }
+  function showApp() {
+    booted = true;
+    bootDone();
+    loginView.hidden = true;
+    appView.hidden = false;
+  }
+
+  /* ⚠️ 邮箱只能从 C.sessionUser() 来：getSession() 的返回里没有 email，
+     以前在这里解 res.data.user.email 恒为空串 → 每次都判定「没登录」
+     → 明明已经登录，页面还是把人弹回登录表单（用户报的那个现象）。
+     重试三次是因为 SDK 初始化偶尔比脚本慢一拍。 */
+  function boot(attempt) {
+    C.sessionUser().then(function (u) {
+      if (u && u.email) { enter(u.email); return; }
+      if (attempt < 3) { setTimeout(function () { boot(attempt + 1); }, 350); return; }
+      showLogin();
+    }).catch(function () {
+      if (attempt < 3) { setTimeout(function () { boot(attempt + 1); }, 350); return; }
+      showLogin();
+    });
+  }
+  boot(1);
 
   $("me-logout").addEventListener("click", function () {
-    C.auth.signOut().then(showLogin).catch(showLogin);
+    booted = false;                 /* 主动退出：允许回到登录表单 */
+    try {
+      Promise.resolve(C.auth.signOut()).then(showLogin, showLogin);
+    } catch (e) { showLogin(); }
   });
 
   /* ---------------- 登录 ---------------- */
