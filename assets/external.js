@@ -354,7 +354,12 @@
       /* 23505 = 撞了 uq_extreq_pending：同一学生同样内容的申请还在待审。
          这是数据库的最后一道闸 —— 前端那把 submitting 锁只能挡住同一个页面里的连点，
          挡不住别的标签页 / 上一次没关干净的浏览器。 */
-      if (err && err.code === "23505") {
+      /* ⚠️ 别只信 err.code：实测 PostgREST 有时不把 code 带回来，只有一句
+         duplicate key value violates unique constraint "uq_extreq_pending"。
+         所以 code 和报错文本一起看，两条路都能认出来。 */
+      var dup = (err && err.code === "23505") ||
+        /duplicate key value violates unique constraint/i.test((err && err.message) || "");
+      if (dup) {
         alertIn($("ext-alerts"), "error",
           "你已经提交过一条一模一样的申请了，还在等审核 —— 不用再交一次。");
         loadMine();
