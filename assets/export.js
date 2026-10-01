@@ -20,7 +20,7 @@
   var SIGNER_NOTE = "义工组织后台导出账号";
 
   var LOGO_GUIS = "assets/logo/guis-logo-h.png";   /* GUIS 横版（红） */
-  var LOGO_VA = "assets/logo/va-logo.png";         /* 义工社 VA 标志（红调，同款） */
+  var LOGO_VA = "assets/logo/va-logo.png";         /* 义工组织 VA 标志（红调，同款） */
 
   /* 导出字段：顺序必须与 admin.html 里 toRows() 造出来的键一致 */
   var COLS = [
@@ -94,7 +94,7 @@
 
   /* 把 GUIS 横版和 VA 画到同一张画布上一次插入。
      好处：间距和相对大小能精确控制，不用去算 ExcelJS 那套「零起算小数行列」偏移。
-     两者之间加一道细竖线 —— 和站点导航里「GUIS ｜ VA ｜ 义工社」的组合方式一致。
+     两者之间加一道细竖线 —— 和站点导航里「GUIS ｜ VA ｜ 义工组织」的组合方式一致。
      VA 比校标略小一点，视觉上主次分明。 */
   function composeLockup() {
     var H = 44;              /* GUIS 横版高度 */

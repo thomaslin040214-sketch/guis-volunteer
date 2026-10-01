@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-ver="20261001c" data-page-title="doc.title">
+<html lang="zh-CN" data-ver="20261001d" data-page-title="doc.title">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,7 +10,7 @@
    于是点站内链接（全是裸路径）进去时整页退回旧设计。
    这里比对 <html data-ver>：不是当前版本就带查询串重拉一次（查询串必定回源）。 */
 (function () {
-  var VER = "20261001c";
+  var VER = "20261001d";
   try {
     var el = document.documentElement;
     var healed = /[?&]_v=/.test(location.search);
@@ -45,15 +45,15 @@
   } catch (e) {}
 })();
 </script>
-<title>GUIS 义工社 | 广州优联国际学校学生志愿服务组织</title>
-<meta name="description" content="广州优联国际学校（GUIS）义工社 —— 由学生自主运营的志愿服务组织。社区关怀、环保行动、教育支持、公益募捐、赛事会务与文化交流。" />
+<title>GUIS 义工组织 | 广州优联国际学校学生志愿服务组织</title>
+<meta name="description" content="广州优联国际学校（GUIS）义工组织 —— 由学生自主运营的志愿服务组织。社区关怀、环保行动、教育支持、公益募捐、赛事会务与文化交流。" />
 <meta name="theme-color" content="#FFFFFF" />
-<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261001c" />
-<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261001c" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261001d" />
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261001d" />
 
 <!-- Open Graph -->
 <meta property="og:type" content="website" />
-<meta property="og:title" content="GUIS 义工社 | 广州优联国际学校义工组织官网" />
+<meta property="og:title" content="GUIS 义工组织 | 广州优联国际学校义工组织官网" />
 <meta property="og:description" content="让每一份善意都落到实地。社区关怀、环保行动、教育支持、公益募捐、赛事会务与文化交流。" />
 <meta property="og:image" content="assets/logo/guis-ulc-lockup.png" />
 
@@ -80,8 +80,8 @@
   .hero-brand .hero-va{max-height:40px}
 }
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20261001c" />
-<link rel="stylesheet" href="assets/app.css?v=20261001c" />
+<link rel="stylesheet" href="assets/site.css?v=20261001d" />
+<link rel="stylesheet" href="assets/app.css?v=20261001d" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
@@ -108,7 +108,7 @@
     <img class="logo-img" src="assets/logo/guis-ulc-lockup.png" alt="GUIS · Guangzhou Ulink International School | ULC · Ulink College" />
     <span class="logo-div"></span>
     <img class="logo-va" src="assets/logo/va-logo.png" alt="GUIS Volunteer Association" />
-    <span class="org" data-i18n="nav.org">义工社</span>
+    <span class="org"><span class="org-script" data-i18n="nav.org">义工组织</span></span>
   </a>
   <div class="nav-links">
     <div class="nav-drop">
@@ -160,7 +160,7 @@
     <img class="hero-va" src="assets/logo/va-logo.png" alt="GUIS Volunteer Association" />
   </div>
 
-  <div class="hero-badge"><span class="dot"></span><span data-i18n="hero.badge">广州优联国际学校 · 学生志愿服务组织</span></div>
+  <div class="hero-badge"><span class="dot"></span><span data-i18n="hero.badge">广州优联外籍人员子女学校-ULC英式国际部·义工组织</span></div>
 
   <h1 class="hero-title" data-i18n="hero.title">同一个世界，<span class="grad">同一种爱</span>。</h1>
 
@@ -177,8 +177,7 @@
 <main>
 
   <!-- ======================= 国庆专区（节日限定）=======================
-       EDIT: 祝福语写在 nd.p1 / nd.p3（assets/i18n.js 里，中英都要改）。
-       右侧 .nd-flags 是漂浮的国旗，旗面图形在页面底部那个隐藏 <svg> 里的 #nd-flag-art。 -->
+        EDIT: 祝福语写在 nd.p1（assets/i18n.js 里，中英都要改）。 -->
   <section id="national" class="nd-section" hidden>
     <div class="wrap">
       <div class="nd-card reveal">
@@ -191,19 +190,15 @@
           <div class="nd-body">
             <p class="nd-eyebrow" data-i18n="nd.eyebrow">National Day · 国庆</p>
             <h2 class="nd-title" data-i18n="nd.title">山河锦绣，<span class="grad-gold">庆祝中华人民共和国成立 <span id="nd-anniv-2">77</span> 周年</span></h2>
+            <!-- 2026-10-01 用户决定删掉原来第二段「祝祖国生日快乐。愿山河锦绣，岁岁长安。」，
+                 现在祝福区只剩 nd.p1 这一段。 -->
             <div class="nd-copy">
-              <p class="nd-lead" data-i18n="nd.p1">祖国河山七十七载，山河无恙，国泰民安。</p>
-              <p data-i18n="nd.p3"><strong>祝祖国生日快乐。愿山河锦绣，岁岁长安。</strong></p>
+              <p class="nd-lead" data-i18n="nd.p1">盛世华夏七十七载，山河无恙，国泰民安。</p>
             </div>
           </div>
 
-          <!-- 会飘的国旗：用 SVG 的 feTurbulence + feDisplacementMap 做布料起伏，
-               外面再套一层 CSS 的漂浮位移。三面旗大小和相位都不同，才不会像贴图。 -->
-          <div class="nd-flags" aria-hidden="true">
-            <svg class="nd-fly f1" viewBox="0 0 90 60"><g filter="url(#nd-wave)"><use href="#nd-flag-art" /></g></svg>
-            <svg class="nd-fly f2" viewBox="0 0 90 60"><g filter="url(#nd-wave)"><use href="#nd-flag-art" /></g></svg>
-            <svg class="nd-fly f3" viewBox="0 0 90 60"><g filter="url(#nd-wave)"><use href="#nd-flag-art" /></g></svg>
-          </div>
+          <!-- 右侧那三面会飘的国旗 2026-10-01 由用户决定删掉，.nd-flags / .nd-fly 的样式
+               和 #nd-wave 滤镜、#nd-flag-art 图形一起清掉了。想找回看 git 历史。 -->
         </div>
       </div>
     </div>
@@ -213,7 +208,7 @@
   <section id="stats" style="padding-top:0;">
     <div class="wrap">
       <div class="stats reveal">
-        <!-- EDIT: 把下面数字换成义工社的真实数据 -->
+        <!-- EDIT: 把下面数字换成义工组织的真实数据 -->
         <div class="stat">
           <div class="num"><span data-count="128" data-suffix="+">0</span></div>
           <div class="label" data-i18n="stat1.label">在册学生志愿者</div>
@@ -242,7 +237,7 @@
           <p class="eyebrow" data-i18n="about.eyebrow">关于我们</p>
           <h2 class="section-title" data-i18n="about.title">一所学校，<span class="grad">一群愿意先动手的人</span>。</h2>
           <div class="prose">
-            <p data-i18n="about.p1">GUIS 义工社成立于广州优联国际学校南沙校园，是<strong>由学生自主运营、学生事务处指导</strong>的志愿服务组织。我们把「知行合一」放进日程表：不只讨论公益，而是每周固定留出时间，去做一件具体、可被看见、可被复盘的事。</p>
+            <p data-i18n="about.p1">GUIS 义工组织成立于广州优联国际学校南沙校园，是<strong>由学生自主运营、学生事务处指导</strong>的志愿服务组织。我们把「知行合一」放进日程表：不只讨论公益，而是每周固定留出时间，去做一件具体、可被看见、可被复盘的事。</p>
             <p data-i18n="about.p2">我们的服务半径从校园延伸到明珠湾与南沙社区。所有项目都由学生调研需求、设计方案、招募排班、现场执行，再一起复盘——失败的部分也写进记录，因为真实的经验比漂亮的总结更有用。</p>
           </div>
         </div>
@@ -430,13 +425,13 @@
         <h2 class="section-title" data-i18n="co.title">想一起做点<span class="grad">具体的事</span>？</h2>
         <p class="lede" data-i18n="co.lede">无论你是 GUIS 的同学、愿意合作的社区与机构，还是想参与服务的家长，都欢迎写信告诉我们。我们也接受社区服务需求提报。</p>
 
-        <!-- EDIT: 替换为义工社真实邮箱 -->
+        <!-- EDIT: 替换为义工组织真实邮箱 -->
         <a class="contact-mail" href="mailto:volunteer@guiscn.com">volunteer@guiscn.com</a>
 
         <div class="hero-actions">
           <a class="btn btn-primary" target="_blank" rel="noopener noreferrer"
              href="https://outlook.live.com/mail/0/deeplink/compose?to=volunteer@guiscn.com&amp;subject=GUIS%20%E4%B9%89%E5%B7%A5%E7%A4%BE%20%C2%B7%20%E5%90%88%E4%BD%9C%E4%B8%8E%E5%8F%82%E4%B8%8E%E5%92%A8%E8%AF%A2"
-             data-i18n="co.btn">写信给义工社</a>
+             data-i18n="co.btn">写信给义工组织</a>
           <a class="btn btn-secondary" href="signup.html" data-i18n="co.alt">查看活动报名</a>
         </div>
 
@@ -458,9 +453,9 @@
     <div class="footer-brand">
       <img src="assets/logo/guis-ulc-lockup.png" alt="GUIS | ULC" />
       <img class="footer-va" src="assets/logo/va-logo.png" alt="GUIS Volunteer Association" />
-      <span class="footer-org" data-i18n="footer.org">广州优联国际学校义工社<br />Guangzhou Ulink International School Volunteer Service</span>
+      <span class="footer-org" data-i18n="footer.org">广州优联外籍人员子女学校-ULC英式国际部·义工组织<br />Guangzhou ULink International School - ULC Division·Volunteer Association</span>
     </div>
-    <span data-i18n="footer.text">© 2026 GUIS 义工社 · 学生自主运营 · 服务记录公开可查。</span>
+    <span data-i18n="footer.text">© 2026 GUIS 义工组织 · 学生自主运营 · 服务记录公开可查。</span>
     <div class="footer-links">
       <a href="#home" data-i18n="footer.top">回到顶部</a>
       <a href="index.html#contact" data-i18n="nav.contact">联系我们</a>
@@ -472,19 +467,10 @@
 
 <!-- 工作照（#gallery）已整块删除，灯箱只服务那一块的 .shot，一起删掉 -->
 
-<!-- 国庆专区用的国旗：图案只定义一次，上面三面旗用 <use> 复用。
-     #nd-wave 是「布料起伏」滤镜：feTurbulence 生成噪声，feDisplacementMap 拿它去推移图形，
-     再让 baseFrequency 缓慢变化，旗面就像在风里抖。 -->
+<!-- 国庆专区用的五颗星：只定义一次，横幅和专区左侧的「星阵背景」用 <use> 复用。
+     （原来还有 #nd-wave 布料起伏滤镜 + #nd-flag-art 旗面，2026-10-01 三面飘旗删掉后一并清了。） -->
 <svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" focusable="false">
   <defs>
-    <filter id="nd-wave" x="-15%" y="-25%" width="130%" height="150%" color-interpolation-filters="sRGB">
-      <feTurbulence type="fractalNoise" baseFrequency="0.011 0.028" numOctaves="2" seed="7" result="ndNoise">
-        <animate attributeName="baseFrequency" dur="11s" repeatCount="indefinite"
-                 values="0.011 0.028; 0.019 0.044; 0.013 0.032; 0.011 0.028" />
-      </feTurbulence>
-      <feDisplacementMap in="SourceGraphic" in2="ndNoise" scale="7" xChannelSelector="R" yChannelSelector="G" />
-    </filter>
-    <!-- 五颗星单独定义一次：旗面用得到，横幅/专区左侧的「星阵背景」也用得到 -->
     <g id="nd-star-art">
       <polygon points="15.00,6.00 17.02,12.22 23.56,12.22 18.27,16.06 20.29,22.28 15.00,18.44 9.71,22.28 11.73,16.06 6.44,12.22 12.98,12.22" fill="#FFDE00" />
       <polygon points="27.43,7.54 28.86,5.90 27.74,4.03 29.74,4.88 31.17,3.24 30.98,5.41 32.99,6.26 30.86,6.75 30.67,8.92 29.55,7.05" fill="#FFDE00" />
@@ -492,27 +478,23 @@
       <polygon points="33.12,20.18 35.29,20.10 35.89,18.00 36.64,20.05 38.82,19.97 37.10,21.31 37.85,23.36 36.04,22.15 34.32,23.49 34.92,21.39" fill="#FFDE00" />
       <polygon points="27.66,25.13 29.70,25.89 31.06,24.19 30.96,26.37 33.00,27.14 30.89,27.72 30.79,29.89 29.60,28.07 27.49,28.65 28.86,26.95" fill="#FFDE00" />
     </g>
-    <g id="nd-flag-art">
-      <rect x="0" y="0" width="90" height="60" rx="1.5" fill="#DE2910" />
-      <use href="#nd-star-art" />
-    </g>
   </defs>
 </svg>
 
 <script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
-<script src="assets/cloud-config.js?v=20261001c"></script>
-<script src="assets/cloud.js?v=20261001c"></script>
-<script src="assets/i18n.js?v=20261001c"></script>
-<script src="assets/board.js?v=20261001c"></script>
-<script src="assets/editor.js?v=20261001c"></script>
-<script src="assets/feed.js?v=20261001c"></script>
+<script src="assets/cloud-config.js?v=20261001d"></script>
+<script src="assets/cloud.js?v=20261001d"></script>
+<script src="assets/i18n.js?v=20261001d"></script>
+<script src="assets/board.js?v=20261001d"></script>
+<script src="assets/editor.js?v=20261001d"></script>
+<script src="assets/feed.js?v=20261001d"></script>
 <!-- 部门成员已独立成 team.html，team.js / team-render.js 只在那一页加载 -->
-<script src="assets/queue.js?v=20261001c"></script>
-<script src="assets/nav.js?v=20261001c"></script>
-<script src="assets/session.js?v=20261001c"></script>
-<script src="assets/main.js?v=20261001c"></script>
+<script src="assets/queue.js?v=20261001d"></script>
+<script src="assets/nav.js?v=20261001d"></script>
+<script src="assets/session.js?v=20261001d"></script>
+<script src="assets/main.js?v=20261001d"></script>
 <!-- 国庆横幅 / 专区：放在 main.js 之后，这样填进去的周年数字不会被 applyLang 覆盖回去 -->
-<script src="assets/national.js?v=20261001c"></script>
+<script src="assets/national.js?v=20261001d"></script>
 <script>
 /* ---------- 首页「活动报名」板块 ----------
    看板的全部逻辑（红绿灯判定、数字、图例、以及「旧结构自愈」）都在 assets/board.js，

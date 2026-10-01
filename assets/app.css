@@ -1,5 +1,5 @@
 /* ============================================================
-   GUIS 义工社 — 报名表单 / 后台管理 附加样式
+   GUIS 义工组织 — 报名表单 / 后台管理 附加样式
    依赖 site.css 里的设计变量（--brand / --hairline / 圆角 / 阴影）
    ============================================================ */
 
@@ -744,9 +744,11 @@ table.data tr.is-picked { background: var(--brand-tint); }
   50%      { transform: translateY(-9px); opacity: 0.75; }
 }
 
+/* 2026-10-01 起右栏（飘旗）没了，改成单列 —— 留着 1fr|320px 会让正文右边空一大块。
+   正文自己的 .nd-body 仍有 max-width 兜着，行宽不会拉得太长。 */
 .nd-inner {
   position: relative; z-index: 2;
-  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 320px);
+  display: grid; grid-template-columns: minmax(0, 1fr);
   gap: clamp(1.5rem, 4vw, 2.6rem); align-items: center;
 }
 .nd-body { position: relative; z-index: 2; max-width: 62ch; }
@@ -812,37 +814,13 @@ table.data tr.is-picked { background: var(--brand-tint); }
   border-bottom: 1px solid rgba(229, 185, 92, 0.3);
 }
 
-/* ---------- 会飘的国旗 ---------- */
-.nd-flags { position: relative; height: 250px; }
-.nd-fly {
-  position: absolute; display: block; overflow: visible;
-  filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.45));
-  will-change: transform;
-}
-.nd-fly.f1 { width: 148px; left: 4%;  top: 8%;   animation: nd-fly-a 9s ease-in-out infinite; }
-.nd-fly.f2 { width: 96px;  left: 54%; top: 50%;  animation: nd-fly-b 7.5s ease-in-out infinite; }
-.nd-fly.f3 { width: 64px;  left: 18%; top: 68%;  animation: nd-fly-c 6s ease-in-out infinite; }
-
-@keyframes nd-fly-a {
-  0%, 100% { transform: translate(0, 0) rotate(-4deg); }
-  50%      { transform: translate(10px, -16px) rotate(3deg); }
-}
-@keyframes nd-fly-b {
-  0%, 100% { transform: translate(0, 0) rotate(5deg); }
-  50%      { transform: translate(-8px, -13px) rotate(-2deg); }
-}
-@keyframes nd-fly-c {
-  0%, 100% { transform: translate(0, 0) rotate(-7deg); }
-  50%      { transform: translate(6px, -10px) rotate(2deg); }
-}
+/* 右侧那三面会飘的国旗 2026-10-01 由用户决定删掉：
+   .nd-flags / .nd-fly / @keyframes nd-fly-* 和 #nd-wave 滤镜、#nd-flag-art 图形一起清了。
+   想找回看 git 历史。 */
 
 @media (max-width: 900px) {
-  .nd-inner { grid-template-columns: 1fr; gap: 1.2rem; }
-  .nd-flags { height: 132px; }
-  .nd-fly.f1 { width: 104px; left: 2%;  top: 4%; }
-  .nd-fly.f2 { width: 70px;  left: 58%; top: 34%; }
-  .nd-fly.f3 { display: none; }
-  /* 单列布局下星阵挪到左上角，别压在正文上 */
+  .nd-inner { gap: 1.2rem; }
+  /* 星阵挪到左上角，别压在正文上 */
   .nd-stars { width: 150px; left: -6%; top: 4%; transform: none; opacity: 0.12; }
 }
 
@@ -858,7 +836,6 @@ table.data tr.is-picked { background: var(--brand-tint); }
 @media (prefers-reduced-motion: reduce) {
   .nd-bar::after { animation: none; display: none; }
   .nd-grid-dots i { animation: none; }
-  .nd-fly { animation: none; }
   .nd-stars, .nd-bar-stars { animation: none; }
 }
 

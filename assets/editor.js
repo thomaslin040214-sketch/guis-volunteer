@@ -1,5 +1,5 @@
 /* ============================================================
-   GUIS 义工社 — 公众号式富文本编辑器（GUISRich）
+   GUIS 义工组织 — 公众号式富文本编辑器（GUISRich）
 
    用法：
      var ed = GUISRich.create(document.getElementById("box"), { placeholder: "正文…" });

@@ -1,5 +1,5 @@
 /* ============================================================
-   GUIS 义工社 — 后台管理
+   GUIS 义工组织 — 后台管理
    登录 / 活动管理 / 报名名单（含勾选录取与导出）/ 实时报名 /
    刊物 / 公告 / 过往活动 / 白名单
 
@@ -188,7 +188,7 @@ document.addEventListener("DOMContentLoaded", function () {
         C.auth.signOut();
         showLogin();
         alertIn($("auth-alerts"), "error",
-          "该邮箱（" + esc(email) + "）还没有加入后台人员名单，请联系义工社执委会先把邮箱加进来。");
+          "该邮箱（" + esc(email) + "）还没有加入后台人员名单，请联系义工组织执委会先把邮箱加进来。");
         return false;
       }
       /* 拿到角色再决定界面。my_access() 是 SECURITY DEFINER，
@@ -1068,7 +1068,7 @@ document.addEventListener("DOMContentLoaded", function () {
   /* ================= 人员管理 =================
      role：owner = 执委会（能改活动 / 刊物 / 公告 / 人员）
            teacher = 负责老师（能看名单、给分配给自己的活动签到、录小时）
-     is_student：这个人同时也是义工社学生成员（既是后台所有者又是学生）。 */
+     is_student：这个人同时也是义工组织学生成员（既是后台所有者又是学生）。 */
   function roleLabel(r) { return r === "owner" ? "执委会" : "负责老师"; }
   function roleClass(r) { return r === "owner" ? "st-approved" : "st-pending"; }
 

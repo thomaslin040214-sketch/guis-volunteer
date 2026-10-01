@@ -1,5 +1,5 @@
 /* ============================================================
-   GUIS 义工社 — 统一登录（login.html）
+   GUIS 义工组织 — 统一登录（login.html）
 
    一个入口，登录后自动分流：
      执委会 owner   → admin.html    后台（能改活动/刊物/公告）
@@ -166,7 +166,7 @@ document.addEventListener("DOMContentLoaded", function () {
         busyOff($("lg-new-send"));
         alertIn($("lg-alerts"), "error",
           "这个邮箱（" + esc(email) + "）不在学校登记的学生名单里，暂时不能自助开通。" +
-          "请确认前缀有没有打错，或联系义工社执委会把你的邮箱加进名单。");
+          "请确认前缀有没有打错，或联系义工组织执委会把你的邮箱加进名单。");
         return;
       }
       if (row.activated) {

@@ -1,4 +1,4 @@
-# GUIS 义工社 · 官方网站
+# GUIS 义工组织 · 官方网站
 
 > 广州优联国际学校（Guangzhou Ulink International School）学生志愿服务组织官网
 > 白色底色 · GUIS 品牌红 `#9C2126` · 纯静态 HTML / CSS / JS（无框架、无构建步骤）
@@ -38,6 +38,7 @@ guis-volunteer/
     ├── cloud-config.js         # 云服务 publicConfig（endpoint + publishableKey）
     ├── cloud.js                # 云服务客户端：初始化一次 + 活动/报名的增删改查
     ├── i18n.js                 # 中英双语词典（中英一一对应）
+    ├── fonts/                  # 导航书法体（只含「义工组织」四个字的子集，见第八节）
     ├── logo/                   # 学校校徽（8 个原始版本已按用途命名）
     │   ├── guis-logo-h.png            红 · 横版组合标（含凤纹 + GUIS + 全称）→ 导航栏
     │   ├── guis-logo-v.png            红 · 竖版组合标 → Hero 主视觉、欢迎信页头
@@ -296,8 +297,8 @@ gh api -X POST repos/<你的用户名>/<新仓库名>/pages \
 
 | 项目 | 取值 |
 |------|------|
-| 品牌红 | `#9C2126`（从校徽 PNG 中取样的实际色值） |
-| 深红（hover / 强调） | `#7A191D` |
+| 品牌蓝 | `#144C90`（从 GUIS\|ULC 组合标志里 ULC 字标取样的实际色值） |
+| 深蓝（hover / 强调） | `#0E3767` |
 | 页面底色 | `#FFFFFF` |
 | 次级底色 | `#FAFAFA` |
 | 正文墨色 | `#17171A` |
@@ -306,6 +307,27 @@ gh api -X POST repos/<你的用户名>/<新仓库名>/pages \
 | 字体 | `-apple-system` → `PingFang SC` → `Hiragino Sans GB` → `Microsoft YaHei` |
 
 所有颜色都定义在 `assets/site.css` 顶部的 `:root` 变量里，改一处即可全站生效。
+
+### 导航里的书法体（`assets/fonts/`）
+
+左上角「义工组织」四个字用的是**马善政毛笔楷书**（Ma Shan Zheng，SIL OFL 1.1，可自由自托管）。
+
+⚠️ 这是**只含这四个字**的字符子集，**2 KB**，不是完整字库 —— 这是刻意的：中文全字库动辄 5–10 MB，
+为了四个装饰字拖慢整站不值得。代价是**字体里没有别的字**，所以：
+
+- 只有中文界面用书法体（`html[lang^="zh"] .nav-logo .org-script`）；英文是 Volunteer Association，
+  走书法体会掉到兜底字体、反而更丑。
+- **改这四个字就要重做子集**，否则新字会掉到 `STXingkai / Kaiti SC / KaiTi / 楷体` 兜底链上。
+
+重做子集（只换 `text=` 里的字即可）：
+
+```bash
+curl -A "Mozilla/5.0" \
+  "https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&text=义工组织&display=swap"
+# 从返回的 CSS 里取出 src: url(...) 那个地址，直接下载：
+curl -A "Mozilla/5.0" "<上面取到的 fonts.gstatic.com 地址>" \
+  -o assets/fonts/ma-shan-zheng-org.woff2
+```
 
 **无障碍**：图片灯箱支持 `Esc` 关闭、`←/→` 翻页；照片格与履历按钮均可用键盘聚焦和回车触发；
 页面尊重系统的「减少动态效果」设置（`prefers-reduced-motion`）。
@@ -319,4 +341,4 @@ CSS 自定义属性、`backdrop-filter`；若无 JS，内容依然完整可读�
 
 ---
 
-© 2026 GUIS 义工社 · 校徽版权归广州优联国际学校所有，仅供本校组织使用。
+© 2026 GUIS 义工组织 · 校徽版权归广州优联国际学校所有，仅供本校组织使用。

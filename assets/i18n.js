@@ -1,5 +1,5 @@
 /* ============================================================
-   GUIS 义工社 — Site dictionary (中文 / EN)
+   GUIS 义工组织 — Site dictionary (中文 / EN)
    在 HTML 里用 data-i18n="key" 取值；用 data-i18n-attr="title:key,aria-label:key"
    给属性赋值。新增文案时，两种语言都要补齐同一个 key。
    ============================================================ */
@@ -7,10 +7,10 @@ window.SITE_I18N = {
 
   /* ---------------- 中文（默认） ---------------- */
   zh: {
-    "doc.title": "GUIS 义工社 | 广州优联国际学校学生志愿服务组织",
-    "doc.join.title": "社长欢迎信 | GUIS 义工社",
+    "doc.title": "GUIS 义工组织 | 广州优联国际学校学生志愿服务组织",
+    "doc.join.title": "社长欢迎信 | GUIS 义工组织",
 
-    "nav.org": "义工社",
+    "nav.org": "义工组织",
     "nav.home": "回到主页",
     "nav.about": "关于我们",
     "nav.programs": "服务项目",
@@ -21,7 +21,7 @@ window.SITE_I18N = {
     "nav.account": "我的义工账户",
     "nav.login": "登录",
 
-    "lg.title": "登录义工社",
+    "lg.title": "登录义工组织",
     "lg.tabPass": "密码登录",
     "lg.tabNew": "首次开通",
     "lg.email": "邮箱",
@@ -55,7 +55,7 @@ window.SITE_I18N = {
     "ui.prev": "上一张",
     "ui.next": "下一张",
 
-    "hero.badge": "广州优联国际学校 · 学生志愿服务组织",
+    "hero.badge": "广州优联外籍人员子女学校-ULC英式国际部·义工组织",
     "hero.title": "同一个世界，<span class=\"grad\">同一种爱</span>。",
     "hero.sub": "GUIS 义工组织由学生自主运营。我们在校园与南沙社区之间，把想法变成有回响的行动 —— 一次探访、一场活动、一次成功举办的义卖。",
     "hero.cta1": "阅读社长欢迎信",
@@ -69,7 +69,7 @@ window.SITE_I18N = {
 
     "about.eyebrow": "关于我们",
     "about.title": "一所学校，<span class=\"grad\">一群愿意先动手的人</span>。",
-    "about.p1": "GUIS 义工社成立于广州优联国际学校南沙校园，是<strong>由学生自主运营、学生事务处指导</strong>的志愿服务组织。我们把「知行合一」放进日程表：不只讨论公益，而是每周固定留出时间，去做一件具体、可被看见、可被复盘的事。",
+    "about.p1": "GUIS 义工组织成立于广州优联国际学校南沙校园，是<strong>由学生自主运营、学生事务处指导</strong>的志愿服务组织。我们把「知行合一」放进日程表：不只讨论公益，而是每周固定留出时间，去做一件具体、可被看见、可被复盘的事。",
     "about.p2": "我们的服务半径从校园延伸到明珠湾与南沙社区。所有项目都由学生调研需求、设计方案、招募排班、现场执行，再一起复盘——失败的部分也写进记录，因为真实的经验比漂亮的总结更有用。",
     "about.listTitle": "我们坚持的三件事",
     "about.li1": "服务前先调研：先弄清楚对方真正需要什么，再决定我们要做什么。",
@@ -157,9 +157,9 @@ window.SITE_I18N = {
 
     "jr.eyebrow": "发展历程",
     "jr.title": "从十几个人开始",
-    "jr.lede": "义工社不是一天长成现在这样的。下面是几个我们自己觉得还算重要的节点。",
+    "jr.lede": "义工组织不是一天长成现在这样的。下面是几个我们自己觉得还算重要的节点。",
 
-    "t1.year": "2023", "t1.title": "义工社前身小组成立", "t1.desc": "由十余名同学发起，从校园图书整理与活动支持做起，第一学期完成 6 场小型服务。",
+    "t1.year": "2023", "t1.title": "义工组织前身小组成立", "t1.desc": "由十余名同学发起，从校园图书整理与活动支持做起，第一学期完成 6 场小型服务。",
     "t2.year": "2024", "t2.title": "正式挂靠学生事务处", "t2.desc": "建立招募、培训与工时记录三项制度，服务范围从校园扩展到南沙社区。",
     "t3.year": "2025", "t3.title": "首个长期项目落地", "t3.desc": "「一平米书房」社区阅读角改造启动，形成固定的项目组与轮值机制。",
     "t4.year": "2025", "t4.title": "公益时数上云并公示", "t4.desc": "统一工时口径与签到方式，每位志愿者的服务时长可查询、可追溯。",
@@ -175,22 +175,22 @@ window.SITE_I18N = {
     "co.eyebrow": "联系我们",
     "co.title": "想一起做点<span class=\"grad\">具体的事</span>？",
     "co.lede": "无论你是 GUIS 的同学、愿意合作的社区与机构，还是想参与服务的家长，都欢迎写信告诉我们。我们也接受社区服务需求提报。",
-    "co.btn": "写信给义工社",
+    "co.btn": "写信给义工组织",
     "co.alt": "查看活动报名",
     "co.l1k": "例会时间", "co.l1v": "学期间每周三 16:30",
     "co.l2k": "招募窗口", "co.l2v": "每学期开学后两周",
     "co.l3k": "指导单位", "co.l3v": "GUIS-ULC 学生事务处",
     "co.meta": "广州 · 南沙区伟立路 8 号 · 广州优联国际学校校园内",
 
-    "footer.org": "广州优联国际学校义工社<br />Guangzhou Ulink International School Volunteer Service",
-    "footer.text": "© 2026 GUIS 义工社 · 学生自主运营 · 服务记录公开可查。",
+    "footer.org": "广州优联外籍人员子女学校-ULC英式国际部·义工组织<br />Guangzhou ULink International School - ULC Division·Volunteer Association",
+    "footer.text": "© 2026 GUIS 义工组织 · 学生自主运营 · 服务记录公开可查。",
     "footer.top": "回到顶部",
 
-    "join.title": "欢迎来到 GUIS 义工社",
+    "join.title": "欢迎来到 GUIS 义工组织",
     "join.meta": "社长欢迎信 · 2026–27 学年",
     "join.location": "GUIS 校园 · 广州南沙",
     "join.salute": "亲爱的同学，",
-    "join.p1": "我是 GUIS 义工社的社长。先谢谢你点开这一页 —— 愿意花几分钟了解我们，本身就已经是一种善意。我不打算在这里讲什么大道理，只想告诉你：这个组织是由学生自己撑起来的，而它最缺的从来不是热情，是那个愿意长期出现的人。",
+    "join.p1": "我是 GUIS 义工组织的社长。先谢谢你点开这一页 —— 愿意花几分钟了解我们，本身就已经是一种善意。我不打算在这里讲什么大道理，只想告诉你：这个组织是由学生自己撑起来的，而它最缺的从来不是热情，是那个愿意长期出现的人。",
     "join.p2": "我们不太喜欢「做公益」这种说法，它听起来像完成一次就能交差的事。我们更习惯把它当成一种日程：每个月固定的两个下午去社区探访，每季度去一次明珠湾净滩，每周六上午给社区的孩子补课。重复、琐碎，有时候甚至有点无聊 —— 但正因为一直有人在，这些事才真的会持续发生。",
     "join.h1": "我们在做什么",
     "join.u1": "社区关怀 —— 定期探访南沙社区的长者，陪他们聊天、整理居家环境、记录他们的故事。",
@@ -207,16 +207,16 @@ window.SITE_I18N = {
     "join.u10": "从需求调研、活动策划到现场执行的项目经验，而不只是「参与者」。",
     "join.u11": "一群会互相记得名字的同伴，以及真实见过的人与生活。",
     "join.h4": "从这里开始",
-    "join.p3": "每学期开学后的两周是我们的开放窗口。你可以直接在义工社例会（学期间每周三 16:30）现场来，或者写一封信告诉我你想参加哪个板块。不需要准备面试稿，想清楚你愿意固定留出哪个时间段就够了。",
+    "join.p3": "每学期开学后的两周是我们的开放窗口。你可以直接在义工组织例会（学期间每周三 16:30）现场来，或者写一封信告诉我你想参加哪个板块。不需要准备面试稿，想清楚你愿意固定留出哪个时间段就够了。",
     "join.p4": "如果你是我们服务的社区或机构的一员，也欢迎写信提报需求——我们会先来听，再决定能不能做、怎么做。",
     "join.sign": "期待在某个周六上午见到你。",
-    "join.name": "GUIS 义工社 社长",
+    "join.name": "GUIS 义工组织 社长",
     "join.sub1": "广州优联国际学校学生志愿服务组织",
     "join.sub2": "指导单位 · 学生事务处",
     "join.back": "返回主页",
     "join.cta": "写信给我们",
 
-    "doc.signup.title": "活动报名 | GUIS 义工社",
+    "doc.signup.title": "活动报名 | GUIS 义工组织",
     "nav.signup": "活动报名",
     "nav.admin": "后台管理",
 
@@ -333,8 +333,7 @@ window.SITE_I18N = {
     "nd.barSub": "愿山河锦绣，岁岁长安",
     "nd.eyebrow": "National Day · 国庆",
     "nd.title": "山河锦绣，<span class=\"grad-gold\">庆祝中华人民共和国成立 <span id=\"nd-anniv-2\">77</span> 周年</span>",
-    "nd.p1": "七十七年过去了，山河无恙，国泰民安。",
-    "nd.p3": "<strong>祝祖国生日快乐。愿山河锦绣，岁岁长安。</strong>",
+    "nd.p1": "盛世华夏七十七载，山河无恙，国泰民安。",
 
     /* ---------- 公开内容流通用 ---------- */
     "feed.mirrorTitle": "当前站点是静态镜像，读不到云端内容。",
@@ -387,7 +386,7 @@ window.SITE_I18N = {
     "f.expPh": "参加过哪些志愿服务、做过什么？没有就留空。",
     "f.note": "备注",
     "f.notePh": "可服务的时间、需要说明的情况等",
-    "f.privacy": "这些信息只用于本次活动的联络与排班，由义工社执委会保管，不会对外公开。",
+    "f.privacy": "这些信息只用于本次活动的联络与排班，由义工组织执委会保管，不会对外公开。",
     "f.submit": "提交报名",
     "f.submitting": "提交中…",
 
@@ -411,10 +410,10 @@ window.SITE_I18N = {
 
   /* ---------------- English ---------------- */
   en: {
-    "doc.title": "GUIS Volunteer Service | Guangzhou Ulink International School",
-    "doc.join.title": "President's Welcome | GUIS Volunteer Service",
+    "doc.title": "GUIS Volunteer Association | Guangzhou Ulink International School",
+    "doc.join.title": "President's Welcome | GUIS Volunteer Association",
 
-    "nav.org": "Volunteer Service",
+    "nav.org": "Volunteer Association",
     "nav.home": "Home",
     "nav.about": "About",
     "nav.programs": "Programmes",
@@ -459,9 +458,9 @@ window.SITE_I18N = {
     "ui.prev": "Previous",
     "ui.next": "Next",
 
-    "hero.badge": "Guangzhou Ulink International School · Student-led service",
+    "hero.badge": "Guangzhou ULink International School - ULC Division·Volunteer Association",
     "hero.title": "One Love, <span class=\"grad\">One Heart</span>.",
-    "hero.sub": "GUIS Volunteer Service is run by students. Between our campus and the Nansha community, we turn good intentions into things that actually happen — a visit, an event, a charity sale that came together.",
+    "hero.sub": "GUIS Volunteer Association is run by students. Between our campus and the Nansha community, we turn good intentions into things that actually happen — a visit, an event, a charity sale that came together.",
     "hero.cta1": "Read the president's welcome",
     "hero.cta2": "Explore our programmes",
     "hero.scroll": "Scroll",
@@ -473,7 +472,7 @@ window.SITE_I18N = {
 
     "about.eyebrow": "About us",
     "about.title": "One school, <span class=\"grad\">a group of people who go first</span>.",
-    "about.p1": "GUIS Volunteer Service is based on the Nansha campus of Guangzhou Ulink International School — a <strong>student-run organisation guided by the Student Affairs Office</strong>. We put \"learning through doing\" on the timetable: rather than only talking about service, we set aside time every week to do one concrete thing that can be seen and reviewed.",
+    "about.p1": "GUIS Volunteer Association is based on the Nansha campus of Guangzhou Ulink International School — a <strong>student-run organisation guided by the Student Affairs Office</strong>. We put \"learning through doing\" on the timetable: rather than only talking about service, we set aside time every week to do one concrete thing that can be seen and reviewed.",
     "about.p2": "Our work reaches from the campus out to Pearl Bay and the wider Nansha community. Students research the need, design the project, recruit and roster, run it on the ground, then review it together — including what went wrong, because an honest record is more useful than a tidy summary.",
     "about.listTitle": "Three things we hold to",
     "about.li1": "Ask before serving: understand what people actually need before deciding what we will do.",
@@ -587,15 +586,15 @@ window.SITE_I18N = {
     "co.l3k": "Supervised by", "co.l3v": "GUIS-ULC Office of the Student Affair",
     "co.meta": "Guangzhou · No. 8 Weili Road, Nansha District · on the GUIS campus",
 
-    "footer.org": "Guangzhou Ulink International School<br />Student Volunteer Service",
-    "footer.text": "© 2026 GUIS Volunteer Service · Run by students · Records open to review.",
+    "footer.org": "Guangzhou ULink International School - ULC Division·Volunteer Association",
+    "footer.text": "© 2026 GUIS Volunteer Association · Run by students · Records open to review.",
     "footer.top": "Back to top",
 
-    "join.title": "Welcome to GUIS Volunteer Service",
+    "join.title": "Welcome to GUIS Volunteer Association",
     "join.meta": "President's welcome · 2026–27 school year",
     "join.location": "GUIS campus · Nansha, Guangzhou",
     "join.salute": "Dear fellow student,",
-    "join.p1": "I'm the president of GUIS Volunteer Service. Thank you for opening this page — taking a few minutes to find out who we are is already a kind of generosity. I'm not here to give you a speech. I just want to say: this organisation is held up by students, and what it needs most has never been enthusiasm, but the person who keeps showing up.",
+    "join.p1": "I'm the president of GUIS Volunteer Association. Thank you for opening this page — taking a few minutes to find out who we are is already a kind of generosity. I'm not here to give you a speech. I just want to say: this organisation is held up by students, and what it needs most has never been enthusiasm, but the person who keeps showing up.",
     "join.p2": "We're not fond of the phrase 'doing charity' — it sounds like something you tick off once. We'd rather treat it as a calendar: two fixed afternoons a month visiting the community, a clean-up at Mingzhu Bay each term, Saturday mornings tutoring local children. Repetitive, unglamorous, sometimes even a little dull — but because someone is always there, these things keep actually happening.",
     "join.h1": "What we do",
     "join.u1": "Community care — regular visits to older residents in Nansha: talking, tidying, and recording their stories.",
@@ -615,13 +614,13 @@ window.SITE_I18N = {
     "join.p3": "The first two weeks of each semester are our open window. You can simply come to a weekly meeting (Wednesdays 16:30 during term), or write and tell me which area you'd like to join. No interview script needed — just work out which time slot you can genuinely keep free.",
     "join.p4": "And if you're part of a community or organisation we serve, write to us with what you need. We'll come and listen first, then decide whether and how we can help.",
     "join.sign": "We hope to see you on a Saturday morning.",
-    "join.name": "President, GUIS Volunteer Service",
+    "join.name": "President, GUIS Volunteer Association",
     "join.sub1": "Guangzhou Ulink International School student volunteer service",
     "join.sub2": "Supervised by the Student Affairs Office",
     "join.back": "Back to home",
     "join.cta": "Write to us",
 
-    "doc.signup.title": "Sign Up | GUIS Volunteer Service",
+    "doc.signup.title": "Sign Up | GUIS Volunteer Association",
     "nav.signup": "Sign Up",
     "nav.admin": "Admin",
 
@@ -738,8 +737,7 @@ window.SITE_I18N = {
     "nd.barSub": "Wishing the country peace and prosperity, year after year",
     "nd.eyebrow": "National Day · 国庆",
     "nd.title": "A land worth singing for — <span class=\"grad-gold\">celebrating <span id=\"nd-anniv-2\">77</span> years of the People's Republic of China</span>",
-    "nd.p1": "Seventy-seven years on — the land is unbroken, the country at peace.",
-    "nd.p3": "<strong>Happy birthday, China. May the land stay splendid, and the years stay calm.</strong>",
+    "nd.p1": "Seventy-seven years of a flourishing China — the land is unbroken, the country at peace.",
 
     /* ---------- Shared by public feeds ---------- */
     "feed.mirrorTitle": "This site is a static mirror and cannot read the cloud content.",

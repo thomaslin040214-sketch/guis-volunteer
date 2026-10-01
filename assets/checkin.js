@@ -1,5 +1,5 @@
 /* ============================================================
-   GUIS 义工社 — 活动签到（给带活动的老师用）
+   GUIS 义工组织 — 活动签到（给带活动的老师用）
 
    两种签到方式，本质都是写 registrations.checked_in：
      1. 扫同学手机上的二维码 → 用 check_token 反查到人 → 打钩
@@ -145,7 +145,7 @@ document.addEventListener("DOMContentLoaded", function () {
         C.auth.signOut();
         showLogin();
         alertIn($("auth-alerts"), "error",
-          "该邮箱（" + esc(email) + "）还没有加入后台人员名单。请让义工社执委会先到后台「人员管理」页签把邮箱加进来并开通账号。");
+          "该邮箱（" + esc(email) + "）还没有加入后台人员名单。请让义工组织执委会先到后台「人员管理」页签把邮箱加进来并开通账号。");
         return false;
       }
       /* 拿到角色再决定能改哪些活动。my_access() 是 SECURITY DEFINER，

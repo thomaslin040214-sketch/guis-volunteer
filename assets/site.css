@@ -1,8 +1,20 @@
 /* ============================================================
-   GUIS 义工社 — Guangzhou Ulink International School
-   Volunteer Service Organisation
+   GUIS 义工组织 — Guangzhou Ulink International School
+   Volunteer Association
    Light system palette · brand blue #144C90 (ULC)
    ============================================================ */
+
+/* 书法体：马善政毛笔楷书（Ma Shan Zheng，SIL OFL 1.1，可自由自托管/再分发）。
+   ⚠️ 这个文件是**只含「义工组织」四个字**的子集（2 KB），不是完整字库 ——
+      导航里那 4 个字以外的任何字都不会有书法效果（会掉到 .nav-logo .org 里的兜底字体）。
+      改这四个字＝要重新做子集，命令写在 README。 */
+@font-face {
+  font-family: "Ma Shan Zheng";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/ma-shan-zheng-org.woff2?v=1") format("woff2");
+}
 
 :root {
   /* Brand —— 取自 GUIS|ULC 组合标志里 ULC 字标的主色 #144C90 */
@@ -160,7 +172,21 @@ nav {
 .nav-logo .logo-img { height: 26px; width: auto; }
 .nav-logo .logo-div { width: 1px; height: 20px; background: var(--hairline-strong); }
 .nav-logo .org { color: var(--text-main); }
-/* 义工社 VA 标志：与 GUIS 校徽并置，组成「GUIS | 义工社」联合标志 */
+/* 导航里的组织名用书法体。只在中文下生效 —— 英文是 Volunteer Association，
+   走书法字体会掉到兜底字体，反而更丑。
+   ⚠️ 字体文件只含「义工组织」这 4 个字（见文件头的 @font-face），
+      改这四个字就要重做子集，否则新字会掉到下面的兜底字体。 */
+html[lang^="zh"] .nav-logo .org-script {
+  font-family: "Ma Shan Zheng", "STXingkai", "华文行楷", "Kaiti SC", "STKaiti",
+    "KaiTi", "楷体", cursive;
+  font-weight: 400;              /* 书法体本身笔重足够，别再加粗 */
+  font-size: 1.24rem;
+  letter-spacing: 0.1em;
+  line-height: 1;
+  display: inline-block;
+  transform: translateY(1px);    /* 毛笔收笔会略微下沉，抬一点跟标志对齐 */
+}
+/* 义工组织 VA 标志：与 GUIS 校徽并置，组成「GUIS | 义工组织」联合标志 */
 .nav-logo .logo-va { height: 24px; width: auto; }
 
 .nav-links { display: flex; align-items: center; gap: clamp(0.85rem, 1.8vw, 1.75rem); }
@@ -316,7 +342,7 @@ section { position: relative; z-index: 2; padding: clamp(4rem, 9vw, 7rem) 0; scr
 
 .hero-logo { width: clamp(150px, 17vw, 208px); margin-bottom: 1.9rem; }
 
-/* 页头联合标志：GUIS 竖版校徽 | 义工社 VA 标志 */
+/* 页头联合标志：GUIS 竖版校徽 | 义工组织 VA 标志 */
 .hero-brand {
   display: flex; align-items: center; justify-content: center;
   gap: clamp(0.9rem, 2.2vw, 1.5rem); margin-bottom: 1.9rem;
@@ -885,7 +911,7 @@ html.js .reveal.is-in { opacity: 1; transform: none; }
   :root { --nav-h: 104px; }
   nav { padding: 0.5rem 0.9rem; row-gap: 0.3rem; }
   .nav-links { gap: 0.7rem 0.95rem; }
-  /* 「义工社」这几个字在手机上最占地方，联合标志本身已经够了 */
+  /* 「义工组织」这几个字在手机上最占地方，联合标志本身已经够了 */
   .nav-logo .org { display: none; }
   .nav-login { padding: 0.3rem 0.75rem; font-size: 0.74rem; }
 }
