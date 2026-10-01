@@ -305,6 +305,13 @@
     if (!title) { stop("请填写你做了什么服务。"); return; }
     if (isNaN(hours) || hours <= 0) { stop("服务小时数要填一个大于 0 的数字。"); return; }
 
+    /* 云存储的路径要拿 uid 拼，uid 空了会抛一句谁也看不懂的
+       CloudStoragePathError —— 这里提前拦住，让他重新登录。 */
+    if (!ME.id) {
+      stop("登录状态没读到，请退出后重新登录再提交。");
+      return;
+    }
+
     var btn = $("ext-submit");
     busyOn(btn, "正在提交…");
     clear($("ext-alerts"));
@@ -330,7 +337,13 @@
     }).then(function (res) {
       busyOff(btn);
       submitting = false;
-      if (res && res.error) throw new Error(res.error.message || "提交失败");
+      /* ⚠️ 把 PostgREST 的 code 带上（23505 = 重复申请），
+         只 new Error(message) 会把 code 丢掉，前端就分不清是哪一种失败了。 */
+      if (res && res.error) {
+        var e2 = new Error(res.error.message || "提交失败");
+        e2.code = res.error.code;
+        throw e2;
+      }
       alertIn($("ext-alerts"), "ok",
         "已提交，等着执委会审核。<b>审核通过后会并进你的累计义工小时</b>，驳回时也能看到原因。");
       resetForm();
@@ -338,6 +351,15 @@
     }).catch(function (err) {
       busyOff(btn);
       submitting = false;
+      /* 23505 = 撞了 uq_extreq_pending：同一学生同样内容的申请还在待审。
+         这是数据库的最后一道闸 —— 前端那把 submitting 锁只能挡住同一个页面里的连点，
+         挡不住别的标签页 / 上一次没关干净的浏览器。 */
+      if (err && err.code === "23505") {
+        alertIn($("ext-alerts"), "error",
+          "你已经提交过一条一模一样的申请了，还在等审核 —— 不用再交一次。");
+        loadMine();
+        return;
+      }
       alertIn($("ext-alerts"), "error", "提交失败：" + ((err && err.message) || "请稍后重试"));
     });
   }
