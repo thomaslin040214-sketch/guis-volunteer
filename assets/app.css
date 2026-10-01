@@ -1250,3 +1250,50 @@ table.data tr.is-done { background: rgba(45, 138, 78, 0.045); }
 @media (max-width: 520px) {
   .me-hours { margin-left: 0; text-align: left; }
 }
+
+/* ============================================================
+   毛玻璃（后台 / 报名那一侧的表面）—— 2026-10-02
+   和 site.css 那一段共用同一组 --glass-* 变量（变量定义在 :root，全局可见）。
+   ⚠️ app.css 排在 site.css 之后加载，所以后台这些表面必须写在这里，
+      写在 site.css 里会被本文件的实心背景盖回去。
+
+   不上玻璃的三类：
+     · 输入框里面 —— 打字时底色太透会看不清光标位置
+     · 徽章 / 提示条 —— 它们靠底色区分语义（红黄绿、开放/停止）
+     · 表格单元格 —— 一行行叠模糊，滚动会掉帧
+   ============================================================ */
+.panel, .svc, .queue-card, .ci-hours-bar,
+.seg, .code-box, .range-box {
+  background-color: var(--glass-bg-strong);
+  background-image: linear-gradient(140deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.05));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  border-color: var(--glass-line);
+  box-shadow: var(--glass-shadow), var(--glass-lip);
+}
+
+/* ⚠️ .act-item / .pos-row 只拿玻璃的配色和描边，**不叠第二层模糊**：
+   它们是成排出现的（报名列表、职位列表），而且基本都躺在 .panel 里 ——
+   父级已经糊过一次，子元素再糊一遍只是白烧 GPU，肉眼看不出区别。
+   （site.css 里那条「数量大的小元素不做模糊」就是给它们写的。） */
+.act-item, .pos-row {
+  background-color: var(--glass-bg-strong);
+  background-image: linear-gradient(140deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.05));
+  border-color: var(--glass-edge);
+  box-shadow: var(--glass-shadow), var(--glass-lip);
+}
+
+/* 面板顶栏原来是白→浅灰的渐变，玻璃底下会显得「这块是实心的」，改成半透明渐变 */
+.panel-head {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.18));
+}
+
+/* 例外的例外：语义色 / 选中态必须是实心的，别被上面那条盖掉 */
+.svc.is-in { background: rgba(45, 138, 78, 0.08); }
+.pos-row.is-on { background: rgba(20, 76, 144, 0.06); }
+
+@supports not ((backdrop-filter: blur(2px)) or (-webkit-backdrop-filter: blur(2px))) {
+  .panel, .act-item, .pos-row, .svc, .queue-card, .ci-hours-bar,
+  .seg, .code-box, .range-box { background: rgba(255, 255, 255, 0.92); }
+  .panel-head { background: linear-gradient(180deg, #fff, var(--bg-soft)); }
+}

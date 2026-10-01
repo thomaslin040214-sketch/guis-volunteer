@@ -865,6 +865,103 @@ footer {
 .footer-links { display: flex; gap: 1.25rem; }
 .footer-links a:hover { color: var(--brand); }
 
+/* ============================================================
+   毛玻璃（glassmorphism）—— 2026-10-02 全站统一
+   半透明白表面 + 背景模糊 + 顶部一道高光，让 .bg 那层品牌色光斑和
+   凤凰 / ULC 水印透上来（背景是纯白的话，模糊是看不出效果的）。
+
+   ⚠️ 三条纪律，改这块之前先看：
+     1) 只玻璃化「表面」。正文和小字要读得清，所以透明度压在 0.55~0.74，
+        而且输入框、选中态、实心按钮一律保持接近实心（见下面各处例外）。
+     2) 不支持 backdrop-filter 的浏览器自动退化成接近实心的白（末尾 @supports）。
+     3) backdrop-filter 很吃 GPU：手机上把模糊半径调小（见响应式那一段），
+        别往列表的每一行上堆。
+   ============================================================ */
+:root {
+  /* 0.70 / 0.84 是反复截图调出来的平衡点：
+     再透一点，压在底下的水印就开始「吃」正文的对比度；
+     再实一点，模糊就看不出来了。 */
+  --glass-bg: rgba(255, 255, 255, 0.70);
+  --glass-bg-strong: rgba(255, 255, 255, 0.84);
+  --glass-line: rgba(255, 255, 255, 0.66);
+  --glass-edge: rgba(20, 76, 144, 0.14);
+  --glass-blur: 16px;
+  --glass-sat: 150%;
+  /* 高光在上一行、投影在下一行 —— 玻璃的「厚度感」就是这两条撑起来的 */
+  --glass-shadow: 0 1px 2px rgba(16, 16, 20, 0.04), 0 18px 40px -20px rgba(20, 76, 144, 0.26);
+  --glass-lip: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* ⚠️ .nd-card（国庆专区）**不在这张名单里** —— 它靠节日红那套配色说话，
+   套上半透明白会被冲成灰紫色。项目里凡是「靠底色表达语义」的块都不上玻璃。 */
+.glass,
+.card, .block, .stat, .chip, .hero-tab,
+.nav-drop-menu, .cal-cell, .cal-item {
+  background-color: var(--glass-bg);
+  /* 一层从左上到右下的白色渐变 —— 没有它，半透明就只是「变灰」，
+     有了它才有玻璃的厚度感 */
+  background-image: linear-gradient(140deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.06));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  border-color: var(--glass-line);
+  box-shadow: var(--glass-shadow), var(--glass-lip);
+}
+
+/* 页脚只换底子，别动它那条上边框（border-color 改了会让分割线消失） */
+footer {
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+}
+
+/* 装大段正文的表面要更实一档（0.55 → 0.76）：
+   玻璃越透，压在底下的水印和光斑越会「吃」掉文字的对比度。
+   卡片（.card）字少，透一点好看；正文块（.block）必须让字清晰。 */
+.block { background-color: var(--glass-bg-strong); }
+
+/* ⚠️ 数量可能很大的小元素只做半透明，不做背景模糊：
+   backdrop-filter 是每个元素一份 GPU 合成层 —— 日历一个月 42 格、标签几十个，
+   全上模糊会明显掉帧，而它们面积小、糊了也看不出来。 */
+.chip, .cal-cell, .act-item, .pos-row {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  background-color: var(--glass-bg-strong);
+  background-image: linear-gradient(140deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.04));
+  /* 没有模糊就没有「厚度」，纯白边框在浅底上几乎看不见 ——
+     这几类小元素改用带一点品牌色的描边（--glass-edge）来收边。 */
+  border-color: var(--glass-edge);
+}
+
+/* 例外：这些状态必须是实心的，半透明会让「选中 / 今天 / 主按钮」失去辨识度 */
+.cal-cell.is-sel { background: #144C90; border-color: #144C90; }
+.cal-cell.is-today { background: rgba(20, 76, 144, 0.10); border-color: #144C90; }
+.btn-primary { background: var(--brand); }
+
+/* 背景要「有东西可模糊」，毛玻璃才成立 —— 纯白底上做玻璃只会得到一块灰。
+   所以把三个品牌色光斑调浓、模糊半径收小（边界更清楚，透过卡片被糊开时对比才明显），
+   网格点也提一档。这是整站唯一一处「背景比原来抢眼」的地方，觉得过了就调这几个数。 */
+.bg-blob { filter: blur(78px); }
+.blob-a { background: radial-gradient(circle, rgba(20, 76, 144, 0.24), transparent 68%); }
+.blob-b { background: radial-gradient(circle, rgba(84, 180, 216, 0.26), transparent 68%); }
+.blob-c { background: radial-gradient(circle, rgba(44, 104, 172, 0.20), transparent 70%); }
+.bg-mesh {
+  background-image:
+    radial-gradient(1px 1px at 20px 20px, rgba(20, 76, 144, 0.14), transparent),
+    radial-gradient(1px 1px at 80px 80px, rgba(20, 76, 144, 0.07), transparent);
+}
+.bg-phoenix { opacity: 0.10; }
+.bg-ulc { opacity: 0.14; }
+
+/* 不支持 backdrop-filter（老 Safari / Firefox 关了硬件加速）时退回接近实心 ——
+   否则文字会直接压在水印和网格上，读不清。 */
+@supports not ((backdrop-filter: blur(2px)) or (-webkit-backdrop-filter: blur(2px))) {
+  .glass,
+  .card, .block, .stat, .chip, .hero-tab,
+  .nav-drop-menu, .cal-cell, .cal-item, .nd-card, footer {
+    background: rgba(255, 255, 255, 0.92);
+  }
+}
+
 /* ---------- Reveal on scroll ---------- */
 .reveal { transition: opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1), transform 0.9s cubic-bezier(0.16, 1, 0.3, 1); }
 html.js .reveal { opacity: 0; transform: translate3d(0, 26px, 0); }
@@ -1257,9 +1354,14 @@ html.js .reveal.is-in { opacity: 1; transform: none; }
 }
 .sg-modal-mask.is-on { opacity: 1; }
 .sg-modal {
-  width: 100%; max-width: 420px; background: #fff;
+  width: 100%; max-width: 420px;
+  /* 弹窗要读得清，所以用强一档的玻璃（0.76 而不是 0.55）+ 更实的模糊 */
+  background: var(--glass-bg-strong);
+  -webkit-backdrop-filter: blur(calc(var(--glass-blur) + 6px)) saturate(var(--glass-sat));
+  backdrop-filter: blur(calc(var(--glass-blur) + 6px)) saturate(var(--glass-sat));
+  border: 1px solid var(--glass-line);
   border-radius: 16px; padding: 1.4rem 1.5rem 1.2rem;
-  box-shadow: 0 24px 60px rgba(15, 23, 42, .22);
+  box-shadow: 0 24px 60px rgba(15, 23, 42, .22), var(--glass-lip);
   transform: translateY(10px) scale(.98); transition: transform .2s ease;
 }
 .sg-modal-mask.is-on .sg-modal { transform: none; }
@@ -1281,4 +1383,10 @@ html.js .reveal.is-in { opacity: 1; transform: none; }
 
 @media (max-width: 560px) {
   .cal-slot-time { flex-basis: 3.4rem; font-size: .72rem; padding-left: .6rem; }
+}
+
+/* backdrop-filter 很吃 GPU：手机上把模糊半径减半，
+   一屏十几个卡片叠模糊时滚动才不会掉帧（桌面看不出差别）。 */
+@media (max-width: 720px) {
+  :root { --glass-blur: 9px; --glass-sat: 130%; }
 }

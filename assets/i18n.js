@@ -13,7 +13,7 @@ window.SITE_I18N = {
     "nav.org": "义工组织",
     "nav.home": "回到主页",
     "nav.about": "关于我们",
-    "nav.programs": "服务项目",
+    "nav.programs": "项目类型",
     "nav.gallery": "志愿风采",
     "nav.team": "部门成员",
     "nav.journey": "发展历程",
@@ -59,7 +59,7 @@ window.SITE_I18N = {
     "hero.title": "同一个世界，<span class=\"grad\">同一种爱</span>。",
     "hero.sub": "GUIS 义工组织由学生自主运营。我们在校园与南沙社区之间，把想法变成有回响的行动 —— 一次探访、一场活动、一次成功举办的义卖。",
     "hero.cta1": "阅读社长欢迎信",
-    "hero.cta2": "浏览服务项目",
+    "hero.cta2": "浏览项目类型",
     "hero.scroll": "向下浏览",
 
     "stat1.label": "在册学生志愿者",
@@ -76,7 +76,7 @@ window.SITE_I18N = {
     "about.li2": "可持续而非一次性：能做成长期项目的事，就不只做一场活动。",
     "about.li3": "记录与公开：服务时长、物资与款项全部留痕，可查询、可追溯。",
 
-    "prog.eyebrow": "服务项目",
+    "prog.eyebrow": "项目类型",
     "prog.title": "六大服务板块",
     "prog.lede": "义工组织按学校的办公室来统筹活动——学生事务处(SAO)、教务处(AO)、升学指导办公室(CAS) 各自牵头，公益募捐与跨办公室的临时行动另作安排。每个板块都从一件小事开始，一年一年往下做。",
 
@@ -437,7 +437,7 @@ window.SITE_I18N = {
     "nav.org": "Volunteer Association",
     "nav.home": "Home",
     "nav.about": "About",
-    "nav.programs": "Programmes",
+    "nav.programs": "Programme types",
     "nav.gallery": "In Action",
     "nav.team": "Departments",
     "nav.journey": "Journey",
@@ -483,7 +483,7 @@ window.SITE_I18N = {
     "hero.title": "One Love, <span class=\"grad\">One Heart</span>.",
     "hero.sub": "GUIS Volunteer Association is run by students. Between our campus and the Nansha community, we turn good intentions into things that actually happen — a visit, an event, a charity sale that came together.",
     "hero.cta1": "Read the president's welcome",
-    "hero.cta2": "Explore our programmes",
+    "hero.cta2": "Explore programme types",
     "hero.scroll": "Scroll",
 
     "stat1.label": "Registered student volunteers",
@@ -500,7 +500,7 @@ window.SITE_I18N = {
     "about.li2": "Sustainable, not one-off: if something can become a long-term project, we don't stop at a single event.",
     "about.li3": "Record and publish: hours, materials and funds are all traceable and open to review.",
 
-    "prog.eyebrow": "Programmes",
+    "prog.eyebrow": "Programme types",
     "prog.title": "Six service areas",
     "prog.lede": "The organisation arranges activities by school office — Student Affairs (SAO), the Academic Office (AO) and College & Counselling Services (CAS) each lead their own, while fundraising and cross-office ad-hoc actions are organised separately. Every area started with something small and has kept going year after year.",
 
