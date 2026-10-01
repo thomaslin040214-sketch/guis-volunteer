@@ -15,6 +15,12 @@
 (function () {
   "use strict";
 
+  /* ⚠️ 整段只跑一次。真机上出现过「点一下提交 → 库里多了两条一模一样的申请」，
+     排查下来是同一个 click 被两套监听各接了一次（脚本被重复执行）。
+     这里在 window 上打桩，就算脚本真被引了两次，第二份也直接退出，不会再绑一遍。 */
+  if (window.__GUIS_EXTERNAL_BOOTED) return;
+  window.__GUIS_EXTERNAL_BOOTED = true;
+
   var C = window.GUISCloud;
   function $(id) { return document.getElementById(id); }
   function esc(s) {
@@ -194,14 +200,16 @@
 
     compress(file).then(function (dataUrl) {
       return C.llmModels().then(function (models) {
-        var model = pickVisionModel(models && models.data ? models.data : models);
-        if (!model) {
-          var e = new Error("NO_VISION_MODEL");
-          throw e;
-        }
-        var out = "";
-        var credit = null;
-        return C.llm.chat.completions.create({
+        /* models.list() 直接回数组（不是 { data } 包一层）—— 实测确认过 */
+        var list = Object.prototype.toString.call(models) === "[object Array]"
+          ? models : ((models && models.data) || []);
+        var model = pickVisionModel(list);
+        if (!model) throw new Error("NO_VISION_MODEL");
+
+        /* ⚠️ create() **不是** Promise —— 它返回一个带 [Symbol.asyncIterator] 的流对象。
+           第一次按 Promise 写（.then(...)）直接抛
+           "create(...).then is not a function"。只能手动 next() 往下读。 */
+        var stream = C.llm.chat.completions.create({
           model: model.id,
           messages: [
             { role: "system", content: OCR_SYSTEM },
@@ -215,20 +223,24 @@
           ],
           stream: true,
           temperature: 0.2
-        }).then(function (stream) {
-          /* SDK 的 create() 返回可异步迭代的流；把 delta 拼起来 */
-          var it = stream[Symbol.asyncIterator] ? stream[Symbol.asyncIterator]() : null;
-          function step(res) {
-            if (res.done) return out;
-            var ch = res.value;
-            var d = ch && ch.choices && ch.choices[0] && ch.choices[0].delta;
-            if (d && d.content) out += d.content;
-            if (ch && ch.usage && ch.usage.credit != null) credit = ch.usage.credit;
-            return it.next().then(step);
-          }
-          return (it ? it.next() : Promise.resolve({ done: true })).then(step)
-            .then(function () { return { text: out, credit: credit, model: model.id }; });
         });
+
+        var it = stream && stream[Symbol.asyncIterator] ? stream[Symbol.asyncIterator]() : null;
+        if (!it) throw new Error("STREAM_NOT_ITERABLE");
+
+        var acc = { text: "", credit: null, model: model.id };
+        function step() {
+          return it.next().then(function (r) {
+            if (r.done) return acc;
+            var ch = r.value;
+            var d = ch && ch.choices && ch.choices[0] && ch.choices[0].delta;
+            if (d && d.content) acc.text += d.content;
+            /* 最后一个 chunk 带上 usage，里面的 credit 就是这次调用实际花的积分 */
+            if (ch && ch.usage && ch.usage.credit != null) acc.credit = ch.usage.credit;
+            return step();
+          });
+        }
+        return step();
       });
     }).then(function (r) {
       busyOff(ocrBtn);
@@ -274,15 +286,24 @@
   if (ocrBtn) ocrBtn.addEventListener("click", runOcr);
 
   /* ================= 提交 ================= */
+  var submitting = false;   /* 手抖连点 / 网络慢时再点一下，都只会有一条申请 */
+
   function submit() {
+    if (submitting) return;
+    submitting = true;
     var org = ($("ext-org").value || "").trim();
     var title = ($("ext-title").value || "").trim();
     var hours = parseFloat($("ext-hours").value);
 
-    if (!file) { alertIn($("ext-alerts"), "error", "请先上传义工证明图片 —— 没有证明审核不了。"); return; }
-    if (!org) { alertIn($("ext-alerts"), "error", "请填写机构名称。"); return; }
-    if (!title) { alertIn($("ext-alerts"), "error", "请填写你做了什么服务。"); return; }
-    if (isNaN(hours) || hours <= 0) { alertIn($("ext-alerts"), "error", "服务小时数要填一个大于 0 的数字。"); return; }
+    /* 校验没过的分支也要把锁松开，不然改完再点就没反应了 */
+    function stop(msg) {
+      submitting = false;
+      alertIn($("ext-alerts"), "error", msg);
+    }
+    if (!file) { stop("请先上传义工证明图片 —— 没有证明审核不了。"); return; }
+    if (!org) { stop("请填写机构名称。"); return; }
+    if (!title) { stop("请填写你做了什么服务。"); return; }
+    if (isNaN(hours) || hours <= 0) { stop("服务小时数要填一个大于 0 的数字。"); return; }
 
     var btn = $("ext-submit");
     busyOn(btn, "正在提交…");
@@ -308,6 +329,7 @@
       return C.submitExternal(payload);
     }).then(function (res) {
       busyOff(btn);
+      submitting = false;
       if (res && res.error) throw new Error(res.error.message || "提交失败");
       alertIn($("ext-alerts"), "ok",
         "已提交，等着执委会审核。<b>审核通过后会并进你的累计义工小时</b>，驳回时也能看到原因。");
@@ -315,6 +337,7 @@
       loadMine();
     }).catch(function (err) {
       busyOff(btn);
+      submitting = false;
       alertIn($("ext-alerts"), "error", "提交失败：" + ((err && err.message) || "请稍后重试"));
     });
   }
