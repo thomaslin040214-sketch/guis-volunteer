@@ -694,7 +694,7 @@ section { position: relative; z-index: 2; padding: clamp(4rem, 9vw, 7rem) 0; scr
 
 /* 页头那个标签页：一条标题栏 + 内容区，内容区里跑打字机 */
 .hero-tab {
-  margin: 2.1rem auto 0; max-width: min(560px, 92vw); text-align: left;
+  margin: 1.55rem auto 0; max-width: min(560px, 92vw); text-align: left;
   border: 1px solid rgba(20, 76, 144, 0.16); border-radius: 0.85rem;
   background: rgba(255, 255, 255, 0.72);
   box-shadow: 0 14px 34px -22px rgba(15, 23, 42, 0.35);
@@ -702,7 +702,7 @@ section { position: relative; z-index: 2; padding: clamp(4rem, 9vw, 7rem) 0; scr
 }
 .hero-tab-bar {
   display: flex; align-items: center; gap: 0.6rem;
-  padding: 0.5rem 0.85rem;
+  padding: 0.4rem 0.8rem;
   background: rgba(20, 76, 144, 0.06);
   border-bottom: 1px solid rgba(20, 76, 144, 0.12);
 }
@@ -711,7 +711,39 @@ section { position: relative; z-index: 2; padding: clamp(4rem, 9vw, 7rem) 0; scr
 .hero-tab-dots i:first-child { background: rgba(209, 57, 47, 0.30); }
 .hero-tab-dots i:nth-child(2) { background: rgba(224, 161, 38, 0.40); }
 .hero-tab-label { font-size: 0.78rem; font-weight: 600; color: var(--brand); letter-spacing: 0.02em; }
-.hero-tab-body { padding: 0.9rem 1rem 1.05rem; }
+.hero-tab-body { padding: 0.72rem 0.9rem 0.85rem; }
+
+/* 页头要塞下「标志 + 徽章 + 标题 + 副标题 + 两个按钮 + 打字机标签页」。
+   1440×900 时打字机已经贴到视口底边 —— 笔记本的视口常常只有 700~800px 高，
+   它就被挤出首屏（用户的原话是「页头没显示出来」）。
+   所以按**视口高度**分两档把间距压紧：先动留白，再动字号。 */
+@media (max-height: 900px) {
+  .hero { padding-top: calc(var(--nav-h) + 1.6rem); padding-bottom: 2.6rem; }
+  .hero-brand .hero-logo { width: clamp(200px, 26vw, 285px); }
+  .hero-badge { margin-bottom: 1.15rem; }
+  .hero-title { margin-bottom: 1rem; }
+  .hero-actions { margin-top: 1.5rem; }
+  .hero-tab { margin-top: 1.3rem; }
+}
+/* 更矮的视口（笔记本 + 浏览器工具栏，或者还挂着国庆横幅）再收一档：
+   这一档要把打字机完整留在首屏里，所以留白和字号一起压。 */
+@media (max-height: 780px) {
+  .hero { padding-top: calc(var(--nav-h) + 0.6rem); padding-bottom: 1.3rem; }
+  .hero-title { font-size: clamp(1.7rem, 4vw, 2.7rem); margin-bottom: 0.7rem; }
+  .hero-sub { font-size: clamp(0.9rem, 1.4vw, 1rem); line-height: 1.5; }
+  .hero-brand .hero-logo { width: clamp(155px, 17vw, 195px); }
+  /* 徽章那句全称在页尾和导航 logo 里都有，矮屏上先把它让出来给打字机 */
+  .hero-badge { display: none; }
+  .hero-actions { margin-top: 1.1rem; }
+  .hero-tab { margin-top: 1rem; }
+  .btn { padding: 0.62rem 1.35rem; font-size: 0.86rem; }
+}
+/* ⚠️ hero 是 flex + justify-content:center，内容比视口矮时上下平分余量 ——
+   所以「省下 40px」只等于打字机上移 20px。窗口本来就矮（笔记本 + 工具栏 +
+   国庆横幅叠一起）时，只能真删东西：品牌标志在导航里已经有了，收掉。 */
+@media (max-height: 680px) {
+  .hero-brand { display: none; }
+}
 
 /* 打字机：grid 叠两层 —— 看不见的占位层撑住高度，看得见的那层才是动画。
    ⚠️ 少了占位层，手机上文字换行时打到第二行整块会往下跳。 */
@@ -979,6 +1011,11 @@ html.js .reveal.is-in { opacity: 1; transform: none; }
   .hero-brand .hero-logo { width: 168px; }
   .hero-brand .hero-div { height: 38px; }
   .hero-brand .hero-va { height: 42px; }
+  /* ⚠️ 标题最小字号是 2.3rem（36.8px），一行「同一个世界，同一种爱。」≈ 370px，
+     加上左右内边距就顶出 390px 的视口了 —— 整个页面会横向滚动，
+     右上角的「登录」先被推出屏幕。窄屏必须把字号压下来。 */
+  .hero-title { font-size: clamp(1.7rem, 8.4vw, 2.2rem); }
+  .hero-sub { font-size: 0.95rem; }
   .nav-logo .logo-img { height: 20px; }
   .nav-logo .logo-va { height: 18px; }
 }
