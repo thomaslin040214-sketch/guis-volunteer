@@ -687,21 +687,72 @@ section { position: relative; z-index: 2; padding: clamp(4rem, 9vw, 7rem) 0; scr
 .tl-title { font-size: 1.04rem; font-weight: 650; margin-top: 0.25rem; color: var(--text-main); letter-spacing: -0.015em; }
 .tl-desc { color: var(--text-muted); font-size: 0.89rem; line-height: 1.72; margin-top: 0.35rem; max-width: 62ch; }
 
-/* ---------- Contact ---------- */
-.contact-card { text-align: center; padding: clamp(2.25rem, 5vw, 3.4rem); display: flex; flex-direction: column; align-items: center; }
-.contact-card .section-title { margin-bottom: 0.75rem; }
-.contact-card .lede { margin-left: auto; margin-right: auto; }
-.contact-mail {
-  margin-top: 1.5rem; font-size: clamp(0.95rem, 2vw, 1.12rem); color: var(--brand);
-  border-bottom: 1px solid rgba(20, 76, 144, 0.3); padding-bottom: 0.15rem; font-weight: 600;
+/* ---------- Contact ----------
+   首页不再有 #contact 这一整块 section：
+   联系方式搬到了页尾的 .footer-contact（每页页脚的「联系我们」都指向那里），
+   打字机留在页头的 .hero-tab 标签页里。 */
+
+/* 页头那个标签页：一条标题栏 + 内容区，内容区里跑打字机 */
+.hero-tab {
+  margin: 2.1rem auto 0; max-width: min(560px, 92vw); text-align: left;
+  border: 1px solid rgba(20, 76, 144, 0.16); border-radius: 0.85rem;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 14px 34px -22px rgba(15, 23, 42, 0.35);
+  overflow: hidden;
+}
+.hero-tab-bar {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.5rem 0.85rem;
+  background: rgba(20, 76, 144, 0.06);
+  border-bottom: 1px solid rgba(20, 76, 144, 0.12);
+}
+.hero-tab-dots { display: inline-flex; gap: 0.3rem; }
+.hero-tab-dots i { width: 8px; height: 8px; border-radius: 50%; background: rgba(20, 76, 144, 0.22); }
+.hero-tab-dots i:first-child { background: rgba(209, 57, 47, 0.30); }
+.hero-tab-dots i:nth-child(2) { background: rgba(224, 161, 38, 0.40); }
+.hero-tab-label { font-size: 0.78rem; font-weight: 600; color: var(--brand); letter-spacing: 0.02em; }
+.hero-tab-body { padding: 0.9rem 1rem 1.05rem; }
+
+/* 打字机：grid 叠两层 —— 看不见的占位层撑住高度，看得见的那层才是动画。
+   ⚠️ 少了占位层，手机上文字换行时打到第二行整块会往下跳。 */
+.co-typer {
+  display: grid; margin: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "PingFang SC", "Microsoft YaHei", monospace;
+  font-size: clamp(0.84rem, 1.9vw, 0.96rem); line-height: 1.75; color: var(--brand);
+}
+.co-typer-ghost, .co-typer-live { grid-area: 1 / 1; }
+.co-typer-ghost { visibility: hidden; }
+.co-typer-caret {
+  display: inline-block; width: 0.52em; height: 1.05em; margin-left: 0.1em;
+  vertical-align: -0.18em; background: var(--brand);
+  animation: typer-blink 1.05s steps(1, end) infinite;
+}
+@keyframes typer-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .co-typer-caret { animation: none; opacity: 0.55; }
+}
+
+/* 页尾的联系区：占满一行，下面是标志 / 版权 / 链接那一行 */
+.footer-contact {
+  flex: 1 0 100%; display: flex; flex-direction: column; align-items: flex-start; gap: 0.5rem;
+  padding-bottom: 1.15rem; margin-bottom: 0.35rem;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.10);
+}
+.footer-contact-title {
+  font-size: 0.74rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--brand);
+}
+.footer-mail {
+  font-size: clamp(0.95rem, 2vw, 1.1rem); font-weight: 600; color: var(--brand);
+  border-bottom: 1px solid rgba(20, 76, 144, 0.3); padding-bottom: 0.12rem;
   transition: color 0.2s ease, border-color 0.2s ease;
 }
-.contact-mail:hover { color: var(--brand-deep); border-color: var(--brand-deep); }
-.contact-meta { margin-top: 1.25rem; color: var(--text-subtle); font-size: 0.84rem; }
-
-.contact-lines { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6rem 1.6rem; margin-top: 1.15rem; }
-.contact-line { font-size: 0.84rem; color: var(--text-muted); }
-.contact-line strong { color: var(--text-main); font-weight: 600; }
+.footer-mail:hover { color: var(--brand-deep); border-color: var(--brand-deep); }
+.footer-actions { display: flex; flex-wrap: wrap; gap: 0.55rem; margin-top: 0.25rem; }
+.footer-lines { display: flex; flex-wrap: wrap; gap: 0.35rem 1.4rem; margin-top: 0.25rem; }
+.footer-line { font-size: 0.82rem; color: var(--text-muted); }
+.footer-line strong { color: var(--text-main); font-weight: 600; }
+.footer-meta { color: var(--text-subtle); font-size: 0.8rem; }
 
 /* ---------- Lightbox ---------- */
 .lightbox {
@@ -996,6 +1047,10 @@ html.js .reveal.is-in { opacity: 1; transform: none; }
 }
 @media (max-width: 640px) {
   .footer-inner { flex-direction: column; gap: 0.85rem; text-align: center; }
+  /* 页尾联系区跟着一起居中（它自己是竖排 flex，只改父级不够） */
+  .footer-contact { align-items: center; text-align: center; }
+  .footer-actions, .footer-lines { justify-content: center; }
+  .hero-tab { margin-top: 1.6rem; }
   /* ⚠️ .footer-brand 自己也是横向 flex —— 只把 .footer-inner 改成竖排不够，
      标志右边那条「广州优联外籍人员子女学校-ULC英式国际部·义工组织」会被挤成
      五行的窄柱。这里让它换行：两个标志留在第 1 行，校名整条占第 2 行居中。 */

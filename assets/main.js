@@ -56,6 +56,12 @@
     });
 
     store(lang);
+
+    /* 语言换了：需要跟着重来的东西自己接住这个事件 ——
+       页头那个打字机就是靠它换语言后从头再打一遍（assets/typer.js）。 */
+    try {
+      document.dispatchEvent(new CustomEvent("guis:langchange", { detail: { lang: lang } }));
+    } catch (e) { /* 没有 CustomEvent 的老浏览器就算了 */ }
   }
 
   function initLang() {

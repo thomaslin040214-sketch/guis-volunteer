@@ -177,6 +177,9 @@ window.SITE_I18N = {
     "co.lede": "无论你是 GUIS 的同学、愿意合作的社区与机构，还是想参与服务的家长，都欢迎写信告诉我们。我们也接受社区服务需求提报。",
     "co.btn": "写信给义工组织",
     "co.alt": "查看活动报名",
+    /* 页头标签页：标题 + 里面那段会被「打出来又退格删掉」的字 */
+    "co.tabLabel": "有问题？问我们",
+    "co.typer": "有问题想问我们？请发邮件到volunteer@guiscn.com",
     "co.l1k": "例会时间", "co.l1v": "学期间每周三 16:30",
     "co.l2k": "招募窗口", "co.l2v": "每学期开学后两周",
     "co.l3k": "指导单位", "co.l3v": "GUIS-ULC 学生事务处",
@@ -599,6 +602,8 @@ window.SITE_I18N = {
     "co.lede": "Whether you're a GUIS student, a community group or charity looking to partner, or a parent wanting to get involved — write to us. We also take requests for community service needs.",
     "co.btn": "Email the organisation",
     "co.alt": "Browse open activities",
+    "co.tabLabel": "Got a question?",
+    "co.typer": "Got a question? Email us at volunteer@guiscn.com",
     "co.l1k": "Weekly meeting", "co.l1v": "Wednesdays 16:30 during term",
     "co.l2k": "Recruitment window", "co.l2v": "First two weeks of each semester",
     "co.l3k": "Supervised by", "co.l3v": "GUIS-ULC Office of the Student Affair",

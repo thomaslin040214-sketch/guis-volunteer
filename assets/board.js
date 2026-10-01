@@ -227,7 +227,7 @@
         '<div id="su-legend" class="tl-legend"></div>' +
         '<div class="board-actions">' +
           '<a href="signup.html" class="btn btn-primary" data-i18n="su.all">打开报名页</a>' +
-          '<a href="#contact" class="btn btn-secondary" data-i18n="su.ask">想参加别的板块？告诉我们</a>' +
+          '<a href="index.html#footer-contact" class="btn btn-secondary" data-i18n="su.ask">想参加别的板块？告诉我们</a>' +
         '</div>' +
       '</div>' +
     '</div>';
