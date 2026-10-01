@@ -407,6 +407,247 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
+  /* ================= 编号 / 类型 / 职位（2026-10-02 加） =================
+     这三块是同一天加的，都挂在这段里，改的时候记得一起看：
+       · 编号：code_prefix + code_no，拼起来显示（SAO + 26001 = SAO26001）
+       · 类型：kind = 'signup' 义工活动 / 'event' 校内日程（只进日历，不可报名）
+       · 职位：activity_positions 表，每个职位各自有名额与备选名额 */
+
+  /* 板块 → 编号前缀。只有三个办公室有固定代号；
+     「公益募捐」「未被框定」没有 —— 按用户要求留空格让他自己写，不写死。 */
+  var CAT_PREFIX = {
+    "学生事务处活动(SAO)": "SAO",
+    "教务处活动(AO)": "AO",
+    "升学指导办公室活动(CAS)": "CAS"
+  };
+  function catPrefix(cat) { return CAT_PREFIX[cat] || ""; }
+  /* 完整编号 = 前缀 + 流水号 */
+  function fullCode(a) {
+    return String((a && a.code_prefix) || "") + String((a && a.code_no) || "");
+  }
+  function pad3(n) { var s = String(n); while (s.length < 3) s = "0" + s; return s; }
+
+  /* 此刻 → datetime-local 要的字符串（本地时间）。
+     ⚠️ 别用 toISOString().slice(0,16)：那是 UTC，会比实际早 8 个小时。 */
+  function nowLocalInput() {
+    var d = new Date();
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) +
+      "T" + pad(d.getHours()) + ":" + pad(d.getMinutes());
+  }
+
+  /* 下一个流水号：两位年份 + 三位序号（26001、26002…）。
+     拿本地已加载的同前缀活动算最大值 +1，纯粹是省手 ——
+     真重号也炸不了：数据库上有 partial unique index，重复会报 23505，届时改一下就行。 */
+  function nextCodeSeq(prefix, rows) {
+    var yy = String(new Date().getFullYear()).slice(-2);
+    var max = 0;
+    (rows || []).forEach(function (a) {
+      if (!prefix) return;
+      if (String(a.code_prefix || "").toUpperCase() !== String(prefix).toUpperCase()) return;
+      var n = parseInt(String(a.code_no || "").replace(/[^0-9]/g, "").slice(-3), 10);
+      if (!isNaN(n) && n > max) max = n;
+    });
+    return yy + pad3(max + 1);
+  }
+
+  /* ---------------- 类型切换 ---------------- */
+  var currentKind = "signup";
+
+  function setKind(kind) {
+    currentKind = kind === "event" ? "event" : "signup";
+    var isEv = currentKind === "event";
+    Array.prototype.forEach.call(document.querySelectorAll("#a-kind-group .seg-btn"), function (b) {
+      b.classList.toggle("is-on", b.getAttribute("data-kind") === currentKind);
+    });
+    /* ⚠️ .field 自带 display:flex，会盖掉 hidden 的 UA 规则，
+       app.css 里补了 .field[hidden]{display:none} 才收得住 —— 别删那条。 */
+    Array.prototype.forEach.call(document.querySelectorAll(".only-signup"), function (el) {
+      el.hidden = isEv;
+    });
+    var t = $("act-form-title");
+    if (t) t.textContent = editingId ? ("编辑" + (isEv ? "校内日程" : "活动")) : (isEv ? "新建校内日程" : "新建义工活动");
+    var submit = $("act-submit");
+    if (submit && !editingId) submit.textContent = isEv ? "创建日程" : "创建活动";
+  }
+
+  var kindGroup = $("a-kind-group");
+  if (kindGroup) {
+    kindGroup.addEventListener("click", function (e) {
+      var b = e.target.closest ? e.target.closest(".seg-btn") : null;
+      if (!b) return;
+      setKind(b.getAttribute("data-kind"));
+    });
+  }
+
+  /* ---------------- 编号联动 ---------------- */
+  function suggestCode() {
+    var pref = $("a-code-prefix"), no = $("a-code-no");
+    if (!pref || !no) return;
+    no.value = nextCodeSeq(pref.value.trim(), myActivities);
+  }
+
+  (function wireCode() {
+    var catSel = $("a-category"), pref = $("a-code-prefix");
+    if (!catSel || !pref) return;
+    pref.addEventListener("input", function () {
+      /* 手写了就不让板块再覆盖；清空了就恢复自动填 */
+      pref.dataset.touched = pref.value.trim() ? "1" : "0";
+    });
+    catSel.addEventListener("change", function () {
+      if (pref.dataset.touched === "1") return;
+      pref.value = catPrefix(catSel.value);
+      if (!$("a-code-no").value) suggestCode();
+    });
+  })();
+
+  /* ---------------- 职位编辑 ----------------
+     界面上是一堆「所见即所得」的行，保存时统一交给 syncPositions() 落库。
+     ⚠️ 这里不做「先把旧的都删掉再整批重建」——那样报名记录里的 position_id
+        会被级联清成 null；只删真正被删掉的那几行。 */
+  var POS_DEFAULTS = { capacity: 10, waitlist_capacity: 2 };
+  var loadedPosIds = [];
+
+  function posHost() { return $("pos-rows"); }
+
+  function ensurePosHead(host) {
+    var h = host.querySelector(".pos-head");
+    if (!h) {
+      h = document.createElement("div");
+      h.className = "pos-row pos-head";
+      h.innerHTML = "<span>职位名称</span><span>名额</span><span>备选</span><span></span>";
+      host.insertBefore(h, host.firstChild);
+    }
+    h.hidden = host.querySelectorAll(".pos-row:not(.pos-head)").length === 0;
+  }
+
+  function addPositionRow(row) {
+    var host = posHost();
+    if (!host) return;
+    var el = document.createElement("div");
+    el.className = "pos-row";
+    el.setAttribute("data-id", (row && row.id) ? row.id : "");
+    el.innerHTML =
+      '<input class="pos-name" type="text" placeholder="例如：指引义工" value="' + esc((row && row.name) || "") + '" />' +
+      '<input class="pos-cap" type="number" min="0" value="' + ((row && row.capacity != null) ? row.capacity : POS_DEFAULTS.capacity) + '" title="这个职位的正取名额（0 = 不限）" />' +
+      '<input class="pos-wait" type="number" min="0" value="' + ((row && row.waitlist_capacity != null) ? row.waitlist_capacity : POS_DEFAULTS.waitlist_capacity) + '" title="这个职位的备选名额" />' +
+      '<button type="button" class="pos-del" title="删除这个职位" aria-label="删除职位">×</button>';
+    host.appendChild(el);
+    ensurePosHead(host);
+    updateCapacityHint();
+  }
+
+  function clearPositions() {
+    var host = posHost();
+    if (host) host.innerHTML = "";
+    loadedPosIds = [];
+    updateCapacityHint();
+  }
+
+  function readPositionRows() {
+    var host = posHost();
+    if (!host) return [];
+    return Array.prototype.map.call(host.querySelectorAll(".pos-row:not(.pos-head)"), function (el) {
+      var nameEl = el.querySelector(".pos-name");
+      var capEl = el.querySelector(".pos-cap");
+      var waitEl = el.querySelector(".pos-wait");
+      return {
+        id: el.getAttribute("data-id") || null,
+        name: (nameEl && nameEl.value ? nameEl.value : "").trim(),
+        capacity: Math.max(0, parseInt(capEl ? capEl.value : "", 10) || 0),
+        waitlist_capacity: Math.max(0, parseInt(waitEl ? waitEl.value : "", 10) || 0)
+      };
+    }).filter(function (r) { return !!r.name; });
+  }
+
+  /* 有了职位之后，活动的总名额由各职位自己管 —— 上面那两个字段就退场了。
+     不直接禁用整个 field（那样鼠标放上去会看不出为什么），只锁输入框 + 换提示。 */
+  function updateCapacityHint() {
+    var rows = readPositionRows();
+    var hint = $("a-capacity-hint"), cap = $("a-capacity"), wait = $("a-waitlist");
+    if (rows.length) {
+      var tc = 0, tw = 0;
+      rows.forEach(function (r) { tc += r.capacity; tw += r.waitlist_capacity; });
+      if (hint) hint.textContent = "已按职位分别计算：正取 " + tc + " 人 · 备选 " + tw + " 人（上面两个数字不再参与）";
+      if (cap) cap.disabled = true;
+      if (wait) wait.disabled = true;
+    } else {
+      if (hint) hint.textContent = "报满就自动停止报名 —— 没有截止时间这一项。";
+      if (cap) cap.disabled = false;
+      if (wait) wait.disabled = false;
+    }
+  }
+
+  /* 保存职位：删掉被移除的 → 更新留下的 → 插入新增的。
+     串行执行：这几张表一次就几行，串行也不慢，而且能在半路失败时留下干净的一半。 */
+  function syncPositions(activityId) {
+    var rows = readPositionRows();
+    var keep = {};
+    var updates = [], inserts = [];
+    rows.forEach(function (r, i) {
+      if (r.id) { keep[String(r.id)] = true; updates.push({ id: r.id, sort_order: i, r: r }); }
+      else inserts.push({ r: r, sort_order: i });
+    });
+    var del = loadedPosIds.filter(function (id) { return !keep[String(id)]; });
+
+    var chain = Promise.resolve();
+    del.forEach(function (id) {
+      chain = chain.then(function () { return C.deletePositions([id]); });
+    });
+    updates.forEach(function (u) {
+      chain = chain.then(function () {
+        return C.updatePosition(u.id, {
+          name: u.r.name, capacity: u.r.capacity,
+          waitlist_capacity: u.r.waitlist_capacity, sort_order: u.sort_order
+        });
+      });
+    });
+    if (inserts.length) {
+      chain = chain.then(function () {
+        return C.createPositions(inserts.map(function (x) {
+          return {
+            activity_id: activityId, name: x.r.name, sort_order: x.sort_order,
+            capacity: x.r.capacity, waitlist_capacity: x.r.waitlist_capacity
+          };
+        }));
+      });
+    }
+    return chain.then(function () { return rows.length; });
+  }
+
+  function loadPositions(activityId) {
+    clearPositions();
+    if (!activityId) return Promise.resolve();
+    /* 读失败不要把表单卡住：职位只是一个可选项 */
+    return C.listPositions(activityId).then(function (res) {
+      var rows = (res && res.data) || [];
+      loadedPosIds = rows.map(function (r) { return r.id; });
+      rows.forEach(addPositionRow);
+      updateCapacityHint();
+    }).catch(function () { loadedPosIds = []; });
+  }
+
+  var posAddBtn = $("pos-add");
+  if (posAddBtn) posAddBtn.addEventListener("click", function () { addPositionRow(null); });
+  var posHostEl = posHost();
+  if (posHostEl) {
+    posHostEl.addEventListener("click", function (e) {
+      var del = e.target.closest ? e.target.closest(".pos-del") : null;
+      if (del) {
+        var row = del.closest(".pos-row");
+        if (row) row.parentNode.removeChild(row);
+        ensurePosHead(posHostEl);
+        updateCapacityHint();
+        return;
+      }
+    });
+    /* 名额 / 职位名一改，下面的「已按职位分别计算」要跟着变。
+       ⚠️ pos-name 也要算进去：只有起了名字的那行才算一个职位，
+          光加一行不填名字，下面的名额提示不该先锁上。 */
+    posHostEl.addEventListener("input", function (e) {
+      if (e.target.classList && /pos-name|pos-cap|pos-wait/.test(e.target.className)) updateCapacityHint();
+    });
+  }
+
   /* ================= 活动管理 ================= */
   var editingId = null;
   var myActivities = [];
@@ -438,13 +679,15 @@ document.addEventListener("DOMContentLoaded", function () {
         /* 看板灯色：绿 = 报名中｜黄 = 已截止、待通知｜红 = 已邮件通知（人工标记） */
         var B = window.GUISBoard;
         var light = B ? B.lightOf(a) : "green";
-        var badgeCls = a.status === "open" ? "badge-open" : a.status === "closed" ? "badge-closed" : "badge-draft";
-        var badgeTxt = a.status === "open" ? "开放报名" : a.status === "closed" ? "停止报名" : "草稿";
+        var isEv = a.kind === "event";
+        var code = fullCode(a);
+        var badgeCls = isEv ? "badge-event" : a.status === "open" ? "badge-open" : a.status === "closed" ? "badge-closed" : "badge-draft";
+        var badgeTxt = isEv ? "校内日程" : (a.status === "open" ? "开放报名" : a.status === "closed" ? "停止报名" : "草稿");
         var when = a.starts_at ? fmtDT(a.starts_at) : "待定";
         var meta = [];
         if (a.category) meta.push(esc(a.category));
         if (a.location) meta.push(esc(a.location));
-        if (a.capacity) meta.push("计划 " + a.capacity + " 人" +
+        if (!isEv && a.capacity) meta.push("计划 " + a.capacity + " 人" +
           (a.waitlist_capacity ? " · 备选 " + a.waitlist_capacity + " 人" : ""));
         var B0 = window.GUISBoard;
         if (B0 && (a._taken || a._waiting)) {
@@ -453,10 +696,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
         html += '<div class="act-item">' +
           '<div class="act-main">' +
-            '<div class="act-title">' + esc(a.title) +
-              ' <span class="badge ' + badgeCls + '">' + badgeTxt + '</span>' +
-              (B ? ' ' + B.lampHTML(light, { short: true }) : '') +
-            '</div>' +
+            '<div class="act-title">' +
+              (code ? '<span class="act-code">' + esc(code) + "</span> " : "") +
+              esc(a.title) +
+              ' <span class="badge ' + badgeCls + '">' + badgeTxt + "</span>" +
+              /* 校内日程没有报名，不参与红黄绿的那套判定 */
+              (!isEv && B ? ' ' + B.lampHTML(light, { short: true }) : '') +
+            "</div>" +
             (a.summary ? '<div class="act-summary">' + esc(a.summary) + '</div>' : '') +
             '<div class="act-meta"><span>' + when + '</span>' +
               meta.map(function (m) { return '<span>' + m + '</span>'; }).join("") +
@@ -465,13 +711,17 @@ document.addEventListener("DOMContentLoaded", function () {
           '<div class="act-side">' +
             '<div class="row-actions">' +
               '<button type="button" class="tbl-btn" data-edit="' + a.id + '">编辑</button>' +
-              '<button type="button" class="tbl-btn" data-toggle="' + a.id + '">' + (a.status === "open" ? "停止报名" : "开放报名") + '</button>' +
-              /* 红灯由后台人工点出来；再点一次撤销，回到按截止时间自动判定的绿 / 黄 */
-              '<button type="button" class="tbl-btn" data-notify="' + a.id + '">' +
-                (light === "red" ? "撤销邮件通知" : "标记已邮件通知") + '</button>' +
+              /* 校内日程没有报名，这两个开关对它没有意义 —— 直接不显示 */
+              (isEv ? '' :
+                '<button type="button" class="tbl-btn" data-toggle="' + a.id + '">' + (a.status === "open" ? "停止报名" : "开放报名") + '</button>' +
+                /* 红灯由后台人工点出来；再点一次撤销，回到按截止时间自动判定的绿 / 黄 */
+                '<button type="button" class="tbl-btn" data-notify="' + a.id + '">' +
+                  (light === "red" ? "撤销邮件通知" : "标记已邮件通知") + '</button>') +
               '<button type="button" class="tbl-btn danger" data-del="' + a.id + '">删除</button>' +
             '</div>' +
-            '<a class="tbl-btn" style="text-align:center;" href="signup.html?activity=' + a.id + '">查看报名页</a>' +
+            /* 校内日程不能报名，那个按钮换成跳日历 */
+            (isEv ? '<span class="act-evnote">只显示在日历里</span>'
+                  : '<a class="tbl-btn" style="text-align:center;" href="signup.html?activity=' + a.id + '">查看报名页</a>') +
           '</div>' +
         '</div>';
       });
@@ -513,12 +763,18 @@ document.addEventListener("DOMContentLoaded", function () {
       $("a-opens").value = toLocalInput(a.signup_opens_at);
       $("a-capacity").value = a.capacity || 30;
       $("a-waitlist").value = (a.waitlist_capacity == null ? 5 : a.waitlist_capacity);
-      $("a-contact").value = a.contact || "";
+      $("a-code-prefix").value = a.code_prefix || catPrefix($("a-category").value);
+      $("a-code-no").value = a.code_no || "";
+      $("a-code-prefix").dataset.touched =
+        (a.code_prefix && catPrefix($("a-category").value) !== a.code_prefix) ? "1" : "0";
+      $("a-show-pos").checked = a.show_positions !== false;
+      setKind(a.kind === "event" ? "event" : "signup");
       $("a-status").value = a.status || "open";
       $("a-notes").value = a.notes || "";
       $("a-manager").value = a.manager_email || "";
       $("a-hours").value = (a.hours == null ? 2 : a.hours);
       clear($("act-alerts"));
+      loadPositions(a.id);
       $("act-form").scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
@@ -583,8 +839,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function resetForm() {
     editingId = null;
-    $("act-form-title").textContent = "新建义工活动";
-    $("act-submit").textContent = "创建活动";
+    setKind("signup");
     $("act-reset").hidden = true;
     $("act-form").reset();
     $("a-capacity").value = 30;
@@ -592,15 +847,29 @@ document.addEventListener("DOMContentLoaded", function () {
     $("a-status").value = "open";
     $("a-manager").value = "";
     $("a-hours").value = 2;
+    $("a-show-pos").checked = true;
+    $("a-code-prefix").value = catPrefix($("a-category").value);
+    $("a-code-prefix").dataset.touched = "0";
+    suggestCode();
+    /* 报名开始时间默认就是「正在新建的这个时刻」—— 以前留空要解释半天，
+       默认填好之后，真想立刻开放的人什么都不用改。 */
+    $("a-opens").value = nowLocalInput();
+    clearPositions();
     clear($("act-alerts"));
   }
   $("act-reset").addEventListener("click", resetForm);
+  /* 开好表单的默认值：报名开始时间 = 此刻、编号 = 该前缀的下一个流水号。
+     不先跑一次的话，新建活动的第一眼是空的，得手填。 */
+  resetForm();
 
   $("act-form").addEventListener("submit", function (e) {
     e.preventDefault();
     var title = $("a-title").value.trim();
     if (!title) { alertIn($("act-alerts"), "error", "活动名称是必填的。"); return; }
 
+    /* ⚠️ a-contact（负责人联系方式）2026-10-02 起整段删掉了：表单里没有这个输入框了，
+       所以 payload 里也别再写 contact —— 写了会把旧数据覆盖成空。 */
+    var isEvent = currentKind === "event";
     var payload = {
       title: title,
       summary: $("a-summary").value.trim() || null,
@@ -608,17 +877,22 @@ document.addEventListener("DOMContentLoaded", function () {
       location: $("a-location").value.trim() || null,
       starts_at: fromLocalInput($("a-starts").value),
       ends_at: fromLocalInput($("a-ends").value),
-      signup_opens_at: fromLocalInput($("a-opens").value),
-      capacity: parseInt($("a-capacity").value, 10) || null,
-      /* 名额满了还能收多少人进 waiting list；0 = 满了直接停 */
-      waitlist_capacity: Math.max(0, parseInt($("a-waitlist").value, 10) || 0),
-      contact: $("a-contact").value.trim() || null,
       notes: $("a-notes").value.trim() || null,
-      status: $("a-status").value,
-      manager_email: $("a-manager").value || null,
-      hours: parseFloat($("a-hours").value)
+      hours: parseFloat($("a-hours").value),
+      code_prefix: $("a-code-prefix").value.trim().toUpperCase() || null,
+      code_no: $("a-code-no").value.trim() || null,
+      kind: isEvent ? "event" : "signup",
+      show_positions: $("a-show-pos").checked
     };
     if (isNaN(payload.hours)) payload.hours = 2;
+    if (!isEvent) {
+      payload.signup_opens_at = fromLocalInput($("a-opens").value);
+      payload.capacity = parseInt($("a-capacity").value, 10) || null;
+      /* 名额满了还能收多少人进 waiting list；0 = 满了直接停 */
+      payload.waitlist_capacity = Math.max(0, parseInt($("a-waitlist").value, 10) || 0);
+      payload.status = $("a-status").value;
+      payload.manager_email = $("a-manager").value || null;
+    }
 
     var btn = $("act-submit");
     btn.disabled = true;
@@ -629,12 +903,23 @@ document.addEventListener("DOMContentLoaded", function () {
 
     req.then(function (res) {
       var out = C.unwrap(res, "保存失败") || [];
+      if (!out.length) {
+        btn.disabled = false; btn.textContent = label;
+        alertIn($("act-alerts"), "error", "没有改动 —— 服务端没有写入任何一行。只有执委会能新建或修改活动，请到「人员管理」确认你的角色。");
+        return null;
+      }
+      var savedId = editingId || out[0].id;
+      /* 职位要在活动之后写（要用到 activity_id）；校内日程没有职位 */
+      return (isEvent ? Promise.resolve(0) : syncPositions(savedId)).then(function () { return savedId; });
+    }).then(function (savedId) {
+      if (savedId == null) return;
       btn.disabled = false; btn.textContent = label;
-      if (!out.length) { alertIn($("act-alerts"), "error", "没有改动 —— 服务端没有写入任何一行。只有执委会能新建或修改活动，请到「人员管理」确认你的角色。"); return; }
-      alertIn($("act-alerts"), "ok", editingId ? "已保存修改。" : "活动已创建，学生现在可以在报名页看到它。");
+      alertIn($("act-alerts"), "ok",
+        editingId ? "已保存修改。" : (isEvent ? "校内日程已创建，会显示在日历里。" : "活动已创建，学生现在可以在报名页看到它。"));
       resetForm();
       loadActivities();
       loadActivityOptions();
+      loadAdminCalendar(true);
     }).catch(function (err) {
       btn.disabled = false; btn.textContent = label;
       alertIn($("act-alerts"), "error", failMsg(err, "保存失败"));
@@ -687,8 +972,7 @@ document.addEventListener("DOMContentLoaded", function () {
       host.innerHTML =
         '<div class="cal-day-head">' + esc(ymd) + "</div>" +
         '<div class="empty">这一天没有活动。</div>' +
-        '<button type="button" class="btn btn-secondary" id="cal-admin-new" data-day="' + esc(ymd) + '">' +
-          "在这一天新建活动</button>";
+        newDayButtons(ymd);
       wireAdminDayButtons();
       return;
     }
@@ -697,27 +981,43 @@ document.addEventListener("DOMContentLoaded", function () {
       '<div class="cal-day-head">' + esc(ymd) + " · " + acts.length + " 个活动</div>" +
       timeline +
       '<div class="cal-day-list">' + acts.map(function (a) {
+        var ev = a.kind === "event";
+        var codeStr = fullCode(a);
         return '<div class="cal-item" data-id="' + a.id + '">' +
           '<div class="cal-item-top">' +
+            (codeStr ? '<span class="act-code">' + esc(codeStr) + "</span> " : "") +
             '<span class="cal-item-title">' + esc(a.title || "") + "</span>" +
-            (window.GUISBoard ? window.GUISBoard.lampOf(a) : "") +
+            (ev ? '<span class="badge badge-event">校内日程</span>'
+                : (window.GUISBoard ? window.GUISBoard.lampOf(a) : "")) +
           "</div>" +
           '<div class="cal-edit-grid">' +
             "<label>活动开始<input type=\"datetime-local\" data-f=\"starts_at\" value=\"" + esc(toLocalInput(a.starts_at)) + "\" /></label>" +
             "<label>活动结束<input type=\"datetime-local\" data-f=\"ends_at\" value=\"" + esc(toLocalInput(a.ends_at)) + "\" /></label>" +
+            /* 校内日程没有报名，这三个字段留着只会让人以为填了会生效 */
+            (ev ? "" :
             "<label>报名开始<input type=\"datetime-local\" data-f=\"signup_opens_at\" value=\"" + esc(toLocalInput(a.signup_opens_at)) + "\" /></label>" +
             "<label>名额<input type=\"number\" min=\"1\" data-f=\"capacity\" value=\"" + esc(String(a.capacity || 30)) + "\" /></label>" +
-            "<label>备选名额<input type=\"number\" min=\"0\" data-f=\"waitlist_capacity\" value=\"" + esc(String(a.waitlist_capacity == null ? 5 : a.waitlist_capacity)) + "\" /></label>" +
+            "<label>备选名额<input type=\"number\" min=\"0\" data-f=\"waitlist_capacity\" value=\"" + esc(String(a.waitlist_capacity == null ? 5 : a.waitlist_capacity)) + "\" /></label>") +
           "</div>" +
           '<div class="cal-item-actions">' +
             '<button type="button" class="btn btn-primary btn-sm" data-save="' + a.id + '">保存</button>' +
           "</div>" +
         "</div>";
       }).join("") + "</div>" +
-      '<button type="button" class="btn btn-secondary" id="cal-admin-new" data-day="' + esc(ymd) + '">' +
-        "在这一天新建活动</button>";
+      newDayButtons(ymd);
 
     wireAdminDayButtons();
+  }
+
+  /* 日历底下那排「在这一天新建 …」—— 活动和校内日程两个入口，
+     ⚠️ id 只能是页面上唯一的元素，所以按钮改用 class + data-day 定位。 */
+  function newDayButtons(ymd) {
+    return '<div class="cal-new-row">' +
+      '<button type="button" class="btn btn-secondary btn-sm cal-admin-new" data-day="' + esc(ymd) + '" data-kind="signup">' +
+        "在这一天新建活动</button>" +
+      '<button type="button" class="btn btn-secondary btn-sm cal-admin-new" data-day="' + esc(ymd) + '" data-kind="event">' +
+        "在这一天新建校内日程</button>" +
+      "</div>";
   }
 
   function wireAdminDayButtons() {
@@ -729,8 +1029,11 @@ document.addEventListener("DOMContentLoaded", function () {
       var saveBtn = e.target.closest ? e.target.closest("[data-save]") : null;
       if (saveBtn) { saveActivityDates(saveBtn); return; }
 
-      var newBtn = e.target.closest ? e.target.closest("#cal-admin-new") : null;
-      if (newBtn) { newActivityOn(newBtn.getAttribute("data-day")); return; }
+      var newBtn = e.target.closest ? e.target.closest(".cal-admin-new") : null;
+      if (newBtn) {
+        newActivityOn(newBtn.getAttribute("data-day"), newBtn.getAttribute("data-kind"));
+        return;
+      }
     });
   }
 
@@ -773,17 +1076,22 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  /* 在选中的这天新建活动：把开始时间填进「活动管理」的表单并切过去 */
-  function newActivityOn(ymd) {
+  /* 在选中的这天新建东西：把开始时间填进「活动管理」的表单并切过去。
+     kind = 'signup' 义工活动 / 'event' 校内日程 —— 日历里两种都能建，
+     这也是「日程不一定需要报名」这条需求的入口。 */
+  function newActivityOn(ymd, kind) {
     if (!isOwner()) return;
+    resetForm();
     showTab("acts");
     Array.prototype.forEach.call(document.querySelectorAll(".tab-btn"), function (x) {
       x.classList.toggle("is-on", x.getAttribute("data-tab") === "acts");
     });
+    setKind(kind === "event" ? "event" : "signup");
     var starts = $("a-starts");
     if (starts) {
       starts.value = ymd ? ymd + "T09:00" : "";
       var ends = $("a-ends");
+      /* 校内日程通常是一整段活动（早会 / 讲座），给个两小时的默认区间 */
       if (ends) ends.value = ymd ? ymd + "T11:00" : "";
       var formPanel = $("act-form-panel");
       if (formPanel) formPanel.scrollIntoView({ behavior: "smooth", block: "start" });

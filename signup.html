@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-ver="20261001e" data-page-title="doc.signup.title">
+<html lang="zh-CN" data-ver="20261002a" data-page-title="doc.signup.title">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,7 +10,7 @@
    于是点站内链接（全是裸路径）进去时整页退回旧设计。
    这里比对 <html data-ver>：不是当前版本就带查询串重拉一次（查询串必定回源）。 */
 (function () {
-  var VER = "20261001e";
+  var VER = "20261002a";
   try {
     var el = document.documentElement;
     var healed = /[?&]_v=/.test(location.search);
@@ -48,8 +48,8 @@
 <title>活动报名 | GUIS 义工组织</title>
 <meta name="description" content="GUIS 义工组织义工活动报名 —— 广州优联国际学校学生志愿服务组织。" />
 <meta name="theme-color" content="#FFFFFF" />
-<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261001e" />
-<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261001e" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261002a" />
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261002a" />
 <!-- 品牌标志兜底样式（内联，随 HTML 一起下发）。
      即使 assets/site.css 被浏览器缓存成旧版本，标志也不会按图片原始尺寸撑破布局。
      这里只设尺寸上限（max-*），正常加载 site.css 时这些上限都不会生效。 -->
@@ -73,8 +73,8 @@
   .hero-brand .hero-va{max-height:40px}
 }
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20261001e" />
-<link rel="stylesheet" href="assets/app.css?v=20261001e" />
+<link rel="stylesheet" href="assets/site.css?v=20261002a" />
+<link rel="stylesheet" href="assets/app.css?v=20261002a" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
@@ -212,6 +212,15 @@
                 <input id="f-student-id" name="student_id" type="text" />
               </div>
 
+              <!-- 职位选择：由后台「职位与名额」决定有没有、有几个。
+                   一个职位的活动自动选中（不显示），多个职位才让学生挑。
+                   容器默认 hidden，renderPositions() 按需打开。 -->
+              <div class="field span-2" id="f-pos-field" hidden>
+                <label data-i18n="f.pos">选择职位</label>
+                <div id="f-pos-list" class="pos-pick"></div>
+                <span class="hint" data-i18n="f.posHint">每个职位的名额单独算；选了哪个职位，就按哪个职位排队。</span>
+              </div>
+
               <div class="field span-2">
                 <label for="f-slot" data-i18n="f.slot">希望参与的岗位或时段</label>
                 <input id="f-slot" name="slot" type="text" />
@@ -292,16 +301,16 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
-<script src="assets/cloud-config.js?v=20261001e"></script>
-<script src="assets/cloud.js?v=20261001e"></script>
-<script src="assets/i18n.js?v=20261001e"></script>
-<script src="assets/board.js?v=20261001e"></script>
-<script src="assets/calendar.js?v=20261001e"></script>
-<script src="assets/nav.js?v=20261001e"></script>
-<script src="assets/navfit.js?v=20261001e"></script>
-<script src="assets/session.js?v=20261001e"></script>
-<script src="assets/main.js?v=20261001e"></script>
-<script src="assets/queue.js?v=20261001e"></script>
+<script src="assets/cloud-config.js?v=20261002a"></script>
+<script src="assets/cloud.js?v=20261002a"></script>
+<script src="assets/i18n.js?v=20261002a"></script>
+<script src="assets/board.js?v=20261002a"></script>
+<script src="assets/calendar.js?v=20261002a"></script>
+<script src="assets/nav.js?v=20261002a"></script>
+<script src="assets/navfit.js?v=20261002a"></script>
+<script src="assets/session.js?v=20261002a"></script>
+<script src="assets/main.js?v=20261002a"></script>
+<script src="assets/queue.js?v=20261002a"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   "use strict";
@@ -315,6 +324,49 @@ document.addEventListener("DOMContentLoaded", function () {
 
   var activities = [];
   var selected = null;
+
+  /* ---------- 职位（按活动分组） ----------
+     后台可以给一个活动拆若干个职位（如家长会的「指引义工」「翻译义工」），
+     每个职位各有名额与备选名额。整页只需要拉一次：一次 listPositions() +
+     一次 positionCounts()，之后按 activity_id 分组用。
+     ⚠️ count 走 position_counts()（SECURITY DEFINER）—— 匿名读不到 registrations，
+        只剩这条 SECURITY DEFINER 的路能告诉我们每个职位还剩几个位子。 */
+  var posByAct = {};
+  var posCounts = {};
+
+  function loadPositions() {
+    posByAct = {}; posCounts = {};
+    return C.listPositions().then(function (res) {
+      var rows = (res && res.data) || [];
+      rows.forEach(function (p) {
+        var k = String(p.activity_id);
+        (posByAct[k] = posByAct[k] || []).push(p);
+      });
+      return C.positionCounts();
+    }).then(function (res) {
+      var rows = (res && res.data) || [];
+      rows.forEach(function (p) { posCounts[String(p.position_id)] = p; });
+    }).catch(function () {
+      /* 职位读不到不影响报名本身：降级成「不分职位」的老样子 */
+      posByAct = {}; posCounts = {};
+    });
+  }
+
+  function positionsOf(a) { return (a && posByAct[String(a.id)]) || []; }
+  function takenOf(p) {
+    var c = posCounts[String(p.id)];
+    return c ? Number(c.taken || 0) : 0;
+  }
+  function waitingOf(p) {
+    var c = posCounts[String(p.id)];
+    return c ? Number(c.waiting || 0) : 0;
+  }
+  /* 还剩几个位子：capacity <= 0 表示不限 */
+  function leftOf(p) {
+    if (!p.capacity || p.capacity <= 0) return Infinity;
+    return Math.max(0, p.capacity - takenOf(p));
+  }
+  function posFull(p) { return leftOf(p) <= 0; }
 
   /* ---------- 工具 ---------- */
   function t(key, fallback) {
@@ -347,7 +399,19 @@ document.addEventListener("DOMContentLoaded", function () {
     var bits = [];
     if (a.starts_at) bits.push("🕘 " + fmtDateTime(a.starts_at));
     if (a.location) bits.push("📍 " + a.location);
-    if (a.capacity) {
+    /* 有职位就按职位报余位 —— 这时 activities.capacity 已经不参与计算了，
+       再显示「已报名 x / 30 人」只会让人以为还有位子。 */
+    var ps = positionsOf(a);
+    if (ps.length) {
+      ps.forEach(function (p) {
+        var left = leftOf(p);
+        bits.push("• " + p.name + " " +
+          (posFull(p)
+            ? (p.waitlist_capacity > 0 && waitingOf(p) < p.waitlist_capacity
+                ? t("sg.posWait", "满 · 可排备选") : t("sg.posFull", "已满"))
+            : t("sg.posLeft", "剩 {n}").replace("{n}", isFinite(left) ? String(left) : t("sg.noLimit", "充足"))));
+      });
+    } else if (a.capacity) {
       bits.push("👥 " + t("sg.taken", "已报名 {a} / {b} 人")
         .replace("{a}", String(a._taken || 0)).replace("{b}", String(a.capacity)));
     }
@@ -420,7 +484,7 @@ document.addEventListener("DOMContentLoaded", function () {
       title: t("sg.loading", "正在读取活动列表…"),
       busyTitle: t("q.busy", "正在为你接通…"),
       sub: t("q.sub", "访问的人有点多，我们正在排队处理，稍等一下就好。"),
-      doneText: t("q.done", "好了，进去了"),
+      doneText: t("q.done", "请稍等，即将进入站点"),
       cancelText: t("q.cancel", "稍后再来"),
       retryText: retryLine
     }).then(function (res) {
@@ -429,7 +493,10 @@ document.addEventListener("DOMContentLoaded", function () {
       return (window.GUISBoard && window.GUISBoard.withCounts
         ? window.GUISBoard.withCounts(C, data) : Promise.resolve(data));
     }).then(function (data) {
-      activities = data || [];
+      /* 职位要跟活动同时就位：列表上的余位、表单里的职位选项都靠它 */
+      return loadPositions().then(function () { return data || []; });
+    }).then(function (data) {
+      activities = data;
       pickLoading.hidden = true;
 
       if (!activities.length) { pickEmpty.hidden = false; return; }
@@ -446,7 +513,15 @@ document.addEventListener("DOMContentLoaded", function () {
         left.style.minWidth = "0";
         var title = document.createElement("div");
         title.className = "t";
-        title.textContent = a.title;
+        /* 活动编号（SAO26001）：后台维护用得上，学生也能凭它对上邮件里的通知 */
+        if (a.code_prefix || a.code_no) {
+          var codeChip = document.createElement("span");
+          codeChip.className = "act-code";
+          codeChip.textContent = String(a.code_prefix || "") + String(a.code_no || "");
+          title.appendChild(codeChip);
+          title.appendChild(document.createTextNode(" "));
+        }
+        title.appendChild(document.createTextNode(a.title));
         var meta = document.createElement("div");
         meta.className = "d";
         meta.textContent = metaLine(a).join(" · ");
@@ -538,7 +613,77 @@ document.addEventListener("DOMContentLoaded", function () {
     formName.textContent = a.title + (a.starts_at ? " · " + fmtDateTime(a.starts_at) : "");
     formPanel.hidden = false;
     clearAlert();
+    renderPositions(a);
     formPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  /* ---------- 表单里的职位选项 ----------
+     规则（后台那个「显示职位选项」开关就是为它准备的）：
+       · 没有职位        → 整块隐藏，报名不带 position_id
+       · 只有一个职位    → 自动选中，整块隐藏（学生没必要点一下）
+       · 两个以上        → 列出来让学生选；show_positions=false 时也还是列出
+                           （多于一个职位却不给选，等于随机分配，不合理）
+     名额按职位各自算，这里直接把「剩几个」写出来，选满的那个会禁用。 */
+  var posField = $("f-pos-field"), posList = $("f-pos-list");
+  var chosenPos = null;
+
+  function renderPositions(a) {
+    chosenPos = null;
+    if (!posField || !posList) return;
+    posList.innerHTML = "";
+    posField.hidden = true;
+
+    var ps = positionsOf(a);
+    if (!ps.length) return;
+
+    if (ps.length === 1) { chosenPos = ps[0]; return; }
+
+    posField.hidden = false;
+    var pickedFirst = false;
+    ps.forEach(function (p) {
+      var row = document.createElement("label");
+      row.className = "pos-pick-row" + (posFull(p) ? " is-full" : "");
+      row.setAttribute("for", "pos-" + p.id);
+
+      var radio = document.createElement("input");
+      radio.type = "radio";
+      radio.name = "position";
+      radio.id = "pos-" + p.id;
+      radio.value = p.id;
+      radio.disabled = posFull(p);
+
+      var body = document.createElement("span");
+      body.className = "pos-pick-body";
+      var nm = document.createElement("span");
+      nm.className = "pos-pick-name";
+      nm.textContent = p.name;
+      var cnt = document.createElement("span");
+      cnt.className = "pos-pick-cnt";
+      if (posFull(p)) {
+        cnt.textContent = (p.waitlist_capacity > 0 && waitingOf(p) < p.waitlist_capacity)
+          ? t("sg.posWait", "满 · 可排备选") : t("sg.posFull", "已满");
+      } else {
+        var n = leftOf(p);
+        cnt.textContent = t("sg.posLeft", "剩 {n}").replace("{n}", isFinite(n) ? String(n) : t("sg.noLimit", "充足"));
+      }
+      body.appendChild(nm);
+      body.appendChild(cnt);
+
+      row.appendChild(radio);
+      row.appendChild(body);
+
+      /* :has() 在旧一点的浏览器里不认，所以选中态自己挂一个 class 兜底 */
+      radio.addEventListener("change", function () {
+        chosenPos = p;
+        Array.prototype.forEach.call(posList.querySelectorAll(".pos-pick-row"), function (el) {
+          el.classList.remove("is-on");
+        });
+        row.classList.add("is-on");
+      });
+      posList.appendChild(row);
+      /* 默认落在第一个还有位子的职位上（都满了就一个都不选，由提交时提示） */
+      if (!pickedFirst && !radio.disabled) { radio.checked = true; chosenPos = p; pickedFirst = true; row.classList.add("is-on"); }
+    });
   }
 
   $("change-activity").addEventListener("click", function () {
@@ -551,6 +696,10 @@ document.addEventListener("DOMContentLoaded", function () {
   $("signup-form").addEventListener("submit", function (e) {
     e.preventDefault();
     clearAlert();
+
+    /* ⚠️ btn 以前忘了定义，下面 goSend / btn.disabled 全是 ReferenceError ——
+       等于提交按钮按了什么都没发生（还不报错到控制台以外的地方）。 */
+    var btn = $("submit-btn");
 
     if (!selected) {
       showAlert("error", t("msg.pickFirst", "请先选择一个活动"));
@@ -575,9 +724,20 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
-    /* 名额满了但备选还有位子：先弹窗说清楚，学生自己决定要不要继续 */
+    /* 两个以上职位时必须选一个（一个职位的已经在 renderPositions 里自动选好了） */
+    var ps = positionsOf(selected);
+    if (ps.length > 1 && !chosenPos) {
+      showAlert("warn", ps.every(posFull)
+        ? t("sg.posAllFull", "这个活动的每个职位都报满了，暂时无法报名。")
+        : t("msg.pickPos", "请先选择一个职位。"));
+      return;
+    }
+
+    /* 名额满了但备选还有位子：先弹窗说清楚，学生自己决定要不要继续。
+       ⚠️ 有职位时跳过这个弹窗 —— 名额是职位各自的，这里的活动级数字已经不作数了，
+          报出来的名次也是错的；交由 register_signup() 回来说明（下面按 waitlisted 展示）。 */
     var goSend = function () { sendSignup(btn, name, email); };
-    if (reasonOf(selected) === "wait") {
+    if (ps.length === 0 && reasonOf(selected) === "wait") {
       btn.disabled = true;
       dialog({
         title: t("sg.waitTitle", "你会进入 waiting list 备选名单"),
@@ -611,7 +771,10 @@ document.addEventListener("DOMContentLoaded", function () {
       student_id: $("f-student-id").value.trim() || null,
       slot: $("f-slot").value.trim() || null,
       experience: $("f-experience").value.trim() || null,
-      note: $("f-note").value.trim() || null
+      note: $("f-note").value.trim() || null,
+      /* 服务器会拿着 position_id 去查这个职位自己的名额 / 备选名额。
+         没设职位的活动就是 null，走 activities.capacity 那条老路。 */
+      position_id: chosenPos ? chosenPos.id : null
     };
 
     /* 提交走排队组件：请求慢或拥塞时自动排队重试；重复报名 / 无权限这类
@@ -620,7 +783,7 @@ document.addEventListener("DOMContentLoaded", function () {
       title: t("f.submitting", "提交中…"),
       busyTitle: t("q.busy", "正在为你接通…"),
       sub: t("q.sub", "报名的人有点多，我们正在排队提交，不要关闭页面。"),
-      doneText: t("q.done", "好了，进去了"),
+      doneText: t("q.doneSubmit", "报名已提交"),
       cancelText: t("q.cancel", "稍后再来"),
       retryText: retryLine,
       shouldRetry: function (e) {
@@ -635,6 +798,8 @@ document.addEventListener("DOMContentLoaded", function () {
         btn.textContent = original;
         if (out.error === "duplicate") showAlert("warn", t("msg.dup", "这个邮箱已经报名过该活动了，无需重复提交。"));
         else if (out.error === "full") showAlert("warn", t("sg.full", "报名人数已满"));
+        else if (out.error === "not_signup") showAlert("warn", t("sg.eventOnly", "这是校内日程，不需要报名 —— 在下面日历里可以看到它的时间。"));
+        else if (out.error === "position_required") showAlert("warn", t("msg.pickPos", "请先选择一个职位。"));
         else showAlert("error", t("msg.denied", "提交被拒绝：该活动可能已关闭报名。"));
         return;
       }
@@ -650,8 +815,11 @@ document.addEventListener("DOMContentLoaded", function () {
           t("sg.waitDone", "已加入备选名单，排在第 {c} 位。").replace("{c}", String(out.position || 1)) +
           " " + t("sg.doneTailWait", "有人退出时会按顺序递补，我们会发邮件通知你。");
       } else {
+        /* 有职位时把职位复述一遍，学生能对上自己报的是哪个岗位 */
+        var pos = (out.position_name) || (chosenPos && chosenPos.name) || "";
         $("done-detail").textContent =
           t("sg.doneLead", "我们已收到你对") + "「" + selected.title + "」" +
+          (pos ? "（" + pos + "）" : "") +
           t("sg.doneTail", "的报名，执委会会在活动前通过邮件与你确认排班。");
       }
       donePanel.scrollIntoView({ behavior: "smooth", block: "start" });

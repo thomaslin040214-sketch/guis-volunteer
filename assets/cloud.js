@@ -44,10 +44,17 @@
   /* 活动查询统一用这一串字段。
      ⚠️ 2026-10-01 起不再有「报名截止时间」：报名只按名额自动截止（见 register_signup）。
         数据库里那个旧列还留着（历史数据），但前端不再读它、也不再写它。
-     ⚠️ 加 waitlist_capacity：名额满了还能收多少人进备选名单（waiting list）。 */
+     ⚠️ 加 waitlist_capacity：名额满了还能收多少人进备选名单（waiting list）。
+     ⚠️ 2026-10-02 起多了四列：
+        · code_prefix / code_no —— 活动编号，前后两截拼起来显示（如 SAO + 26001 = SAO26001）。
+          前缀按板块自动给（SAO / AO / CAS），「公益募捐」「未被框定」没有固定代号，
+          留 Exec 自己填（code_prefix 可为空）。
+        · kind —— 'signup' 需要报名的活动 / 'event' 校内日程（只进日历，不能报名）。
+        · show_positions —— false 时报名表单不显示职位选择（只有一个职位的活动用）。 */
   var ACT_COLS =
     "id, title, summary, category, location, starts_at, ends_at, signup_opens_at, " +
-    "capacity, waitlist_capacity, status, notified_at, manager_email, hours, created_at";
+    "capacity, waitlist_capacity, status, notified_at, manager_email, hours, created_at, " +
+    "code_prefix, code_no, kind, show_positions";
 
   var api = {
     cloud: cloud,
@@ -129,11 +136,15 @@
     },
 
     /* ---------- 活动 ---------- */
+    /* 报名页候选列表：kind = 'signup' 才需要报名。
+       ⚠️ 校内日程（kind = 'event'）也要能建、能在日历里看到，但它不能报名 ——
+          这里在服务端就滤掉，免得学生选了之后被 register_signup 一句 'not_signup' 拒回来。 */
     listOpenActivities: function () {
       return db
         .from("activities")
         .select(ACT_COLS)
         .eq("status", "open")
+        .eq("kind", "signup")
         .order("starts_at", { ascending: true, nullsFirst: false });
     },
 
@@ -174,8 +185,7 @@
 
     /* 后台把活动标成「已邮件通知」（看板上的红灯）。
        传 false 撤销 —— 撤销后回到按截止时间自动判定的绿 / 黄灯。 */
-    setActivityNotified: function (id, notified) {
-      return db
+    setActivityNotified: function (id, notified) {      return db
         .from("activities")
         .update({ notified_at: notified ? new Date().toISOString() : null })
         .eq("id", id)
@@ -197,10 +207,56 @@
       return db.rpc("activity_counts");
     },
 
+    /* 改整个活动的默认义工时长（activities.hours）。
+       为什么要走 SECURITY DEFINER：activities 的 UPDATE 策略只认 is_owner()，
+       但带队的负责老师也要能在签到页临时改（用户明确要求），
+       于是把判断收敛到函数里 —— i_manage_activity() 已包含执委会。 */
+    setActivityHours: function (id, hours) {
+      return db.rpc("set_activity_hours", {
+        p_activity_id: id,
+        p_hours: (hours === "" || hours == null) ? null : Number(hours)
+      });
+    },
+
+    /* ---------- 职位（岗位）----------
+       一个活动可以有多个职位（如家长会的「指引义工」「翻译义工」），
+       每个职位各自有名额与备选名额；一旦这个活动有职位，
+       register_signup 就按职位算名额，activities.capacity 不再参与。
+       ⚠️ 写操作只有执委会能通过 RLS（is_owner()），读则跟着活动状态走
+          （开放报名或已归档的活动，匿名也能读到它的职位）。 */
+    listPositions: function (activityId) {
+      var q = db
+        .from("activity_positions")
+        .select("id, activity_id, name, sort_order, capacity, waitlist_capacity, created_at")
+        .order("sort_order", { ascending: true })
+        .order("id", { ascending: true });
+      if (activityId) q = q.eq("activity_id", activityId);
+      return q;
+    },
+
+    createPositions: function (rows) {
+      if (!rows || !rows.length) return Promise.resolve({ data: [], error: null });
+      return db.from("activity_positions").insert(rows).select();
+    },
+
+    updatePosition: function (id, patch) {
+      return db.from("activity_positions").update(patch).eq("id", id).select();
+    },
+
+    deletePositions: function (ids) {
+      if (!ids || !ids.length) return Promise.resolve({ data: [], error: null });
+      return db.from("activity_positions").delete().in("id", ids);
+    },
+
+    /* 报名前用它显示每个职位还剩几个位置（匿名可调用，SECURITY DEFINER） */
+    positionCounts: function () {
+      return db.rpc("position_counts");
+    },
+
     listRegistrations: function (activityId) {
       var q = db
         .from("registrations")
-        .select("id, activity_id, name, email, phone, grade, programme, student_id, slot, experience, note, status, selected, selected_at, selected_by, check_token, checked_in, checked_in_at, checked_in_by, hours, created_at")
+        .select("id, activity_id, name, email, phone, grade, programme, student_id, slot, experience, note, status, selected, selected_at, selected_by, check_token, checked_in, checked_in_at, checked_in_by, hours, position_id, position_name, created_at")
         .order("created_at", { ascending: true });
       if (activityId) q = q.eq("activity_id", activityId);
       return q;
@@ -262,7 +318,7 @@
     findByCheckToken: function (token) {
       return db
         .from("registrations")
-        .select("id, activity_id, name, email, phone, grade, programme, student_id, slot, status, selected, check_token, checked_in, checked_in_at, checked_in_by, created_at")
+        .select("id, activity_id, name, email, phone, grade, programme, student_id, slot, status, selected, check_token, checked_in, checked_in_at, checked_in_by, position_id, position_name, hours, created_at")
         .eq("check_token", token)
         .limit(1);
     },

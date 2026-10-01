@@ -19,6 +19,9 @@
     showAfter: 900,                  // 超过这个毫秒数还没返回，才显示排队界面
     baseDelay: 800,                  // 首次重试等待，之后按 2 倍递增，上限 8 秒
     cancelText: "稍后再来",           // 取消按钮文案（调用方按当前语言传入）
+    /* 加载完成后那一瞬的文案。以前没有默认值，调用方忘了传就显示「好了，进去了」，
+       而用户希望的是「请稍等，即将进入站点」—— 这里给个默认值，别的调用点忘了也不至于跑偏。 */
+    doneText: "请稍等，即将进入站点",
     // 重试倒计时文案，调用方可按语言覆盖
     retryText: function (attempt, max, seconds) {
       return "第 " + attempt + " / " + max + " 次尝试 · " + seconds + " 秒后自动重试";
@@ -113,7 +116,7 @@
     if (mask) mask.classList.remove("is-waiting");
     if (barFill) barFill.style.width = "100%";
     if (mask) mask.classList.add("is-done");
-    if (titleEl) titleEl.textContent = message || "好了，进去了";
+    if (titleEl) titleEl.textContent = message || DEFAULTS.doneText;
     if (subEl) subEl.textContent = "";
     if (metaEl) metaEl.textContent = "";
     setTimeout(hide, 550);

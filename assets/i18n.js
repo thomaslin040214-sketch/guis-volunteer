@@ -314,6 +314,8 @@ window.SITE_I18N = {
     "cal.place": "地点",
     "cal.tbd": "待定",
     "cal.goSignup": "去报名",
+    /* 2026-10-02：校内日程（不需要报名的日历条目） */
+    "cal.event": "校内日程",
     "cal.adminHint": "点日历上的任意一天，然后在下面改这一天的活动开始 / 结束 / 报名开始时间。只有执委会能改。",
     "cal.save": "保存",
     "cal.saving": "保存中…",
@@ -368,6 +370,14 @@ window.SITE_I18N = {
     "sg.keepGoing": "继续报名",
     "sg.yes": "好的",
     "sg.no": "算了",
+    /* 2026-10-02：职位（岗位）—— 每个职位各自有名额与备选名额，
+       活动自己的 capacity 在有职位之后就不再参与计算。 */
+    "sg.posLeft": "剩 {n}",
+    "sg.posFull": "已满",
+    "sg.posWait": "满 · 可排备选",
+    "sg.noLimit": "充足",
+    "sg.posAllFull": "这个活动的每个职位都报满了，暂时无法报名。",
+    "sg.eventOnly": "这是校内日程，不需要报名 —— 在下面日历里可以看到它的时间。",
 
     "f.name": "姓名 <span class=\"req\">*</span>",
     "f.email": "邮箱 <span class=\"req\">*</span>",
@@ -382,6 +392,8 @@ window.SITE_I18N = {
     "f.studentId": "学号",
     "f.slot": "希望参与的岗位或时段",
     "f.slotHint": "例如：周六上午课业辅导 / 净滩称重记录 / 摊位收银",
+    "f.pos": "选择职位",
+    "f.posHint": "每个职位的名额单独算；选了哪个职位，就按哪个职位排队。",
     "f.exp": "相关经验",
     "f.expPh": "参加过哪些志愿服务、做过什么？没有就留空。",
     "f.note": "备注",
@@ -391,6 +403,7 @@ window.SITE_I18N = {
     "f.submitting": "提交中…",
 
     "msg.pickFirst": "请先选择一个活动",
+    "msg.pickPos": "请先选择一个职位。",
     "msg.closed": "这个活动已经截止报名了。",
     "msg.required": "姓名和邮箱是必填的。",
     "msg.badEmail": "邮箱格式看起来不太对，请检查一下。",
@@ -401,7 +414,10 @@ window.SITE_I18N = {
 
     "q.busy": "正在为你接通…",
     "q.sub": "访问的人有点多，我们正在排队处理，稍等一下就好。",
-    "q.done": "好了，进去了",
+    /* 加载完成那一瞬间：明确告诉他还差一步就进站点了，别说「好了，进去了」 */
+    "q.done": "请稍等，即将进入站点",
+    /* 提交报名走完那一刻另说一句（它不会「进入站点」） */
+    "q.doneSubmit": "报名已提交",
     "q.cancel": "稍后再来",
     "q.cancelled": "已取消，需要的话可以再试一次。",
     "q.cancelledLoad": "已取消加载，刷新页面可以重新读取。",
@@ -718,6 +734,8 @@ window.SITE_I18N = {
     "cal.place": "Venue",
     "cal.tbd": "TBC",
     "cal.goSignup": "Sign up",
+    /* 2026-10-02: school calendar entries (no sign-up needed) */
+    "cal.event": "School event",
     "cal.adminHint": "Pick a day on the calendar, then edit that day's start / end / sign-up opening time below. Only the executive committee can change it.",
     "cal.save": "Save",
     "cal.saving": "Saving…",
@@ -772,6 +790,14 @@ window.SITE_I18N = {
     "sg.keepGoing": "Sign up anyway",
     "sg.yes": "OK",
     "sg.no": "Never mind",
+    /* 2026-10-02: positions — each position has its own capacity and waiting list;
+       once an activity has positions, the activity-level capacity stops counting. */
+    "sg.posLeft": "{n} left",
+    "sg.posFull": "Full",
+    "sg.posWait": "Full · waitlist open",
+    "sg.noLimit": "plenty",
+    "sg.posAllFull": "Every position for this activity is full — sign-up isn't possible right now.",
+    "sg.eventOnly": "That's a school calendar entry, not something you sign up for — check the calendar below for its timing.",
 
     "f.name": "Full name <span class=\"req\">*</span>",
     "f.email": "Email <span class=\"req\">*</span>",
@@ -786,6 +812,8 @@ window.SITE_I18N = {
     "f.studentId": "Student ID",
     "f.slot": "Preferred role or shift",
     "f.slotHint": "e.g. Saturday morning tutoring / beach clean-up weighing / stall cashier",
+    "f.pos": "Choose a position",
+    "f.posHint": "Each position has its own quota — you queue against the one you pick.",
     "f.exp": "Relevant experience",
     "f.expPh": "What volunteering have you done before? Leave blank if none.",
     "f.note": "Notes",
@@ -795,6 +823,7 @@ window.SITE_I18N = {
     "f.submitting": "Submitting…",
 
     "msg.pickFirst": "Please choose an activity first",
+    "msg.pickPos": "Please choose a position first.",
     "msg.closed": "Sign-up for this activity has closed.",
     "msg.required": "Name and email are required.",
     "msg.badEmail": "That email address doesn't look right — please check it.",
@@ -805,7 +834,8 @@ window.SITE_I18N = {
 
     "q.busy": "Getting you through…",
     "q.sub": "It's a bit busy right now — we're queuing your request, this should only take a moment.",
-    "q.done": "You're in",
+    "q.done": "Almost there — opening the site now",
+    "q.doneSubmit": "Sign-up submitted",
     "q.cancel": "Try later",
     "q.cancelled": "Cancelled — you can try again whenever you like.",
     "q.cancelledLoad": "Loading cancelled — refresh the page to try again.",

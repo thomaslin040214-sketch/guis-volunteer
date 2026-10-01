@@ -337,21 +337,28 @@
         dayTimelineHTML(list, key) +
         '<div class="cal-day-list">' + list.map(function (it) {
           var a = it.a;
-          var open = !window.GUISBoard || window.GUISBoard.isOpen(a);
+          /* 校内日程（kind = 'event'）不需要报名 —— 别再挂「去报名」按钮、
+             也别显示报名开始时间和「已报名 x / y 人」这种只对系列活动有意义的数字。 */
+          var isEv = a.kind === "event";
+          var open = !isEv && (!window.GUISBoard || window.GUISBoard.isOpen(a));
+          var code = String(a.code_prefix || "") + String(a.code_no || "");
           return '<div class="cal-item">' +
             '<div class="cal-item-top">' +
+              (code ? '<span class="act-code">' + esc(code) + "</span> " : "") +
               '<span class="cal-item-title">' + esc(a.title || "") + "</span>" +
-              (it.phase !== "run" ? '<span class="cal-phase cal-phase-' + it.phase + '">' +
+              (isEv ? '<span class="badge badge-event">' + esc(t("cal.event", "校内日程")) + "</span>" : "") +
+              (it.phase !== "run" && !isEv ? '<span class="cal-phase cal-phase-' + it.phase + '">' +
                 esc(phaseText(it.phase)) + "</span>" : "") +
-              lamp(a) +
+              (isEv ? "" : lamp(a)) +
             "</div>" +
             '<div class="cal-item-meta">' +
               "<span>" + esc(t("cal.start", "开始")) + "：" + esc(fmtDT(a.starts_at) || t("cal.tbd", "待定")) + "</span>" +
               "<span>" + esc(t("cal.end", "结束")) + "：" + esc(a.ends_at ? fmtHM(a.ends_at) : "—") + "</span>" +
+              (isEv ? "" :
               "<span>" + esc(t("cal.opens", "报名开始")) + "：" + esc(a.signup_opens_at ? fmtDT(a.signup_opens_at) : t("cal.opensNow", "建好即开放")) + "</span>" +
               "<span>" + esc(t("sg.taken", "已报名 {a} / {b} 人")
                   .replace("{a}", String(a._taken || 0))
-                  .replace("{b}", a.capacity ? String(a.capacity) : "∞")) + "</span>" +
+                  .replace("{b}", a.capacity ? String(a.capacity) : "∞")) + "</span>") +
               (a.location ? "<span>" + esc(t("cal.place", "地点")) + "：" + esc(a.location) + "</span>" : "") +
             "</div>" +
             /* 报名页认的是 ?activity=<id>（见 signup.html 内联脚本），不是 ?a= */

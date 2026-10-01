@@ -359,7 +359,7 @@
           title: t("su.loading", "正在读取活动列表…"),
           busyTitle: t("q.busy", "正在为你接通…"),
           sub: t("q.sub", "访问的人有点多，我们正在排队处理，稍等一下就好。"),
-          doneText: t("q.done", "好了，进去了"),
+          doneText: t("q.done", "请稍等，即将进入站点"),
           cancelText: t("q.cancel", "稍后再来"),
           retryText: function (attempt, max, seconds) {
             return t("q.retry", "第 {a} / {m} 次尝试 · {s} 秒后自动重试")

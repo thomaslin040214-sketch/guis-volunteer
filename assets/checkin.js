@@ -289,6 +289,8 @@ document.addEventListener("DOMContentLoaded", function () {
     var act = currentActivity();
     if (!act) {
       if (box) { box.hidden = true; box.innerHTML = ""; }
+      var noBar = $("ci-hours-bar");
+      if (noBar) noBar.hidden = true;
       return;
     }
     var can = canManageCurrent();
@@ -302,6 +304,17 @@ document.addEventListener("DOMContentLoaded", function () {
         : '<div class="alert alert-warn">这个活动由 <b>' + esc(mgr || "（还没指定负责老师）") +
           "</b> 负责，你只能<b>查看名单</b>，不能扫码签到或修改义工小时。</div>";
     }
+
+    /* 本次义工时长：只有能管这个活动的人可以改（负责人或执委会） */
+    var hoursBar = $("ci-hours-bar");
+    var hoursIn = $("ci-hours-all");
+    var hoursBtn = $("ci-hours-save");
+    if (hoursBar) hoursBar.hidden = !act;
+    if (hoursIn) {
+      hoursIn.value = fmtH(act.hours);
+      hoursIn.disabled = !can;
+    }
+    if (hoursBtn) hoursBtn.disabled = !can;
 
     /* 不是自己的活动：扫码入口和手输入口直接关掉，别让老师扫半天才发现写不进去 */
     var scan = $("ci-scan-toggle");
@@ -319,6 +332,49 @@ document.addEventListener("DOMContentLoaded", function () {
   $("ci-search").addEventListener("input", renderRoster);
   $("ci-filter").addEventListener("change", renderRoster);
   $("ci-refresh").addEventListener("click", loadRoster);
+
+  /* ---------------- 本次义工时长（活动默认值） ----------------
+     后台「活动」表单里那个「本次义工时长」在签到现场改不了 —— 老师临时发现活动多干了
+     半小时，还得回后台绕一圈。这里直接给一个输入框，走 set_activity_hours()，
+     服务端用 i_manage_activity() 再判一次：只有负责老师本人和执委会能写进去。
+     ⚠️ 已经单独填过小时的同学不会被覆盖（registrations.hours 优先级更高）。 */
+  var hoursBtnEl = $("ci-hours-save");
+  if (hoursBtnEl) {
+    hoursBtnEl.addEventListener("click", function () {
+      var act = currentActivity();
+      if (!act) return;
+      if (!canManageCurrent()) {
+        alertIn($("ci-alerts"), "error", "这个活动不是你负责的，不能改它的义工时长。");
+        return;
+      }
+      var raw = $("ci-hours-all").value.trim();
+      var n = raw === "" ? null : Number(raw);
+      if (raw !== "" && (isNaN(n) || n < 0)) {
+        alertIn($("ci-alerts"), "error", "义工时长要是 0 或正数；留空表示不填。");
+        return;
+      }
+      clear($("ci-alerts"));
+      busyOn(hoursBtnEl, "保存中…");
+      C.setActivityHours(act.id, n).then(function (res) {
+        var out = (res && res.data) || null;
+        busyOff(hoursBtnEl);
+        /* 服务端返回的是 jsonb 对象，不是行 —— 不能按 rows.length 判断 */
+        if (!out || out.ok !== true) {
+          alertIn($("ci-alerts"), "error",
+            "没有改成功：" + (out && out.error === "forbidden"
+              ? "这个活动不是你负责的。" : "请刷新后重试。"));
+          return;
+        }
+        act.hours = out.hours;
+        alertIn($("ci-alerts"), "ok", "本次义工时长已改成 <b>" + fmtH(out.hours) + "</b> 小时/人。");
+        renderRoster();
+        applyGate();
+      }).catch(function (err) {
+        busyOff(hoursBtnEl);
+        alertIn($("ci-alerts"), "error", failMsg(err, "保存失败"));
+      });
+    });
+  }
 
   /* ---------------- 名单 ---------------- */
   /* 应到人数：以「已录取」的人为准；这个活动还没保存录取名单时，退回全部报名。 */
