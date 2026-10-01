@@ -124,7 +124,12 @@
       : { href: "me.html", label: t("lg.footStudent", "我的义工账户") };
   }
 
+  /* 头像插在哪儿：优先 .nav-right（右半区，跟语言开关 / 登录按钮同一组），
+     老结构（没有 .nav-right 的页面）退回 .nav-links。
+     两种情况都插在「登录」按钮前面，登录成功后那个按钮会隐藏，位置就顶上了。 */
   function host() {
+    var right = document.querySelector(".nav-right");
+    if (right) return { parent: right, before: right.querySelector(".nav-login") };
     var links = document.querySelector(".nav-links");
     if (!links) return null;
     return { parent: links, before: links.querySelector(".nav-login") };

@@ -76,13 +76,20 @@
       bar.hidden = readStored() === "1";
 
       /* 顶栏是 fixed 的，横幅是普通文档流 —— 不撑开就会被压在导航栏底下看不见。
-         导航栏在小屏会换行变高，所以这里量它的实际高度，别写死 64px。 */
+         导航栏在小屏会换行变高，所以这里量它的实际高度，别写死 64px。
+         高度还会因为语言切换 / 头像插入而变，光听 resize 不够，
+         有 ResizeObserver 就直接盯着导航本身（assets/navfit.js 也做同一件事，
+         两边互不依赖：它管 --nav-h，这里管横幅的 margin-top）。 */
       var nav = document.querySelector("nav");
       function offset() {
-        if (!nav) return;
+        if (!nav || !nav.isConnected) nav = document.querySelector("nav");
+        if (!nav || !bar) return;
         bar.style.marginTop = nav.offsetHeight + "px";
       }
       offset();
+      if (nav && window.ResizeObserver) {
+        try { new ResizeObserver(offset).observe(nav); } catch (e) { /* 忽略 */ }
+      }
       window.addEventListener("resize", offset);
 
       var close = document.getElementById("nd-close");

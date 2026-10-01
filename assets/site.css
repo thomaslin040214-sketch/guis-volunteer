@@ -156,7 +156,10 @@ nav {
   position: fixed; top: 0; left: 0; right: 0; z-index: 100;
   height: var(--nav-h);
   padding: 0 clamp(1rem, 4vw, 3rem);
-  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  display: flex; align-items: center; justify-content: space-between;
+  /* 这个 gap 现在同时决定「刊物 ↔ 语言开关」的间距（.nav-right 拆出去之后），
+     所以跟着 .nav-links 用同一个函数式取值，改版前后观感一致 */
+  gap: clamp(0.85rem, 1.8vw, 1.75rem);
   background: rgba(255, 255, 255, 0.78);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
@@ -189,7 +192,11 @@ html[lang^="zh"] .nav-logo .org-script {
 /* 义工组织 VA 标志：与 GUIS 校徽并置，组成「GUIS | 义工组织」联合标志 */
 .nav-logo .logo-va { height: 24px; width: auto; }
 
-.nav-links { display: flex; align-items: center; gap: clamp(0.85rem, 1.8vw, 1.75rem); }
+.nav-links {
+  display: flex; align-items: center; gap: clamp(0.85rem, 1.8vw, 1.75rem);
+  /* 把「链接组 + 右侧区」一起推到最右，观感和改版前一致（标志在左，其余靠右） */
+  margin-left: auto;
+}
 
 .nav-links a {
   color: var(--text-muted);
@@ -198,6 +205,14 @@ html[lang^="zh"] .nav-logo .org-script {
   white-space: nowrap;
 }
 .nav-links a:hover, .nav-links a.is-active { color: var(--brand); }
+
+/* ---------- 导航右半区：语言开关 + 登录（登录后换成头像） ----------
+   单独拆成一个 nav 的直接子元素，是为了手机端能把这一组留在第 1 行 ——
+   见文件末尾「手机端」那段。桌面下它紧跟在链接组后面，看不出分别。 */
+.nav-right {
+  display: flex; align-items: center;
+  gap: clamp(0.85rem, 1.8vw, 1.75rem);
+}
 
 /* ---------- 关于我们 · 下拉菜单 ---------- */
 .nav-drop { position: relative; }
@@ -367,12 +382,22 @@ section { position: relative; z-index: 2; padding: clamp(4rem, 9vw, 7rem) 0; scr
   width: 6px; height: 6px; border-radius: 50%;
   background: var(--brand); box-shadow: 0 0 8px rgba(20, 76, 144, 0.5);
 }
+/* 徽章文案是「广州优联外籍人员子女学校-ULC英式国际部·义工组织」，
+   窄屏要折两行。不锁的话浏览器会在最后一个「织」字前断，
+   变成第二行孤零零一个字。把机构名整体锁成不断行，
+   断点就落到「·」后面，读起来顺得多。
+   （<span class="nb"> 写在 assets/i18n.js 的 hero.badge 值里，index.html 里也有一份） */
+.hero-badge .nb { white-space: nowrap; }
 
 .hero-title {
   font-size: clamp(2.3rem, 6.2vw, 4.6rem);
   font-weight: 700; letter-spacing: -0.04em; line-height: 1.1;
   margin-bottom: 1.35rem; color: var(--text-main);
   max-width: 22ch;
+  /* 手机上标题会折两行。默认折法是「同一个世界，同一种 / 爱。」——
+     第二行只剩一个字，很难看。balance 让两行长度接近，变成
+     「同一个世界，」/「同一种爱。」（老浏览器忽略这条，不影响功能） */
+  text-wrap: balance;
 }
 .hero-title .grad {
   background: linear-gradient(180deg, var(--brand) 10%, #54B4D8 100%);
@@ -843,21 +868,31 @@ html.js .reveal.is-in { opacity: 1; transform: none; }
   .bg-ulc { width: 54vw; opacity: 0.08; }
 }
 @media (max-width: 720px) {
-  nav { height: auto; padding: 0.6rem 1rem; flex-wrap: wrap; gap: 0.5rem; }
-  /* 窄屏改成换行，不再横向滚动 ——
-     一横滚就会把最后一项截掉，而且下拉菜单会被 overflow 裁掉一半。 */
-  .nav-links { order: 3; width: 100%; justify-content: flex-start; gap: 0.85rem 1rem;
-    flex-wrap: wrap; padding-bottom: 0.2rem; }
+  /* 手机导航改成**固定两行**：
+       第 1 行  联合标志  |  语言开关 + 登录（登录后是头像）
+       第 2 行  导航链接，space-between 铺满整行
+     以前是「所有东西混在一行里自然换行」，390px 下会折成 4 行、高达 157px
+     （占屏 19%），而且「关于我们」被 order:9 单甩到最后一行，很难看。
+     ⚠️ 具体高度不写死在这儿，交给 assets/navfit.js 量出真实值写进 --nav-h。 */
+  nav { height: auto; padding: 0.45rem 0.9rem; flex-wrap: wrap; gap: 0.3rem 0.6rem; }
+  .nav-right { order: 2; margin-left: auto; gap: 0.5rem; }
+  .nav-links {
+    order: 3; width: 100%; margin-left: 0; padding-bottom: 0.15rem;
+    justify-content: flex-start; flex-wrap: wrap; gap: 0.4rem 1.5rem;
+  }
   .nav-links a { font-size: 0.76rem; }
   .nav-drop-btn { font-size: 0.76rem; }
-  /* 展开的菜单就地铺开占一整行，不用绝对定位（父级是 flex 行，绝对定位会被裁） */
-  .nav-drop { width: 100%; order: 9; }
+  /* 「关于我们」关着的时候就是普通一项，跟别的链接排在同一行；
+     展开的菜单回到绝对定位浮在页面之上，不再把导航撑高。
+     ⚠️ 这里绝不能再给 .nav-links / nav 加 overflow，否则绝对定位的菜单会被裁掉。
+     ⚠️ 同理别把 .nav-drop-menu 改回 position:static —— 那样它会把
+        第 2 行整个顶下去，「关于我们」又变成独占一行。 */
+  .nav-drop { width: auto; order: 0; }
   .nav-drop-menu {
-    position: static; display: none; width: 100%; min-width: 0;
-    margin-top: 0.45rem; box-shadow: none; background: rgba(0, 0, 0, 0.025);
+    top: calc(100% + 0.5rem); left: 0; min-width: 8.75rem; margin-top: 0;
+    box-shadow: 0 14px 34px rgba(16, 24, 40, 0.16);
   }
-  .nav-drop.is-open .nav-drop-menu { display: block; }
-  .nav-drop-menu a { font-size: 0.78rem; padding: 0.4rem 0.6rem; }
+  .nav-drop-menu a { font-size: 0.78rem; padding: 0.42rem 0.62rem; }
   .course { grid-template-columns: 1fr; gap: 0.2rem; }
   .course .tag { display: none; }
   .project .metrics { grid-template-columns: 1fr; }
@@ -904,16 +939,37 @@ html.js .reveal.is-in { opacity: 1; transform: none; }
 
 /* ==========================================================================
    手机端（2026-10-01 统一整理）
-   导航在窄屏会换成两行，所以 --nav-h 要跟着变大，否则锚点跳转 /
-   首屏顶部都会被那颗变高的导航盖住。
+   导航在窄屏会折成两行，高度随之变化 —— 所以 --nav-h 不再写死一个数字，
+   交给 assets/navfit.js 量出真实高度写回。这里只留一个「偏大」的兜底值：
+   万一手滑禁用了 JS，宁可顶上多留一点，也不要让首屏被导航盖住。
    ========================================================================== */
 @media (max-width: 720px) {
-  :root { --nav-h: 104px; }
-  nav { padding: 0.5rem 0.9rem; row-gap: 0.3rem; }
-  .nav-links { gap: 0.7rem 0.95rem; }
-  /* 「义工组织」这几个字在手机上最占地方，联合标志本身已经够了 */
+  :root { --nav-h: 84px; }
+  /* 「义工组织」这四个字在手机上留不下 —— GUIS|ULC 联合标志本身就宽 163px，
+     语言开关 + 登录按钮还要 145px，390px 屏幕已经只剩 50 多px。
+     硬塞进去就得把标志或按钮压到看不清，不划算。
+     （后台 / 签到 / 我的账户页没有右半区，理论上装得下，
+       但那三个页面的 .org 里还跟着「· 后台」这类后缀，一并保持隐藏更统一。） */
   .nav-logo .org { display: none; }
   .nav-login { padding: 0.3rem 0.75rem; font-size: 0.74rem; }
+}
+
+/* 最窄的一档（iPhone SE 320px / 部分安卓小屏）。
+   ⚠️ 必须排在上面那个 720px 块之后 —— 等宽度的媒体查询里，靠后的赢。
+   320px 可用宽度只有 291px，而第 1 行「联合标志 163 + 右半区 148 + 间距」= 349px，
+   会顶成 3 行，所以这一档把标志和右半区一起收紧，同时让链接行改成
+   space-between 铺满（窄屏上比左对齐好看，不会在右边留一大块空）。 */
+@media (max-width: 480px) {
+  nav { padding: 0.4rem 0.7rem; gap: 0.3rem 0.5rem; }
+  .nav-links { justify-content: space-between; gap: 0.4rem 0.8rem; }
+  .nav-links a, .nav-drop-btn { font-size: 0.72rem; }
+  .nav-logo { gap: 0.4rem; }
+  .nav-logo .logo-img { height: 17px; }
+  .nav-logo .logo-div { height: 14px; }
+  .nav-logo .logo-va { height: 16px; }
+  .nav-right { gap: 0.35rem; }
+  .lang-btn { padding: 0.24rem 0.5rem; font-size: 0.68rem; }
+  .nav-login { padding: 0.26rem 0.6rem; font-size: 0.7rem; }
 }
 @media (max-width: 560px) {
   /* 12 个月缩略条改成横滑一行，别在手机上占三四行 */
@@ -940,6 +996,11 @@ html.js .reveal.is-in { opacity: 1; transform: none; }
 }
 @media (max-width: 640px) {
   .footer-inner { flex-direction: column; gap: 0.85rem; text-align: center; }
+  /* ⚠️ .footer-brand 自己也是横向 flex —— 只把 .footer-inner 改成竖排不够，
+     标志右边那条「广州优联外籍人员子女学校-ULC英式国际部·义工组织」会被挤成
+     五行的窄柱。这里让它换行：两个标志留在第 1 行，校名整条占第 2 行居中。 */
+  .footer-brand { flex-wrap: wrap; justify-content: center; gap: 0.5rem 0.8rem; }
+  .footer-brand .footer-org { flex: 1 0 100%; font-size: 0.78rem; max-width: 24rem; line-height: 1.6; }
   .footer-links { flex-wrap: wrap; justify-content: center; gap: 0.75rem 1rem; }
   .me-hero { padding: 1rem 1.1rem; gap: 0.85rem; }
   .me-hours { width: 100%; text-align: left; }

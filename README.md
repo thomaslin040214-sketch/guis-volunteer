@@ -32,23 +32,29 @@ guis-volunteer/
 ├── signup.html                 # 学生报名页（选活动 → 填表 → 提交，无需登录）
 ├── admin.html                  # 后台门户（登录 / 建活动 / 审核报名 / 导出 Excel）
 └── assets/
-    ├── site.css                # 全部样式（白色主题 + 品牌红）
+    ├── site.css                # 全部样式（白色主题 + 品牌蓝）
     ├── app.css                 # 表单 / 表格 / 后台 的附加样式
     ├── main.js                 # 交互：语言切换 / 滚动动画 / 计数 / 进度条 / 下拉履历 / 灯箱
+    ├── navfit.js               # 把导航的真实高度写进 --nav-h（手机端两行导航靠它对齐，见第八节）
     ├── cloud-config.js         # 云服务 publicConfig（endpoint + publishableKey）
     ├── cloud.js                # 云服务客户端：初始化一次 + 活动/报名的增删改查
     ├── i18n.js                 # 中英双语词典（中英一一对应）
     ├── fonts/                  # 导航书法体（只含「义工组织」四个字的子集，见第八节）
-    ├── logo/                   # 学校校徽（8 个原始版本已按用途命名）
-    │   ├── guis-logo-h.png            红 · 横版组合标（含凤纹 + GUIS + 全称）→ 导航栏
-    │   ├── guis-logo-v.png            红 · 竖版组合标 → Hero 主视觉、欢迎信页头
-    │   ├── guis-wordmark.png          红 · GUIS 字标 → 页脚
-    │   ├── guis-emblem.png            红 · 凤纹徽章 → 背景水印
+    ├── logo/                   # 品牌标志
+    │   ├── guis-ulc-lockup.png        GUIS | ULC 联合标志 → 导航栏左、Hero、后台登录卡
+    │   ├── va-logo.png                义工组织 V.A. 标志（橙蓝 V）→ 导航栏、Hero、页脚、favicon 底图
+    │   ├── ulc-mark.svg               背景水印用的 ULC 标记（右侧）
+    │   ├── guis-phoenix-blue.png      背景水印用的凤凰（左侧）
+    │   ├── guis-logo-h.png            红 · 横版组合标（含凤纹 + GUIS + 全称）
+    │   ├── guis-logo-v.png            红 · 竖版组合标
+    │   ├── guis-wordmark.png          红 · GUIS 字标
+    │   ├── guis-emblem.png            红 · 凤纹徽章
     │   ├── guis-logo-h-white.png      白 · 横版（深色底时使用）
     │   ├── guis-logo-v-white.png      白 · 竖版（深色底时使用）
     │   ├── guis-wordmark-white.png    白 · 字标（深色底时使用）
     │   ├── guis-emblem-white.png      白 · 徽章（深色底时使用）
-    │   └── favicon.png                浏览器标签页图标
+    │   ├── favicon.png                浏览器标签页图标（V.A. 标志）
+    │   └── apple-touch-icon.png       加入主屏图标
     └── photos/
         └── shot-01.jpg … shot-08.jpg   # 工作照（当前为占位图，见第四节）
 ```
@@ -138,6 +144,9 @@ guis-volunteer/
 
 - 头像取邮箱前缀的缩写（`linjtom@gmail.com` → `LI`，`20261001@guiscn.com` → `20`），
   点开是「邮箱 + 角色 + 去自己该去的页面 + 退出登录」。
+- 头像插在**导航右半区 `.nav-right` 里、「登录」按钮之前**（那个按钮会隐藏，位置自然顶上）。
+  ⚠️ 手机端第 1 行就是「标志 + `.nav-right`」，所以头像必须留在这个容器里 ——
+  插到 `.nav-links` 里去的话会掉到第 2 行。`host()` 里保留了 `.nav-links` 兜底路径。
 - **不用每次回来都重新登录。** 会话由云服务自己续期（access token 2 小时，
   快到期时 SDK 自动用 refresh token 换新的），我们额外做了三件事：
   1. 头像先从 `localStorage` 秒画（只画头像，不当登录凭证）；
@@ -331,6 +340,44 @@ curl -A "Mozilla/5.0" "<上面取到的 fonts.gstatic.com 地址>" \
 
 **无障碍**：图片灯箱支持 `Esc` 关闭、`←/→` 翻页；照片格与履历按钮均可用键盘聚焦和回车触发；
 页面尊重系统的「减少动态效果」设置（`prefers-reduced-motion`）。
+
+### 手机端导航：两行 + `--nav-h` 自动量高（2026-10-01）
+
+导航是 `position: fixed`，脱离文档流，所以页面顶部要靠 `--nav-h` 手动留出正好一样高的空间
+（`site.css` 的 `section[scroll-margin-top]` / `.hero` 的 `padding-top`、`app.css` 的 `.page-head`）。
+**留少了首屏和锚点会被盖住，留多了顶上白一条。**
+
+坑在于这个高度是会变的：
+
+| 场景 | 导航高度 |
+|------|----------|
+| 桌面（>720px） | `64px` |
+| 手机 · 首页类页面（标志行还有语言开关 + 登录） | `78px` |
+| 手机 · 后台 / 签到 / 我的账户（标志行只有标志） | `56px` |
+
+以前 `--nav-h` 写死在媒体查询里（一度是 `104px`），而且导航是「所有元素混在一行里自然换行」，
+390px 下折成 **4 行、157px**（占屏 19%），「关于我们」还被 `order: 9` 甩到单独一行。
+
+现在：
+
+1. **`assets/navfit.js`（13 页全挂，必须排在 `session.js` 之前）**量出导航真实高度写回 `--nav-h`，
+   并用 `ResizeObserver` + `document.fonts.ready` 跟随字体落地、语言切换、头像插入等变化。
+   CSS 里只留一个偏大的兜底值 `84px`（禁 JS 时宁可多留也不要盖住）。
+2. **导航拆成三段**：`.nav-logo` / `.nav-links` / `.nav-right`。手机端第 1 行是
+   「标志 + `.nav-right`（语言开关 + 登录 / 头像）」，第 2 行是 `.nav-links`（`order: 3; width: 100%`）。
+   ⚠️ 以后**新增页面时语言开关和登录按钮必须放进 `.nav-right`**，否则它们会掉到第 2 行去。
+   `session.js` 的 `host()` 也是优先往 `.nav-right` 里插头像，找不到才退回 `.nav-links`。
+3. **下拉菜单在手机端保持绝对定位**（`top: calc(100% + 0.5rem)`）。
+   ⚠️ 别给 `nav` / `.nav-links` 加 `overflow`，也别把 `.nav-drop-menu` 改回 `position: static` ——
+   前者会把菜单裁掉，后者会把「关于我们」顶成独占一行。
+4. 「义工组织」这四个书法字在手机上**不显示**：GUIS\|ULC 联合标志本身就宽 163px，
+   语言开关 + 登录还要 145px，390px 屏幕只剩 50 多px，硬塞就得把标志或按钮压到看不清。
+   最窄档 `≤480px`（320px 小屏）另外把标志和右半区一起收紧，否则第 1 行会顶成 3 行。
+5. 页脚 `.footer-brand` 在 `≤640px` 也要换行：两个标志留一行，长长的中英文校名 `flex: 1 0 100%`
+   独占一行居中。只改 `.footer-inner` 不够 —— 校名会被挤成五行的窄柱。
+
+回归套件：`/tmp/guis-mobile-check.js`（72 项）钉住以上约束；
+`/tmp/guis-nav-check.js` 钉住导航结构；`/tmp/guis-session-check.js` 钉住头像插入位置。
 
 ---
 
