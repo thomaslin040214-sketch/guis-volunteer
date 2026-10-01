@@ -112,7 +112,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   /* 只有执委会能进的页签；负责老师一律看不到。
      「活动日历」也在里面 —— 它能改活动的开始 / 结束 / 报名截止，属于写操作。 */
-  var OWNER_ONLY_TABS = ["acts", "calendar", "journal", "announce", "people", "students"];
+  var OWNER_ONLY_TABS = ["acts", "calendar", "journal", "announce", "people", "students", "hours"];
 
   function applyRoleUI() {
     var owner = isOwner();
@@ -183,6 +183,8 @@ document.addEventListener("DOMContentLoaded", function () {
     loadActivities();
     loadActivityOptions();
     loadManagerOptions();
+    /* 校外时长认定的未读角标：不看那个页签也要能看到「有几条待审」 */
+    if (isOwner()) refreshInboxBadge();
   }
 
   function showLogin() {
@@ -382,11 +384,12 @@ document.addEventListener("DOMContentLoaded", function () {
   /* ---------------- Tab 切换 ----------------
      每个页签进场时要做的第一件事写在 onEnter 里（拉数据、启动轮询等），
      离开实时报名时要停掉定时器，否则它会一直在后台刷新。 */
-  var TAB_IDS = ["acts", "calendar", "regs", "live", "archive", "journal", "announce", "people", "students"];
+  var TAB_IDS = ["acts", "calendar", "regs", "live", "archive", "journal", "announce", "people", "students", "hours"];
   var TAB_ENTER = {
     calendar: function () { if (isOwner()) loadAdminCalendar(true); },
     people: function () { if (isOwner()) { loadPeople(); loadManagerOptions(); } },
     students: function () { if (isOwner()) loadStudents(); },
+    hours: function () { if (isOwner()) { loadInbox(); loadExternal(); } },
     live: function () { loadLive(true); },
     archive: function () {
       if ($("arc-activity").options.length <= 1) loadArchiveOptions();
@@ -2666,6 +2669,220 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     }
   });
+
+  /* ============================================================
+     校外时长认定 · 审核端（2026-10-02 加）
+
+     流程：学生提交 → 数据库触发器往 admin_inbox 写一条 → 这里的角标 +1
+           → 执委会看图核定 → 通过 / 驳回。
+
+     ⚠️ 两个边界，改之前先看：
+       1) 「通过」不是在这里把小时加进某个字段 —— 状态改成 approved 就够了，
+          my_service() 会把 approved 的申请 UNION 进那个人的义工记录，
+          「我的义工账户」的累计小时自然带上。前端不要另外加一遍，会算重。
+       2) 收件箱只有读和标已读的权限，没有 INSERT —— 消息是触发器写的。
+          所以这里永远不会出现「学生自己造一条已审核消息」的情况。
+     ============================================================ */
+  var hoursFilter = "pending";
+
+  function fmtWhen(iso) {
+    if (!iso) return "";
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return "";
+    var p = function (n) { return n < 10 ? "0" + n : String(n); };
+    return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) +
+      " " + p(d.getHours()) + ":" + p(d.getMinutes());
+  }
+
+  function refreshInboxBadge() {
+    var badge = $("hours-badge");
+    if (!badge) return;
+    C.unreadInboxCount().then(function (res) {
+      /* head:true 的回包里只有 count，没有 data */
+      var n = (res && typeof res.count === "number") ? res.count : 0;
+      badge.textContent = n > 99 ? "99+" : String(n);
+      badge.hidden = n <= 0;
+    }).catch(function () { /* 角标读不出来就算了，别打扰审核 */ });
+  }
+
+  function loadInbox() {
+    var loading = $("inbox-loading"), list = $("inbox-list"), empty = $("inbox-empty");
+    loading.hidden = false; list.hidden = true; empty.hidden = true;
+    C.listInbox().then(function (res) {
+      var rows = C.unwrap(res, "读取失败") || [];
+      loading.hidden = true;
+      if (!rows.length) { empty.hidden = false; refreshInboxBadge(); return; }
+      list.hidden = false;
+      list.innerHTML = rows.map(function (m) {
+        var unread = !m.read_at;
+        return '<div class="msg' + (unread ? " is-unread" : " is-read") + '">' +
+          '<span class="msg-dot" aria-hidden="true"></span>' +
+          '<div class="msg-main">' +
+            '<div class="msg-title">' + esc(m.title) + "</div>" +
+            (m.body ? '<div class="msg-body">' + esc(m.body) + "</div>" : "") +
+            '<div class="msg-time">' + fmtWhen(m.created_at) +
+              (unread ? " · 未读" : " · 已读") + "</div>" +
+          "</div>" +
+        "</div>";
+      }).join("");
+      refreshInboxBadge();
+    }).catch(function (err) {
+      loading.hidden = true;
+      empty.hidden = false;
+      empty.textContent = "读取失败：" + failMsg(err);
+    });
+  }
+
+  var readAllBtn = $("inbox-read-all");
+  if (readAllBtn) {
+    readAllBtn.addEventListener("click", function () {
+      busyOn(readAllBtn, "处理中…");
+      C.listInbox().then(function (res) {
+        var rows = C.unwrap(res, "读取失败") || [];
+        var ids = rows.filter(function (m) { return !m.read_at; }).map(function (m) { return m.id; });
+        if (!ids.length) return { data: [], error: null };
+        return C.markInboxRead(ids);
+      }).then(function () {
+        busyOff(readAllBtn);
+        alertIn($("inbox-alerts"), "ok", "已全部标为已读。");
+        loadInbox();
+      }).catch(function (err) {
+        busyOff(readAllBtn);
+        alertIn($("inbox-alerts"), "error", failMsg(err, "标记失败"));
+      });
+    });
+  }
+
+  function loadExternal() {
+    var loading = $("hours-loading"), list = $("hours-list"), empty = $("hours-empty");
+    loading.hidden = false; list.hidden = true; empty.hidden = true;
+    C.listExternalAll(hoursFilter).then(function (res) {
+      var rows = C.unwrap(res, "读取失败") || [];
+      loading.hidden = true;
+      if (!rows.length) { empty.hidden = false; return; }
+      list.hidden = false;
+      list.innerHTML = rows.map(xtHTML).join("");
+    }).catch(function (err) {
+      loading.hidden = true;
+      empty.hidden = false;
+      empty.textContent = "读取失败：" + failMsg(err);
+    });
+  }
+
+  function xtHTML(r) {
+    var when = r.service_date ? String(r.service_date).slice(0, 10) : "日期未填";
+    var meta = [esc(r.org_name || "机构未填"), when].join(" · ");
+    var done = "";
+    if (r.status !== "pending") {
+      done = '<div class="xt-done">' +
+        (r.status === "approved" ? "✅ 已通过" : "⛔ 已驳回") +
+        " · " + fmtWhen(r.reviewed_at) +
+        (r.reviewer_email ? " · " + esc(r.reviewer_email) : "") +
+        (r.review_note ? "<br />意见：" + esc(r.review_note) : "") +
+        "</div>";
+    }
+    var acts = "";
+    if (r.status === "pending") {
+      acts =
+        '<input class="xt-note" type="text" placeholder="驳回时写一句原因（学生会看到）" />' +
+        '<button type="button" class="btn btn-primary xt-approve" data-id="' + r.id + '">通过</button>' +
+        '<button type="button" class="btn btn-secondary xt-reject" data-id="' + r.id + '">驳回</button>';
+    }
+    return '<div class="xt" data-id="' + r.id + '">' +
+      '<div class="xt-head">' +
+        '<div class="xt-who">' +
+          '<div class="xt-title">' + esc(r.activity_name || "（未填活动内容）") + "</div>" +
+          '<div class="xt-sub">' + meta + "</div>" +
+          '<div class="xt-sub">' + esc(r.student_email) +
+            (r.student_name ? " · " + esc(r.student_name) : "") +
+            " · 提交于 " + fmtWhen(r.created_at) + "</div>" +
+          (r.note ? '<div class="xt-sub">学生说明：' + esc(r.note) + "</div>" : "") +
+        "</div>" +
+        '<div class="xt-hours">' + Number(r.hours) + " 小时</div>" +
+      "</div>" +
+      (r.proof_path
+        ? '<div class="xt-proof"><button type="button" class="link-btn xt-proof-btn" data-p="' +
+          esc(r.proof_path) + '">查看证明图片</button><div class="xt-proof-img"></div></div>'
+        : '<div class="xt-proof"><span class="hint">⚠️ 这条没有附证明图片。</span></div>') +
+      '<div class="xt-actions">' + acts + "</div>" +
+      done +
+    "</div>";
+  }
+
+  /* 图片走签名链接（默认 15 分钟）：云存储没有公开读，
+     每次点开现签一个，转发出去很快也就失效了。 */
+  function showProof(path, box) {
+    box.innerHTML = '<span class="loading"></span> 正在取图…';
+    C.proofUrl(path).then(function (res) {
+      var d = res && (res.data || res);
+      var url = (d && (d.signedUrl || d.url)) || (typeof d === "string" ? d : "");
+      if (!url) {
+        box.innerHTML = '<span class="hint">图片取不回来（可能已被删除）。</span>';
+        return;
+      }
+      box.innerHTML = '<img src="' + esc(url) + '" alt="义工证明" style="margin-top:.5rem;" />';
+    }).catch(function () {
+      box.innerHTML = '<span class="hint">图片取不回来（可能已被删除）。</span>';
+    });
+  }
+
+  var hoursList = $("hours-list");
+  if (hoursList) {
+    hoursList.addEventListener("click", function (e) {
+      var t = e.target;
+      if (!t || t.nodeType !== 1) return;
+
+      var pv = t.closest(".xt-proof-btn");
+      if (pv) {
+        var box = pv.parentNode.querySelector(".xt-proof-img");
+        showProof(pv.getAttribute("data-p"), box);
+        return;
+      }
+
+      var ap = t.closest(".xt-approve");
+      var rj = t.closest(".xt-reject");
+      if (!ap && !rj) return;
+      var id = (ap || rj).getAttribute("data-id");
+      var card = (ap || rj).closest(".xt");
+      var noteEl = card ? card.querySelector(".xt-note") : null;
+      var note = noteEl ? (noteEl.value || "").trim() : "";
+
+      if (rj && !note) {
+        if (!window.confirm("不写驳回原因的话，学生只会看到「已驳回」，不知道为什么。确定不写吗？")) return;
+      }
+      if (ap && !window.confirm("通过后这些小时会并入该同学的累计义工小时，确定吗？")) return;
+
+      busyOn(ap || rj, "处理中…");
+      C.reviewExternal(id, ap ? "approved" : "rejected", note, ME.email)
+        .then(function (res) {
+          busyOff(ap || rj);
+          if (res && res.error) throw new Error(res.error.message || "写入失败");
+          alertIn($("hours-alerts"), "ok", ap
+            ? "已通过 —— 这些小时已经并入该同学的累计义工小时。"
+            : "已驳回 —— 不计入义工小时，学生会看到你的意见。");
+          loadExternal();
+          loadInbox();
+        })
+        .catch(function (err) {
+          busyOff(ap || rj);
+          alertIn($("hours-alerts"), "error", failMsg(err, "审核失败"));
+        });
+    });
+  }
+
+  var hoursFilterBox = $("hours-filter");
+  if (hoursFilterBox) {
+    hoursFilterBox.addEventListener("click", function (e) {
+      var b = e.target && e.target.closest ? e.target.closest(".seg-btn") : null;
+      if (!b) return;
+      Array.prototype.forEach.call(hoursFilterBox.querySelectorAll(".seg-btn"), function (x) {
+        x.classList.remove("is-on");
+      });
+      b.classList.add("is-on");
+      hoursFilter = b.getAttribute("data-st") || "";
+      loadExternal();
+    });
+  }
 
   /* 页面被隐藏时停掉实时轮询，回到页面再接上，省掉无谓请求 */
   document.addEventListener("visibilitychange", function () {

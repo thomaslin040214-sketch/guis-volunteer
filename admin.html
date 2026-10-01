@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-ver="20261002g">
+<html lang="zh-CN" data-ver="20261002h">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,7 +10,7 @@
    于是点站内链接（全是裸路径）进去时整页退回旧设计。
    这里比对 <html data-ver>：不是当前版本就带查询串重拉一次（查询串必定回源）。 */
 (function () {
-  var VER = "20261002g";
+  var VER = "20261002h";
   try {
     var el = document.documentElement;
     var healed = /[?&]_v=/.test(location.search);
@@ -49,8 +49,8 @@
 <meta name="description" content="GUIS 义工组织后台管理：创建义工活动、查看报名名单、导出 Excel。" />
 <meta name="theme-color" content="#FFFFFF" />
 <meta name="robots" content="noindex, nofollow" />
-<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261002g" />
-<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261002g" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261002h" />
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261002h" />
 <!-- 品牌标志兜底样式（内联，随 HTML 一起下发）。
      即使 assets/site.css 被浏览器缓存成旧版本，标志也不会按图片原始尺寸撑破布局。
      这里只设尺寸上限（max-*），正常加载 site.css 时这些上限都不会生效。 -->
@@ -74,8 +74,8 @@
   .hero-brand .hero-va{max-height:40px}
 }
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20261002g" />
-<link rel="stylesheet" href="assets/app.css?v=20261002g" />
+<link rel="stylesheet" href="assets/site.css?v=20261002h" />
+<link rel="stylesheet" href="assets/app.css?v=20261002h" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
@@ -246,6 +246,11 @@
           <button type="button" class="tab-btn" data-tab="announce">公告</button>
           <button type="button" class="tab-btn" data-tab="people">人员管理</button>
           <button type="button" class="tab-btn" data-tab="students">学生名单</button>
+          <!-- 未读数量角标：学生一提交，数据库触发器就往收件箱写一条，
+               这里显示还没点开过的条数。数字由 admin.js 的 refreshInboxBadge() 更新。 -->
+          <button type="button" class="tab-btn" data-tab="hours">
+            校外时长审核<span class="tab-badge" id="hours-badge" hidden>0</span>
+          </button>
         </div>
 
         <!-- 不是执委会的人（负责老师）登录后看到的说明。
@@ -840,6 +845,54 @@
           </div>
         </div>
 
+        <!-- ---------- 校外时长认定审核（只有执委会） ---------- -->
+        <div id="tab-hours" hidden>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>收件箱</h2>
+                <div class="sub">
+                  学生一提交申请，这里就自动多一条（由数据库写入，不是前端造的）。
+                  点「全部标为已读」把角标清掉。
+                </div>
+              </div>
+              <button type="button" class="link-btn" id="inbox-read-all">全部标为已读</button>
+            </div>
+            <div class="panel-body">
+              <div id="inbox-alerts"></div>
+              <div id="inbox-loading" class="empty"><span class="loading"></span> 正在读取…</div>
+              <div id="inbox-list" hidden></div>
+              <div id="inbox-empty" class="empty" hidden>收件箱是空的 —— 还没有人提交校外时长认定。</div>
+            </div>
+          </div>
+
+          <div class="panel" style="margin-top:1.25rem;">
+            <div class="panel-head">
+              <div>
+                <h2>认定申请</h2>
+                <div class="sub">
+                  通过 = 这些小时并入该同学的累计义工小时（立刻出现在他自己的「我的义工账户」里）；
+                  驳回 = 不计入，并把理由回给他看。
+                </div>
+              </div>
+              <div class="seg" id="hours-filter">
+                <button type="button" class="seg-btn is-on" data-st="pending">待审核</button>
+                <button type="button" class="seg-btn" data-st="approved">已通过</button>
+                <button type="button" class="seg-btn" data-st="rejected">已驳回</button>
+                <button type="button" class="seg-btn" data-st="">全部</button>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div id="hours-alerts"></div>
+              <div id="hours-loading" class="empty"><span class="loading"></span> 正在读取…</div>
+              <div id="hours-list" hidden></div>
+              <div id="hours-empty" class="empty" hidden>这一类暂时没有记录。</div>
+            </div>
+          </div>
+
+        </div>
+
       </div>
 
     </div>
@@ -866,17 +919,17 @@
 <!-- 导出 Excel：ExcelJS 才能往表里插 logo（SheetJS 社区版写不了图片），加载失败时用 SheetJS 降级 -->
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="assets/cloud-config.js?v=20261002g"></script>
-<script src="assets/cloud.js?v=20261002g"></script>
-<script src="assets/navfit.js?v=20261002g"></script>
-<script src="assets/session.js?v=20261002g"></script>
-<script src="assets/qr.js?v=20261002g"></script>
-<script src="assets/board.js?v=20261002g"></script>
-<script src="assets/calendar.js?v=20261002g"></script>
-<script src="assets/export.js?v=20261002g"></script>
-<script src="assets/editor.js?v=20261002g"></script>
-<script src="assets/feed.js?v=20261002g"></script>
-<script src="assets/backup.js?v=20261002g"></script>
-<script src="assets/admin.js?v=20261002g"></script>
+<script src="assets/cloud-config.js?v=20261002h"></script>
+<script src="assets/cloud.js?v=20261002h"></script>
+<script src="assets/navfit.js?v=20261002h"></script>
+<script src="assets/session.js?v=20261002h"></script>
+<script src="assets/qr.js?v=20261002h"></script>
+<script src="assets/board.js?v=20261002h"></script>
+<script src="assets/calendar.js?v=20261002h"></script>
+<script src="assets/export.js?v=20261002h"></script>
+<script src="assets/editor.js?v=20261002h"></script>
+<script src="assets/feed.js?v=20261002h"></script>
+<script src="assets/backup.js?v=20261002h"></script>
+<script src="assets/admin.js?v=20261002h"></script>
 </body>
 </html>

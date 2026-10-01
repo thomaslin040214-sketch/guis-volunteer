@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-ver="20261002h">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>校外时长认定 | GUIS 义工组织</title>
+<meta name="description" content="在校外机构做过义工的同学，在这里提交证明并申请把服务小时计入学校义工记录。" />
+<meta name="theme-color" content="#FFFFFF" />
+<meta name="robots" content="noindex, nofollow" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261002h" />
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261002h" />
+<meta http-equiv="Cache-Control" content="no-cache, must-revalidate" />
+<script>
+/* 文档自愈：托管服务器只给 last-modified，没有 Cache-Control / ETag，
+   浏览器会启发式复用旧版 HTML —— 旧版里引用的还是旧版本号的 CSS/JS，
+   于是点站内链接（全是裸路径）进去时整页退回旧设计。
+   这里比对 <html data-ver>：不是当前版本就带查询串重拉一次（查询串必定回源）。 */
+(function () {
+  var VER = "20261002h";
+  try {
+    var el = document.documentElement;
+    var healed = /[?&]_v=/.test(location.search);
+
+    /* ① 这台电脑见过更新的版本，却拿到了更旧的一份 —— 一定是缓存，重拉一次。
+       版本号是定长 YYYYMMDD+字母，字典序就能比大小。 */
+    var seen = "";
+    try { seen = localStorage.getItem("guis-doc-ver-seen") || ""; } catch (e) {}
+    if (seen && seen > VER && !healed) {
+      sessionStorage.setItem("guis-doc-ver", VER);
+      var su = location.href.split("#")[0];
+      location.replace(su + (su.indexOf("?") >= 0 ? "&" : "?") + "_v=" + VER + "&cb=" + Date.now() + (location.hash || ""));
+      return;
+    }
+    try { if (VER > seen) localStorage.setItem("guis-doc-ver-seen", VER); } catch (e) {}
+
+    /* ② 常规比对：<html data-ver> 不是当前版本就重拉一次 */
+    if (el.getAttribute("data-ver") === VER) {
+      if (healed && history.replaceState) {
+        var q = location.search.replace(/[?&]_v=[^&]*/, "").replace(/[?&]cb=[^&]*/g, "").replace(/^\?&/, "?");
+        history.replaceState(null, "", location.pathname + (q === "?" ? "" : q) + location.hash);
+      }
+      return;
+    }
+    if (healed) return;                                          /* 带串进来还是旧的，别再跳 */
+    if (sessionStorage.getItem("guis-doc-ver") === VER) return;   /* 本次会话只试一次 */
+    sessionStorage.setItem("guis-doc-ver", VER);
+    var u = location.href.split("#")[0];
+    location.replace(u + (u.indexOf("?") >= 0 ? "&" : "?") + "_v=" + VER + "&cb=" + Date.now() + (location.hash || ""));
+  } catch (e) {}
+})();
+</script>
+<style>
+.nav-logo{display:flex;align-items:center;gap:.5rem}
+.footer-brand{display:flex;align-items:center;gap:.9rem}
+.nav-logo .logo-img,.nav-logo .logo-va{max-height:34px;width:auto}
+.footer-brand img{max-height:34px;width:auto}
+@media (max-width:640px){
+  .nav-logo .logo-img,.nav-logo .logo-va{max-height:26px}
+  .footer-brand img{max-height:26px}
+}
+@media (max-width:480px){
+  .nav-logo .logo-img,.nav-logo .logo-va{max-height:24px}
+  .footer-brand img{max-height:24px}
+}
+</style>
+<link rel="stylesheet" href="assets/site.css?v=20261002h" />
+<link rel="stylesheet" href="assets/app.css?v=20261002h" />
+<script>document.documentElement.classList.add("js");</script>
+</head>
+<body>
+
+<div class="bg" aria-hidden="true">
+  <div class="bg-mesh"></div>
+  <div class="bg-blob blob-a"></div>
+  <div class="bg-blob blob-b"></div>
+</div>
+
+<nav>
+  <a href="index.html" class="nav-logo">
+    <img class="logo-img" src="assets/logo/guis-ulc-lockup.png" alt="GUIS · Guangzhou Ulink International School | ULC · Ulink College" />
+    <span class="logo-div"></span>
+    <img class="logo-va" src="assets/logo/va-logo.png" alt="GUIS Volunteer Association" />
+    <span class="org"><span class="org-script">义工组织</span> · 校外时长认定</span>
+  </a>
+  <div class="nav-links">
+    <a href="index.html">回到主页</a>
+    <a href="signup.html">报名活动</a>
+    <a href="me.html">我的义工账户</a>
+    <a href="external.html" class="is-active">校外时长认定</a>
+  </div>
+</nav>
+
+<main class="page-head">
+  <section style="padding-top:0;">
+    <div class="wrap">
+
+      <div class="origin-banner" id="origin-banner" hidden>
+        <b>当前访问地址未绑定到云服务。</b>
+        提交与审核只在应用的正式域名上生效。请改用
+        <a id="origin-link" href="#"></a> 访问本页。
+      </div>
+
+      <div id="ext-boot" class="empty"><span class="loading"></span> 正在读取…</div>
+
+      <!-- ============ 未登录 ============ -->
+      <div id="ext-gate" hidden>
+        <div class="panel" style="max-width:520px;margin:0 auto;">
+          <div class="panel-body" style="text-align:center;">
+            <img src="assets/logo/guis-ulc-lockup.png" alt="GUIS | ULC" style="width:200px;margin:0 auto 1rem;" />
+            <h2 style="margin:0 0 .5rem;">先用学校邮箱登录</h2>
+            <p class="hint" style="margin:0 0 1.25rem;">
+              校外时长认定要挂在你的学校账号下，审核结果和累计小时也记在这里。
+            </p>
+            <a class="btn btn-primary" href="login.html?next=external.html">去登录</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ 已登录 ============ -->
+      <div id="ext-app" hidden>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>提交校外义工时长认定</h2>
+              <div class="sub">
+                在校外机构（社区、图书馆、公益组织等）做过的义工，把证明拍照上传，
+                执委会审核通过后就会并入你的累计义工小时。
+              </div>
+            </div>
+            <button type="button" class="link-btn" id="ext-reset">清空重填</button>
+          </div>
+          <div class="panel-body">
+            <div id="ext-alerts"></div>
+
+            <div class="field span-2">
+              <label for="ext-file">义工证明图片 <span class="req">*</span></label>
+              <input id="ext-file" type="file" accept="image/*" />
+              <span class="hint">
+                证书、感谢信、机构盖章的时长记录、志愿汇／i 志愿的截图都可以。
+                <b>图片里最好能看清机构名称、你的名字和服务小时数。</b>
+              </span>
+            </div>
+
+            <div id="ext-preview" hidden style="margin:.5rem 0;">
+              <img id="ext-img" alt="证明预览" style="max-width:100%;max-height:320px;border-radius:12px;border:1px solid var(--hairline);" />
+            </div>
+
+            <div class="field span-2">
+              <button type="button" class="btn btn-secondary" id="ext-ocr" disabled>
+                自动识别图片里的信息
+              </button>
+              <span class="hint" id="ext-ocr-note">选好图片后点这里，系统会试着把机构、活动、日期、小时数填进下面；填错的地方你自己改就行。</span>
+            </div>
+
+            <div class="form-grid" style="margin-top:.5rem;">
+              <div class="field">
+                <label for="ext-name">你的姓名</label>
+                <input id="ext-name" type="text" placeholder="和证明上一致的姓名" />
+              </div>
+
+              <div class="field">
+                <label for="ext-org">机构名称 <span class="req">*</span></label>
+                <input id="ext-org" type="text" placeholder="例如：南沙区图书馆" />
+              </div>
+
+              <div class="field">
+                <label for="ext-title">做了什么事 <span class="req">*</span></label>
+                <input id="ext-title" type="text" placeholder="例如：图书整理与借阅引导" />
+              </div>
+
+              <div class="field">
+                <label for="ext-date">服务日期</label>
+                <input id="ext-date" type="date" />
+              </div>
+
+              <div class="field">
+                <label for="ext-hours">服务小时数 <span class="req">*</span></label>
+                <input id="ext-hours" type="number" step="0.5" min="0" max="500" placeholder="例如：3.5" />
+              </div>
+
+              <div class="field span-2">
+                <label for="ext-note">补充说明（可选）</label>
+                <textarea id="ext-note" rows="3" placeholder="比如这段时间你具体做了什么、联系老师是谁 —— 有助于审核判断。"></textarea>
+              </div>
+            </div>
+
+            <div style="margin-top:1rem;">
+              <button type="button" class="btn btn-primary" id="ext-submit">提交申请</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top:1.25rem;">
+          <div class="panel-head">
+            <div>
+              <h2>我提交过的申请</h2>
+              <div class="sub">通过审核的小时会显示在「我的义工账户」的累计小时里。</div>
+            </div>
+            <button type="button" class="link-btn" id="ext-refresh">刷新</button>
+          </div>
+          <div class="panel-body">
+            <div id="ext-list-loading" class="empty"><span class="loading"></span> 正在读取…</div>
+            <div id="ext-list" class="act-list" hidden></div>
+            <div id="ext-list-empty" class="empty" hidden>还没有提交过认定申请。</div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap footer-inner">
+    <div class="footer-brand">
+      <img src="assets/logo/guis-ulc-lockup.png" alt="GUIS | ULC" />
+      <img class="footer-va" src="assets/logo/va-logo.png" alt="GUIS Volunteer Association" />
+      <span class="footer-org">广州优联外籍人员子女学校-ULC英式国际部·义工组织<br />校外时长认定</span>
+    </div>
+    <span>© 2026 GUIS 义工组织</span>
+    <div class="footer-links">
+      <a href="index.html">回到主页</a>
+      <a href="me.html">我的义工账户</a>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
+<script src="assets/cloud-config.js?v=20261002h"></script>
+<script src="assets/cloud.js?v=20261002h"></script>
+<script src="assets/navfit.js?v=20261002h"></script>
+<script src="assets/session.js?v=20261002h"></script>
+<script src="assets/external.js?v=20261002h"></script>
+</body>
+</html>

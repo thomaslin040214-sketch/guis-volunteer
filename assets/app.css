@@ -1250,3 +1250,62 @@ table.data tr.is-done { background: rgba(45, 138, 78, 0.045); }
 @media (max-width: 520px) {
   .me-hours { margin-left: 0; text-align: left; }
 }
+
+/* ============================================================
+   校外时长认定 · 审核端（2026-10-02 加）
+   ============================================================ */
+
+/* 页签上的未读角标。用 <span> 放在按钮文字后面，
+   所以不能给它 margin —— 会顶歪整排页签的基线。 */
+.tab-badge {
+  display: inline-block; min-width: 1.1rem; height: 1.1rem; padding: 0 0.3rem;
+  margin-left: 0.4rem; border-radius: 980px;
+  background: #D1392F; color: #fff;
+  font-size: 0.68rem; font-weight: 700; line-height: 1.1rem; text-align: center;
+  vertical-align: 1px;
+}
+.tab-badge[hidden] { display: none; }   /* ⚠️ 不给这条的话 hidden 会被上面的 display 盖掉 */
+
+/* 收件箱的一条消息 */
+.msg {
+  display: flex; gap: 0.75rem; align-items: flex-start;
+  padding: 0.7rem 0.85rem; border: 1px solid var(--hairline); border-radius: 12px;
+  background: var(--bg-soft); margin-bottom: 0.5rem;
+}
+.msg.is-unread { background: #fff; border-color: rgba(20, 76, 144, 0.28); }
+.msg-dot {
+  width: 0.5rem; height: 0.5rem; border-radius: 50%; flex: 0 0 auto;
+  margin-top: 0.45rem; background: var(--brand);
+}
+.msg.is-read .msg-dot { background: rgba(0, 0, 0, 0.12); }
+.msg-main { flex: 1 1 auto; min-width: 0; }
+.msg-title { font-size: 0.88rem; font-weight: 600; }
+.msg-body {
+  font-size: 0.78rem; color: var(--text-muted); margin-top: 0.2rem;
+  white-space: pre-line;   /* 触发器里用 \n 分行写的，这里照原样换行 */
+}
+.msg-time { font-size: 0.72rem; color: var(--text-subtle); margin-top: 0.25rem; }
+
+/* 一条认定申请 */
+.xt {
+  border: 1px solid var(--hairline); border-radius: 14px;
+  padding: 0.85rem 0.95rem; margin-bottom: 0.7rem; background: #fff;
+}
+.xt-head { display: flex; gap: 0.75rem; align-items: flex-start; flex-wrap: wrap; }
+.xt-who { flex: 1 1 auto; min-width: 0; }
+.xt-title { font-size: 0.95rem; font-weight: 600; }
+.xt-sub { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.15rem; }
+.xt-hours {
+  font-size: 1.05rem; font-weight: 700; color: var(--brand); white-space: nowrap;
+}
+.xt-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin-top: 0.7rem; }
+.xt-note {
+  width: 100%; margin-top: 0.5rem; font-size: 0.82rem;
+  padding: 0.45rem 0.6rem; border: 1px solid var(--hairline); border-radius: 8px;
+}
+.xt-proof { margin-top: 0.6rem; }
+.xt-proof img { max-width: 100%; max-height: 260px; border-radius: 10px; border: 1px solid var(--hairline); }
+.xt-done {
+  margin-top: 0.6rem; font-size: 0.78rem; color: var(--text-muted);
+  padding-top: 0.5rem; border-top: 1px dashed var(--hairline);
+}

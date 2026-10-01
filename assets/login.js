@@ -28,6 +28,21 @@ document.addEventListener("DOMContentLoaded", function () {
     student: "me.html"
   };
 
+  /* ?next=xxx.html —— 从别的页面被弹过来登录时，登完回到那一页。
+     （校外时长认定页就是这么跳过来的。）
+     ⚠️ 只认本站的 .html 相对路径，别的什么都不认 —— 否则这就是一个开放重定向，
+        把 ?next= 换成外站链接就能把人骗出去。 */
+  function nextDest(role) {
+    try {
+      var n = new URLSearchParams(location.search).get("next") || "";
+      if (!/^[a-zA-Z0-9_-]+\.html$/.test(n)) return DEST[role];
+      /* 执委会/老师有自己的固定去处，next 只在学生这条路上生效 ——
+         免得有人拿一个 next 把管理员塞进学生页。 */
+      if (role !== "student") return DEST[role];
+      return n;
+    } catch (e) { return DEST[role]; }
+  }
+
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
@@ -77,7 +92,7 @@ document.addEventListener("DOMContentLoaded", function () {
     return C.myAccess().then(function (ar) {
       var row = (ar && ar.data && ar.data[0]) || {};
       var role = row.role === "owner" ? "owner" : row.role === "teacher" ? "teacher" : "student";
-      var dest = DEST[role];
+      var dest = nextDest(role);
       var msg = role === "owner" ? t("lg.goOwner", "识别到你是指委会成员，正在进入后台…")
         : role === "teacher" ? t("lg.goTeacher", "识别到你是负责老师，正在进入签到页…")
         : t("lg.goStudent", "进入「我的义工账户」…");
@@ -88,7 +103,7 @@ document.addEventListener("DOMContentLoaded", function () {
       /* 拿不到角色也别卡死：按学生处理，学生页自己会再判一次 */
       box.innerHTML = '<div class="alert alert-warn">' +
         esc(t("lg.detecting", "正在识别你的身份…")) + "</div>";
-      setTimeout(function () { location.href = DEST.student; }, 800);
+      setTimeout(function () { location.href = nextDest("student"); }, 800);
       return "student";
     });
   }

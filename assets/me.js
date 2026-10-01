@@ -370,20 +370,28 @@ document.addEventListener("DOMContentLoaded", function () {
       $("me-list").hidden = false;
       $("me-list").innerHTML = rows.map(function (r) {
         var h = (r.hours != null ? Number(r.hours) : Number(r.default_hours || 0));
-        var state = r.checked_in
-          ? "已签到 · " + fmtDT(r.checked_in_at)
-          : (r.selected ? "已录取 · 未签到" : "已报名 · 等录取结果");
-        return '<div class="svc' + (r.checked_in ? " is-in" : "") + '">' +
+        /* 校外认定的记录是 my_service() UNION 进来的：没有签到这回事，
+           状态栏写「审核通过」而不是「已签到」，机构名放在原本显示地点的地方。 */
+        var ext = r.source === "external";
+        var state = ext
+          ? "校外认定 · 已通过审核"
+          : (r.checked_in
+              ? "已签到 · " + fmtDT(r.checked_in_at)
+              : (r.selected ? "已录取 · 未签到" : "已报名 · 等录取结果"));
+        var sub = ext
+          ? (r.org_name ? esc(r.org_name) : "校外机构") + " · 校外服务认定"
+          : fmtDay(r.starts_at) +
+              (r.location ? " · " + esc(r.location) : "") +
+              (r.category ? " · " + esc(r.category) : "");
+        return '<div class="svc' + (ext || r.checked_in ? " is-in" : "") + '">' +
           '<div class="svc-main">' +
             '<div class="svc-title">' + esc(r.title) + "</div>" +
-            '<div class="svc-sub">' + fmtDay(r.starts_at) +
-              (r.location ? " · " + esc(r.location) : "") +
-              (r.category ? " · " + esc(r.category) : "") + "</div>" +
+            '<div class="svc-sub">' + sub + "</div>" +
             '<div class="svc-sub">' + state + "</div>" +
           "</div>" +
           '<div class="svc-right">' +
             '<div class="svc-hours">' + (Math.round(h * 100) / 100) + " 小时</div>" +
-            '<div class="svc-state">' + (r.hours != null ? "单独核定" : "按活动时长") + "</div>" +
+            '<div class="svc-state">' + (ext ? "校外认定" : (r.hours != null ? "单独核定" : "按活动时长")) + "</div>" +
           "</div>" +
         "</div>";
       }).join("");

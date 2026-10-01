@@ -56,10 +56,22 @@
     "capacity, waitlist_capacity, status, notified_at, manager_email, hours, created_at, " +
     "code_prefix, code_no, kind, show_positions, all_day";
 
+  /* 校外时长认定申请的字段串。
+     ⚠️ 学生版**不含** ocr_text / reviewer_email —— 那是审核侧才该看的东西
+        （ocr_text 是模型从证明图里读出来的原文，里面有可能是学生手写的杂信息）。 */
+  var EXT_COLS =
+    "id, org_name, activity_name, service_date, hours, status, proof_path, note, " +
+    "review_note, reviewed_at, created_at";
+  var EXT_COLS_ALL =
+    "id, student_email, student_name, org_name, activity_name, service_date, hours, " +
+    "status, proof_path, ocr_text, note, reviewer_email, review_note, reviewed_at, created_at";
+
   var api = {
     cloud: cloud,
     db: db,
     auth: cloud.auth,
+    storage: cloud.storage,
+    llm: cloud.llm,
     unwrap: unwrap,
     endpoint: cfg.endpoint,
 
@@ -460,6 +472,109 @@
 
     deleteStudent: function (email) {
       return db.from("student_directory").delete().eq("email", email).select("email");
+    },
+
+    /* ================= 校外义工时长认定（2026-10-02 加） =================
+       学生拿着校外机构的义工证明来申请，执委会审核通过后并入他本人的义工小时
+       —— 合并发生在服务端：my_service() 里 UNION 了 status='approved' 的申请，
+         所以「我的义工账户」的累计小时自然就带上了，前端不用另外加一遍。
+
+       两张表，权限分工是刻意的：
+         · external_hour_requests —— 申请本体。学生只能插自己的、看自己的，
+           而且只能带着 status='pending' 插（不能自己给自己通过）；
+           改状态只有执委会可以（RLS 里 is_owner()）。
+         · admin_inbox —— 执委会收件箱。⚠️ 学生**没有**这张表的 INSERT 权限，
+           收件那一行的写入者是数据库触发器 —— 免得有人伪造一条消息误导审核人。
+       证明图片走云存储的 shared 路径（为什么不是 users/：users 只有本人能读，
+       执委会就看不到图、没法核；shared 的代价是任何登录的人都能读，但文件名是
+       随机串，只有先拿到申请记录才知道去读哪一个）。 */
+    submitExternal: function (payload) {
+      /* ⚠️ 不链 .select()：匿名/学生写入后的回读受 SELECT 策略约束会报 42501。 */
+      return db.from("external_hour_requests").insert(payload);
+    },
+
+    myExternal: function () {
+      return db
+        .from("external_hour_requests")
+        .select(EXT_COLS)
+        .order("created_at", { ascending: false });
+    },
+
+    /* 执委会看全部（RLS 里 is_owner() 放行）。传 status 就是只看某一类。 */
+    listExternalAll: function (status) {
+      var q = db
+        .from("external_hour_requests")
+        .select(EXT_COLS_ALL)
+        .order("created_at", { ascending: false })
+        .limit(300);
+      if (status) q = q.eq("status", status);
+      return q;
+    },
+
+    reviewExternal: function (id, status, note, reviewerEmail) {
+      return db
+        .from("external_hour_requests")
+        .update({
+          status: status,
+          review_note: note || null,
+          reviewer_email: reviewerEmail || null,
+          reviewed_at: new Date().toISOString()
+        })
+        .eq("id", id);
+    },
+
+    deleteExternal: function (id) {
+      return db.from("external_hour_requests").delete().eq("id", id);
+    },
+
+    listInbox: function () {
+      return db
+        .from("admin_inbox")
+        .select("id, kind, ref_id, title, body, created_at, read_at")
+        .order("created_at", { ascending: false })
+        .limit(100);
+    },
+
+    /* 未读数：只数「还没点开过的」。head:true 不回传行，省流量。 */
+    unreadInboxCount: function () {
+      return db
+        .from("admin_inbox")
+        .select("id", { count: "exact", head: true })
+        .is("read_at", null);
+    },
+
+    markInboxRead: function (ids) {
+      if (!ids || !ids.length) return Promise.resolve({ data: [], error: null });
+      return db
+        .from("admin_inbox")
+        .update({ read_at: new Date().toISOString() })
+        .in("id", ids);
+    },
+
+    /* ---------- 证明图片（云存储） ---------- */
+    uploadProof: function (file, uid) {
+      var ext = String(file.name || "").split(".").pop() || "jpg";
+      ext = ext.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 5) || "jpg";
+      var name = "ext-hours/" + Date.now() + "-" +
+        Math.random().toString(36).slice(2, 10) + "." + ext;
+      var p = cloud.storage.sharedPath(uid, name);
+      return cloud.storage
+        .upload(p, file, { contentType: file.type || "image/jpeg", upsert: false })
+        .then(function (res) {
+          if (!res || res.error) return res;
+          /* 统一成 { data: { path } } —— 调用方只关心「存到哪儿了」 */
+          return { data: { path: p }, error: null };
+        });
+    },
+
+    /* 签名链接默认 15 分钟：够审核人看完，也不至于被人转发出去长期有效 */
+    proofUrl: function (p, ttl) {
+      return cloud.storage.createSignedUrl(p, ttl || 900);
+    },
+
+    /* ---------- 大模型（读图识别证明上的信息） ---------- */
+    llmModels: function () {
+      return cloud.llm.models.list();
     }
   };
 
