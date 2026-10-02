@@ -1377,9 +1377,52 @@ table.data tr.is-done { background: rgba(45, 138, 78, 0.045); }
 #ct-picks-empty { margin-top: 0.85rem; }
 
 /* ---------- 时长那一行 ---------- */
-.ct-hours-row { display: flex; align-items: center; gap: 0.6rem; }
-.ct-hours-row input { flex: 0 0 7rem; }
-.ct-unit { font-size: 0.85rem; color: var(--text-muted); }
+/* 只读四项：姓名 / 时长 / 出具日期 —— 值全部由在册名单和勾选结果带出来 */
+.ct-ro { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; margin-bottom: 1.15rem; }
+.ct-ro-item {
+  border: 1px solid var(--hairline); border-radius: var(--radius-sm);
+  padding: 0.6rem 0.75rem; background: var(--bg-soft); min-width: 0;
+}
+.ct-ro-item span { display: block; font-size: 0.75rem; color: var(--text-subtle); }
+.ct-ro-item b { display: block; margin-top: 0.2rem; font-size: 0.95rem; font-weight: 650; word-break: break-word; }
+
+/* 自动生成的服务内容：不能编辑，样式也要让人一眼看出「改不了」 */
+.ct-locked {
+  border: 1px solid var(--hairline); border-radius: var(--radius-sm);
+  background: var(--bg-soft); color: var(--text-soft);
+  padding: 0.7rem 0.8rem; font-size: 0.88rem; line-height: 1.7;
+  white-space: pre-wrap; max-height: 13rem; overflow: auto;
+}
+
+/* 我的证明申请：一张卡一条，只有「已通过」那条亮出下载 */
+.ct-req {
+  border: 1px solid var(--hairline); border-radius: var(--radius-sm);
+  padding: 0.85rem 0.95rem; background: var(--card-bg);
+}
+.ct-req + .ct-req { margin-top: 0.75rem; }
+.ct-req.is-approved { border-color: rgba(45, 138, 78, 0.32); }
+.ct-req.is-rejected { border-color: var(--danger-line); }
+.ct-req-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
+.ct-req-title { font-size: 0.95rem; font-weight: 650; }
+.ct-req-sub { font-size: 0.78rem; color: var(--text-subtle); margin-top: 0.15rem; word-break: break-all; }
+.ct-req-note {
+  margin-top: 0.6rem; padding-left: 0.6rem; border-left: 3px solid var(--hairline-strong);
+  font-size: 0.84rem; line-height: 1.6; color: var(--text-soft);
+}
+.ct-req-note.is-bad { border-left-color: var(--danger-line); color: var(--danger-deep); }
+.ct-req-acts { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.7rem; }
+.ct-req-acts .btn { padding: 0.4rem 0.9rem; font-size: 0.85rem; }
+
+.ct-st { font-size: 0.72rem; font-weight: 700; padding: 0.18rem 0.55rem; border-radius: 999px; white-space: nowrap; }
+.ct-st-pending { background: rgba(196, 138, 42, 0.14); color: #8A5E0C; }
+.ct-st-approved { background: rgba(45, 138, 78, 0.12); color: #256B42; }
+.ct-st-rejected { background: var(--danger-tint); color: var(--danger-deep); }
+.ct-st-withdrawn { background: rgba(0, 0, 0, 0.06); color: var(--text-muted); }
+
+@media (max-width: 640px) {
+  .ct-ro { grid-template-columns: minmax(0, 1fr); }
+  .ct-req-acts { width: 100%; }
+}
 
 /* ============================================================
    证明版式（预览 + 打印共用）
@@ -1436,11 +1479,17 @@ table.data tr.is-done { background: rgba(45, 138, 78, 0.045); }
 .cert-sign-1 { display: grid; grid-template-columns: 55% 45%; }
 .cert-sign-date { text-align: right; padding-right: 8%; }
 
-/* 表下这几行：Word 里靠制表符排，这里用「左栏 + 55% 起」的栅格近似，落点接近 */
+/* 表下这几行：原件里靠制表符排（9 / 8 / 9 个 tab）。
+   这里不用 grid 近似 —— 直接给它们**跟表格一样的宽度和左偏移**，
+   再用 flex 两端对齐：左边精准压在表格左边框上，右边最后一键落在右边框上。
+   ⚠️ 数字跟 .cert-table 那两条必须成对改（15.08cm / 1.92cm 是原件的 twips 换算出来的），
+      之前用 padding-left:0.93cm + 55%/45% 栅格，两头都对不上框线。 */
 .cert-line {
-  display: grid; grid-template-columns: 55% 45%;
-  margin: 0; padding-left: 0.93cm; font-weight: 700;
+  display: flex; justify-content: space-between; align-items: baseline;
+  width: 15.08cm; margin: 0 0 0 1.92cm; padding: 0;
+  font-weight: 700; white-space: nowrap;
 }
+.cert-line > span { display: block; }
 .cert-handler { margin-top: 0.5cm; }
 .cert-labels { font-size: 9pt; }
 .cert-last { margin: 0.25cm 0 0; font-size: 9pt; font-weight: 700; }

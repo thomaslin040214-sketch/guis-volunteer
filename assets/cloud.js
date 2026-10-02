@@ -66,6 +66,12 @@
     "id, student_email, student_name, org_name, activity_name, service_date, hours, " +
     "status, proof_path, ocr_text, note, reviewer_email, review_note, reviewed_at, created_at";
 
+  /* 志愿服务记录证明申请的字段串。学生审核两侧用同一份 —— 学生本来就只能读到自己的行，
+     审核侧能读全部，靠的是 RLS 里的 is_cert_reviewer()，不是靠这里多摘几个字段。 */
+  var CERT_COLS =
+    "id, student_email, student_name, student_name_en, id_type, id_no, hours, content, " +
+    "issue_date, picks, status, reviewer_email, review_note, reviewed_at, created_at";
+
   var api = {
     cloud: cloud,
     db: db,
@@ -460,7 +466,9 @@
     listStudents: function () {
       return db
         .from("student_directory")
-        .select("email, name, grade, student_id, programme, activated, activated_at, created_at")
+        /* name_en —— 英文全名，会印在义工证明的姓名栏（中文名前面）。
+           没登记的话证明上只显示中文名，学生那一侧改不了这一项。 */
+        .select("email, name, name_en, grade, student_id, programme, activated, activated_at, created_at")
         .order("email", { ascending: true });
     },
 
@@ -525,6 +533,81 @@
 
     deleteExternal: function (id) {
       return db.from("external_hour_requests").delete().eq("id", id);
+    },
+
+    /* ================= 志愿服务记录证明 · 申请与审核（2026-10-02 加） =================
+       为什么要「提交 → 审核 → 才能下载」：之前勾完记录就能直接拿走一份成品，
+       等于任何人可以给自己开一张抬头是学校的证明。现在这一层的权限分成两半：
+         · certificate_requests —— 申请本体。学生只能插自己的、看自己的，而且只能带着
+           status='pending' 插；**通过 / 驳回没有 UPDATE 策略**，只能走
+           review_certificate_request()（SECURITY DEFINER），它认 cert_reviewers 名单。
+           学生唯一能改的是「把自己那条 pending 撤成 withdrawn」（策略里卡了方向）。
+         · cert_reviewers —— 指定的审核人名单，只有执委会（owner）能增删。
+           ⚠️ owner 不自动等于审核人 —— 想审就得把自己也加进这张表。
+       ⚠️ 证件号码现在会存在库里（审核和日后重打都要看）。这跟「页面不留痕」不冲突：
+          浏览器本地一个字都不写，只是云端这行记录里有，且只有本人和审核人读得到。 */
+    myCertRequests: function () {
+      return db
+        .from("certificate_requests")
+        .select(CERT_COLS)
+        .order("created_at", { ascending: false })
+        .limit(50);
+    },
+
+    submitCertRequest: function (payload) {
+      /* ⚠️ 不链 .select()：写入后的回读受 SELECT 策略约束会报 42501。
+         重复提交（同一账户已有一条 pending）由唯一索引 uq_certreq_pending 挡下 → 23505。 */
+      return db.from("certificate_requests").insert(payload);
+    },
+
+    withdrawCertRequest: function (id) {
+      return db.from("certificate_requests").update({ status: "withdrawn" }).eq("id", id);
+    },
+
+    /* 审核人读全部（RLS 里 is_cert_reviewer() 放行）。传 status 就是只看某一类。 */
+    listCertRequests: function (status) {
+      var q = db
+        .from("certificate_requests")
+        .select(CERT_COLS)
+        .order("created_at", { ascending: false })
+        .limit(300);
+      if (status) q = q.eq("status", status);
+      return q;
+    },
+
+    reviewCertRequest: function (id, pass, note) {
+      return db.rpc("review_certificate_request", {
+        p_id: id,
+        p_pass: !!pass,
+        p_note: note || null
+      });
+    },
+
+    /* 角标：还有几条没判。审核人之外的人 select 不到别人的行，数出来自然是自己的（0）。 */
+    pendingCertCount: function () {
+      return db
+        .from("certificate_requests")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "pending");
+    },
+
+    isCertReviewer: function () {
+      return db.rpc("is_cert_reviewer");
+    },
+
+    listCertReviewers: function () {
+      return db
+        .from("cert_reviewers")
+        .select("email, note, created_at, created_by")
+        .order("created_at", { ascending: true });
+    },
+
+    addCertReviewer: function (payload) {
+      return db.from("cert_reviewers").insert(payload).select();
+    },
+
+    removeCertReviewer: function (email) {
+      return db.from("cert_reviewers").delete().eq("email", email).select();
     },
 
     listInbox: function () {

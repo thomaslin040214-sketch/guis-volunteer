@@ -279,40 +279,77 @@ guis-volunteer/
 
 ### 🧾 志愿服务记录证明 · 学生自助生成（2026-10-02 加）
 
-`certificate.html` + `assets/cert.js` + `assets/docx.js`。
+`certificate.html` + `assets/cert.js`（后台那一半在 `admin.html` 的「证明审核」页签）。
 
-学生登录后：勾出要计入的记录（默认只勾**已签到**和**校外认定已通过**的）
-→ 补上证件类型/号码、其他说明、出具日期、经办人 → 右边实时预览 → 一键下载 `.docx`，
-或在页面里直接打印/另存 PDF。入口在 `me.html` 的账户区，以及 `me.html` / `external.html` 的导航。
+### 流程：提交 → 指定的人审核 → 才能下载 PDF
 
-**版式对着学校那份原件抄的**（`广州优联国际学校ULC学部-志愿服务记录证明.docx`）
-—— 下面每个数都是从原件 `word/document.xml` 里量出来的，**不是估的**：
+以前勾完记录就能直接拿走一份成品，等于任何人可以给自己开一张抬头是学校的证明。
+2026-10-02 起改成三段：
 
-| 元素 | 取值 |
+| 环节 | 在哪 | 说明 |
+|------|------|------|
+| 申请端 | `certificate.html` | 勾要计入的记录（默认勾**已签到** + **校外认定已通过**的）→ 只补**证件类型 / 证件号码** → 提交 |
+| 等待 | 同一个页面「我的申请」 | 提交后是「审核中」，可撤回；被驳回能看到理由，改完可重提；**只有「已通过」那条会亮出「下载 PDF 证明」** |
+| 审核端 | 后台「证明审核」页签 | 名单指定的人看详情（含勾选明细与证件号）→ 通过 / 驳回（可写理由） |
+
+学生页面上**只能填证件类型 + 号码**，这五项一律不开放修改：
+
+| 字段 | 来源 |
 |------|------|
-| 校徽 | 原模板里的 976×181 PNG，存在 `assets/logo/cert-crest.png`；`wp:extent` 4058285×752475 EMU，图片自身 `a:ext` 4313083×799680（原件两个值就不一样，别统一） |
-| 校名 / 标题 | 楷体 26pt（`sz=52`）/ 28pt（`sz=56`）；英文校名 Calibri 14pt、`(Certificate of Voluntary Service)` 12pt |
-| 页面 | A4 `11906×16838`，**页边距四边都是 720 twips（1.27cm）**；`docGrid` linePitch 312 |
-| 表格 | `tblGrid` 2735 / **2128** / **3685**；`tblInd` **1086**（不贴左边距）；跨 2 列 5813、跨 3 列 8548 |
-| 行高 | 第 3 行 501、第 6 行 782、第 7 行 425 twips（其余按内容撑） |
-| 单元格 | 等线 10.5pt（`w:sz="21"`，靠 `docDefaults` 继承）；中文一行、英文一行**分两段** |
-| 第 1 行 | 首尾各有一个**空段**（行才够高、「学生信息」竖排居中才对）；第 4 行首格原件**没有** `vAlign` |
-| 落款格（第 7 行） | 5 段：空 / `学生事务副校长签字:` + 空格 + `(印章Seal)` / `(Signed by Deputy Principal of Pastoral)` / 空（首行缩进 150 字）/ 空格 + 日期（`left=5355 hanging=5040`） |
-| 表下三行 | **不在表格里**，靠制表符对齐：经办人（9 个 tab）+ 电话、两条横线（8 个 tab，左 10 个「—」右 12 个）、两个标签（9 个 tab） |
-| `word/settings.xml` | `defaultTabStop = 420` —— **少这个文件，上面所有制表符落点全变，就会「全挤在一起」** |
-| 样式 | `docDefaults` 等线 10.5pt；⚠️ **不要写 `<w:spacing>`**，行距靠 `docGrid` 撑，写了会把行压扁 |
+| 姓名 / 英文名 | 在册名单 `student_directory.name` / `.name_en`（英文名没登记就只显示中文名 —— 要补请改名单，别给学生开输入框） |
+| 志愿服务时长 | 按勾选自动算，只显示、不支持手改 |
+| 志愿服务内容 | 按勾选自动生成「序号. 日期　地点/机构　活动名　N 小时」 |
+| 出具日期 | 永远是今天（本地时区） |
+| 经办人 / 联系电话 | `Thomas Lin 林骏玮` / `020-39090100-16720`，写死在 `cert.js` 顶部 |
 
-⚠️ 改版式要**同时改两处**：`assets/cert.js` 里的 OOXML 与 `app.css` 里的 `.cert-sheet` 预览样式，
-两边对不上就会出现「预览好看、下载出来不对」。
+### PDF 是怎么出来的
 
-⚠️ 另外三条：
+浏览器打印：`paintSheet()` 把**已通过那条记录的快照**画进同一个 `.cert-sheet`
+→ 临时把 `document.title` 换成存档文件名（Chrome / Safari 拿它当默认文件名）
+→ `window.print()`，学生自己在打印框里选「另存为 PDF」。
+⚠️ 打印用的是快照数据，**不是当前表单** —— 通过之后再改勾选、改证件号都篡改不了已通过那份。
 
-1. **不留存。** 证件号码只在内存里过一遍 —— 不写 localStorage / sessionStorage，不上传云端。
-   页面上那句「本页不留存这些内容」是承诺，别为了「记住上次填的」偷偷加缓存。
-2. **docx 是自己拼的。** `assets/docx.js` 是一个最小 zip 打包器（**STORE 不压缩**，自己算 CRC-32），
-   不引 JSZip、不依赖 `DecompressionStream`。zip 条目要带 `0x0800` 标志位，否则中文文件名乱码。
+⌨️ 这条路线是踏实之选：本机 Word 自动化被 macOS 权限拦着（osascript 报 `-10004`），
+也没有装 LibreOffice / pandoc，项目又不引 CDN。`assets/docx.js` 还留在仓库里没删，
+但目前**没有任何页面引用它**（原来那套 OOXML 构建器已从 `cert.js` 移除，需要的话 git 历史里找）。
+
+### 权限：不是所有人都能审核
+
+| 表 | 谁能读写 |
+|----|---------|
+| `certificate_requests` | 学生只能插自己的、看自己的，而且只能带着 `status='pending'` 插；**通过 / 驳回没有 UPDATE 策略**，只走 `review_certificate_request()`（SECURITY DEFINER），它内部再认一次 `cert_reviewers` 名单。学生唯一能改的是把自己那条 pending 撤成 `withdrawn`（策略里卡了方向） |
+| `cert_reviewers` | 指定的审核人名单，只有执委会能增删。⚠️ **owner ≠ 审核人** —— 执委会也得把自己加进来才审得动（页签里有「把我加为审核人」按钮） |
+| `uq_certreq_pending`（唯一索引） | 一个人同时只能有一条 pending —— 重复提交撞 23505，前端翻译成「你还有一条没审核完」 |
+
+> 「证明审核」页签对审核人 + 执委会可见（`applyCertUI()`），其它人（含负责老师）按钮直接 `hidden`。
+> 真正的边界在数据库策略里，前端藏起来只是免得老师看到看不懂的 42501。
+
+⚠️ 三条别忘了：
+
+1. **证件号码现在会存在云端**（审核和日后重打都要看）。这不违反「页面不留痕」——
+   浏览器本地一个字都不写（`localStorage` / `sessionStorage` 都不碰），且只有本人和指定的审核人读得到。
+2. **下载用的是快照**：之后重新提交只会多出一条新的 pending，已通过那条的内容永远不变。
 3. **日期一律本地时间拼**：`toISOString().slice(0,10)` 走的是 UTC，东八区在 00:00–08:00
    之间会算成昨天，证明上的出具日期就错了。
+
+### 版式（对照学校原件）
+
+**版式对着学校那份原件抄的**（`广州优联国际学校ULC学部-志愿服务记录证明.docx`）
+—— 下面每个数都是从原件 `word/document.xml` 里量出来的，**不是估的**。
+现在虽然改成 HTML 打印，这些数字仍然决定了 `app.css` 里 `.cert-sheet` 的尺寸：
+
+| 元素 | 取值 | 在 CSS 里对应 |
+|------|------|------|
+| 校徽 | `assets/logo/cert-crest.png` | `.cert-crest { width: 4.44in }` |
+| 校名 / 标题 | 楷体 26pt / 28pt；英文校名 Calibri 14pt、`(Certificate of Voluntary Service)` 12pt | `.cert-school` / `.cert-title` |
+| 页面 | A4，页边距四边 720 twips（1.27cm） | `.cert-sheet { width:21cm; padding:1.27cm }` |
+| 表格 | 总宽 8548 twips、缩进 1086；列宽 2735 / 2128 / 3685 | `.cert-table { width:15.08cm; margin-left:1.92cm }` |
+| 行高 | 第 3 行 501、第 6 行 782、第 7 行 425 twips | `tbody tr:nth-child(1) / :nth-child(6)` |
+| 单元格 | 等线 10.5pt；中文一行、英文一行**分两段** | `.cert-l`（`<br />` 分段） |
+| 落款格（第 7 行） | 5 段：空 / `学生事务副校长签字:` + `(印章Seal)` / 英文 / 空 / 日期 | `.cert-sign-1` + `.cert-sign-date` |
+| **表下三行** | 原件靠制表符对齐（9 / 8 / 9 个 tab，两条横线各在一端） | ⚠️ **必须是 `width:15.08cm; margin-left:1.92cm; display:flex; justify-content:space-between`** —— 以前用 `padding-left:0.93cm` + 55%/45% 栅格，两头都对不上表格框线 |
+
+⚠️ 改预览样式时记住：预览和打印是**同一个 DOM**（`#cert-sheet`），`@media print` 只负责隐藏页面其它部分。
 
 ### 👤 登录态：右上角头像（全站共用 `assets/session.js`）
 
@@ -348,6 +385,8 @@ DELETE FROM auth.users               WHERE email IN ('teacher.demo@guiscn.com','
 DELETE FROM allowed_admins           WHERE email = 'teacher.demo@guiscn.com';
 DELETE FROM student_directory        WHERE email = '2510032@guiscn.com';
 UPDATE activities SET manager_email = NULL WHERE manager_email = 'teacher.demo@guiscn.com';
+-- 顺手清掉测试期间用演示账号提交的证明申请（含证件号码，别留在线上）
+DELETE FROM certificate_requests     WHERE student_email = '2510032@guiscn.com';
 ```
 
 ### 使用流程

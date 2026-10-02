@@ -185,6 +185,8 @@ document.addEventListener("DOMContentLoaded", function () {
     loadManagerOptions();
     /* 校外时长认定的未读角标：不看那个页签也要能看到「有几条待审」 */
     if (isOwner()) refreshInboxBadge();
+    /* 证明审核要不要显示、我会不会拿到审核权 —— 服务端说了算（is_cert_reviewer()） */
+    checkCertReviewer();
   }
 
   function showLogin() {
@@ -384,12 +386,13 @@ document.addEventListener("DOMContentLoaded", function () {
   /* ---------------- Tab 切换 ----------------
      每个页签进场时要做的第一件事写在 onEnter 里（拉数据、启动轮询等），
      离开实时报名时要停掉定时器，否则它会一直在后台刷新。 */
-  var TAB_IDS = ["acts", "calendar", "regs", "live", "archive", "journal", "announce", "people", "students", "hours"];
+  var TAB_IDS = ["acts", "calendar", "regs", "live", "archive", "journal", "announce", "people", "students", "hours", "cert"];
   var TAB_ENTER = {
     calendar: function () { if (isOwner()) loadAdminCalendar(true); },
     people: function () { if (isOwner()) { loadPeople(); loadManagerOptions(); } },
     students: function () { if (isOwner()) loadStudents(); },
     hours: function () { if (isOwner()) { loadInbox(); loadExternal(); } },
+    cert: function () { loadCertReviewers(); if (certReviewer) loadCertReqs(); },
     live: function () { loadLive(true); },
     archive: function () {
       if ($("arc-activity").options.length <= 1) loadArchiveOptions();
@@ -1800,7 +1803,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function loadStudents() {
     var body = $("stu-body");
-    body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-subtle);"><span class="loading"></span> 读取中…</td></tr>';
+    /* 加了「英文名」一列之后这里是 7 列 */
+    body.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-subtle);"><span class="loading"></span> 读取中…</td></tr>';
     C.listStudents().then(function (res) {
       studentRows = C.unwrap(res, "读取失败") || [];
       renderStudents();
@@ -1815,10 +1819,10 @@ document.addEventListener("DOMContentLoaded", function () {
     var q = String($("stu-search").value || "").trim().toLowerCase();
     var list = studentRows.filter(function (r) {
       if (!q) return true;
-      return [r.email, r.name, r.student_id, r.grade].join(" ").toLowerCase().indexOf(q) >= 0;
+      return [r.email, r.name, r.name_en, r.student_id, r.grade].join(" ").toLowerCase().indexOf(q) >= 0;
     });
     if (!list.length) {
-      body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-subtle);">' +
+      body.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-subtle);">' +
         (studentRows.length ? "没有匹配的人。" : "名单还是空的 —— 用上面的框批量导入。") + "</td></tr>";
       $("stu-count").textContent = "";
       return;
@@ -1827,6 +1831,8 @@ document.addEventListener("DOMContentLoaded", function () {
       return "<tr>" +
         "<td>" + esc(r.email) + "</td>" +
         "<td>" + esc(r.name) + "</td>" +
+        /* 英文名印在义工证明上（中文名前面）。没登记就只能显示中文名，学生在证明页改不了这一项 */
+        "<td>" + (r.name_en ? esc(r.name_en) : '<span class="hint">未登记</span>') + "</td>" +
         "<td>" + esc(r.grade) + "</td>" +
         "<td>" + esc(r.student_id) + "</td>" +
         "<td>" + (r.activated ? '<span class="ci-yes">已开通</span>' : '<span class="ci-no">未开通</span>') + "</td>" +
@@ -1858,11 +1864,13 @@ document.addEventListener("DOMContentLoaded", function () {
         email: email,
         name: parts[1] || null,
         grade: parts[2] || null,
-        student_id: parts[3] || null
+        student_id: parts[3] || null,
+        /* 英文名（第 5 列，可省）—— 会印在义工证明的姓名栏里 */
+        name_en: parts[4] || null
       });
     });
     if (!rows.length) {
-      alertIn($("stu-alerts"), "error", "没解析出任何有效邮箱。每行一条：邮箱, 姓名, 年级, 学号");
+      alertIn($("stu-alerts"), "error", "没解析出任何有效邮箱。每行一条：邮箱, 姓名, 年级, 学号, 英文名（可选）");
       return;
     }
     var btn = this;
@@ -2988,6 +2996,291 @@ document.addEventListener("DOMContentLoaded", function () {
       b.classList.add("is-on");
       hoursFilter = b.getAttribute("data-st") || "";
       loadExternal();
+    });
+  }
+
+  /* ============================================================
+     志愿服务记录证明 · 审核端（2026-10-02 加）
+
+     这道闸门是用户提出来的：以前学生勾完记录就能直接拿走一份成品，
+     等于任何人可以给自己开一张抬头是学校的证明。现在必须提交 → 等指定的人审核 → 通过才给下载。
+
+     ⚠️ 三处边界，改之前先看：
+       1) 通过 / 驳回只走 review_certificate_request()（SECURITY DEFINER）——
+          certificate_requests **没有** UPDATE 策略，学生改不了自己的状态，
+          审核人也只有这扇门能进。函数里再认一次 cert_reviewers 名单
+          （用户要求「不是所有人都能审核」，所以前台哪都能藏、后台这只认名单）。
+       2) cert_reviewers（指定审核人名单）只有执委会能读能写。
+          ⚠️ **owner ≠ 审核人**：执委会也得把自己加进名单才审得动。
+       3) 学生能不能下载取决于那一行的 status —— 我们不给他任何别的入口，
+          certificate.html 里也只有 approved 才会把下载按钮画出来。
+       顺带一句：每条申请里含学生证件号码，**只对审核人可见**，别往外传。
+     ============================================================ */
+  var certFilter = "pending";
+  var certReviewer = false;                 /* 我有没有审核权，服务端说了算 */
+
+  function refreshCertBadge() {
+    var badge = $("cert-badge");
+    if (!badge) return;
+    if (!certReviewer) { badge.hidden = true; return; }
+    C.pendingCertCount().then(function (res) {
+      var n = (res && typeof res.count === "number") ? res.count : 0;
+      badge.textContent = n > 99 ? "99+" : String(n);
+      badge.hidden = n <= 0;
+    }).catch(function () { /* 角标读不出来就算了 */ });
+  }
+
+  function checkCertReviewer() {
+    if (typeof C.isCertReviewer !== "function") return Promise.resolve(false);
+    return C.isCertReviewer().then(function (res) {
+      certReviewer = (C.unwrap(res, "") === true);
+      applyCertUI();
+      return certReviewer;
+    }).catch(function () {
+      certReviewer = false;
+      applyCertUI();
+      return false;
+    });
+  }
+
+  /* 页签能不能见人：指定的审核人 + 执委会（管理名单）。页面里按钮默认 hidden，
+     这里按服务端结论放出来 —— 但真正的权限仍在数据库策略里。 */
+  function applyCertUI() {
+    var btn = document.querySelector('.tab-btn[data-tab="cert"]');
+    if (btn) btn.hidden = !(certReviewer || isOwner());
+    /* 名单只有执委会能读写：审核人不是 owner 的话整块藏掉，免得他看到 42501 报错 */
+    var revPanel = $("cert-rev-panel");
+    if (revPanel) revPanel.hidden = !isOwner();
+    var selfBox = $("cert-rev-self");
+    if (selfBox) {
+      selfBox.hidden = certReviewer || !isOwner();
+      var me = $("cert-rev-me");
+      if (me) me.textContent = ME.email;
+    }
+    refreshCertBadge();
+  }
+
+  /* ---------- 审核人名单 ---------- */
+  function loadCertReviewers() {
+    if (!isOwner()) return;
+    var loading = $("cert-rev-loading"), list = $("cert-rev-list"), empty = $("cert-rev-empty");
+    loading.hidden = false; list.hidden = true; empty.hidden = true;
+    C.listCertReviewers().then(function (res) {
+      var rows = C.unwrap(res, "读取失败") || [];
+      loading.hidden = true;
+      if (!rows.length) { empty.hidden = false; applyCertUI(); return; }
+      list.hidden = false;
+      list.innerHTML =
+        '<table class="data"><thead><tr>' +
+          "<th>邮箱</th><th>备注</th><th>加入时间</th><th></th>" +
+        "</tr></thead><tbody>" +
+        rows.map(function (r) {
+          return "<tr>" +
+            "<td>" + esc(r.email) + "</td>" +
+            "<td>" + esc(r.note || "") + "</td>" +
+            "<td>" + fmtDT(r.created_at) + "</td>" +
+            '<td><div class="row-actions">' +
+              '<button type="button" class="tbl-btn danger cert-rev-del" data-e="' + esc(r.email) + '">移出名单</button>' +
+            "</div></td>" +
+          "</tr>";
+        }).join("") +
+        "</tbody></table>";
+      applyCertUI();
+    }).catch(function (err) {
+      loading.hidden = true;
+      empty.hidden = false;
+      empty.textContent = "读取失败：" + failMsg(err);
+    });
+  }
+
+  function addReviewer(email, note) {
+    if (!isOwner()) return;
+    var btn = $("cert-rev-add");
+    busyOn(btn, "添加中…");
+    C.addCertReviewer({ email: email, note: note || "", created_by: ME.email })
+      .then(function (res) {
+        if (res && res.error) throw new Error(res.error.message || "添加失败");
+        busyOff(btn);
+        alertIn($("cert-rev-alerts"), "ok", "已把 <b>" + esc(email) + "</b> 加进审核人名单。");
+        $("cert-rev-email").value = "";
+        $("cert-rev-note").value = "";
+        loadCertReviewers();
+        checkCertReviewer().then(function () {
+          if (certReviewer) loadCertReqs();
+        });
+      })
+      .catch(function (err) {
+        busyOff(btn);
+        alertIn($("cert-rev-alerts"), "error", failMsg(err, "添加失败"));
+      });
+  }
+
+  var certRevAdd = $("cert-rev-add");
+  if (certRevAdd) {
+    certRevAdd.addEventListener("click", function () {
+      var email = ($("cert-rev-email").value || "").trim().toLowerCase();
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+        alertIn($("cert-rev-alerts"), "error", "邮箱格式不对 —— 要能登录后台的完整邮箱。");
+        return;
+      }
+      clear($("cert-rev-alerts"));
+      addReviewer(email, ($("cert-rev-note").value || "").trim());
+    });
+  }
+
+  var certRevAddMe = $("cert-rev-addme");
+  if (certRevAddMe) {
+    certRevAddMe.addEventListener("click", function () {
+      if (!ME.email) return;
+      clear($("cert-rev-alerts"));
+      addReviewer(ME.email, "执委会");
+    });
+  }
+
+  var certRevList = $("cert-rev-list");
+  if (certRevList) {
+    certRevList.addEventListener("click", function (e) {
+      var t = e.target;
+      if (!t || t.nodeType !== 1 || !t.closest) return;
+      var del = t.closest(".cert-rev-del");
+      if (!del) return;
+      var email = del.getAttribute("data-e");
+      if (!window.confirm("把 " + email + " 移出审核人名单？移出之后他就点不了通过/驳回了。")) return;
+      del.disabled = true;
+      C.removeCertReviewer(email).then(function (res) {
+        if (res && res.error) throw new Error(res.error.message || "移除失败");
+        loadCertReviewers();
+        checkCertReviewer();
+      }).catch(function (err) {
+        del.disabled = false;
+        alertIn($("cert-rev-alerts"), "error", failMsg(err, "移除失败"));
+      });
+    });
+  }
+
+  /* ---------- 申请列表 ---------- */
+  function loadCertReqs() {
+    var loading = $("cert-loading"), list = $("cert-list"), empty = $("cert-empty");
+    loading.hidden = false; list.hidden = true; empty.hidden = true;
+    C.listCertRequests(certFilter).then(function (res) {
+      var rows = C.unwrap(res, "读取失败") || [];
+      loading.hidden = true;
+      refreshCertBadge();
+      if (!rows.length) { empty.hidden = false; return; }
+      list.hidden = false;
+      list.innerHTML = rows.map(certHTML).join("");
+    }).catch(function (err) {
+      loading.hidden = true;
+      empty.hidden = false;
+      empty.textContent = "读取失败：" + failMsg(err) +
+        "（如果你不在审核人名单里，这张列表是读不到的）";
+    });
+  }
+
+  function certHTML(r) {
+    var nm = (r.student_name_en ? r.student_name_en + " " : "") + (r.student_name || "");
+    var picks = r.picks && r.picks.length ? r.picks : [];
+    var detail = picks.length
+      ? '<div class="xt-sub">明细：' + picks.map(function (p) {
+          return esc((p.date || "日期待定") + " " + (p.title || "（未标题）") + " " +
+            Number(p.hours || 0) + "h");
+        }).join("；") + "</div>"
+      : '<div class="xt-sub">⚠️ 这条没带勾选项的明细。</div>';
+
+    var done = "";
+    if (r.status !== "pending" && r.status !== "withdrawn") {
+      done = '<div class="xt-done">' +
+        (r.status === "approved" ? "✅ 已通过 —— 他现在能下载 PDF 了" : "⛔ 已驳回") +
+        " · " + fmtWhen(r.reviewed_at) +
+        (r.reviewer_email ? " · " + esc(r.reviewer_email) : "") +
+        (r.review_note ? "<br />意见：" + esc(r.review_note) : "") +
+        "</div>";
+    }
+    if (r.status === "withdrawn") {
+      done = '<div class="xt-done">↩️ 学生自己撤回了这条申请。</div>';
+    }
+
+    var acts = "";
+    if (r.status === "pending") {
+      acts =
+        '<input class="xt-note" type="text" placeholder="驳回时写一句原因（学生会看到）" />' +
+        '<button type="button" class="btn btn-primary ct-ap" data-id="' + r.id + '">通过</button>' +
+        '<button type="button" class="btn btn-secondary ct-rj" data-id="' + r.id + '">驳回</button>';
+    }
+
+    return '<div class="xt" data-id="' + r.id + '">' +
+      '<div class="xt-head">' +
+        '<div class="xt-who">' +
+          '<div class="xt-title">' + esc(nm.trim() || "（名单里没有姓名）") + "</div>" +
+          '<div class="xt-sub">' + esc(r.student_email) + " · 提交于 " + fmtWhen(r.created_at) + "</div>" +
+          '<div class="xt-sub">' + esc(r.id_type || "证件类型未记") + " · " + esc(r.id_no || "证件号未记") +
+            " · 出具日期 " + esc(String(r.issue_date || "").slice(0, 10)) + "</div>" +
+          detail +
+          (r.content ? '<div class="xt-sub">服务内容：' + esc(r.content).replace(/\n/g, "；") + "</div>" : "") +
+        "</div>" +
+        '<div class="xt-hours">' + Number(r.hours) + " 小时</div>" +
+      "</div>" +
+      '<div class="xt-actions">' + acts + "</div>" +
+      done +
+    "</div>";
+  }
+
+  var certListBox = $("cert-list");
+  if (certListBox) {
+    certListBox.addEventListener("click", function (e) {
+      var t = e.target;
+      if (!t || t.nodeType !== 1 || !t.closest) return;
+
+      var ap = t.closest(".ct-ap");
+      var rj = t.closest(".ct-rj");
+      if (!ap && !rj) return;
+      if (!certReviewer) {
+        alertIn($("cert-alerts"), "error",
+          "你不在审核人名单里，改不了这条申请。请让执委会到本页上方的名单里把你加进去。");
+        return;
+      }
+      var id = (ap || rj).getAttribute("data-id");
+      var card = (ap || rj).closest(".xt");
+      var noteEl = card ? card.querySelector(".xt-note") : null;
+      var note = noteEl ? (noteEl.value || "").trim() : "";
+
+      if (rj && !note) {
+        if (!window.confirm("不写驳回原因的话，学生只会看到「已驳回」，不知道为什么。确定不写吗？")) return;
+      }
+      if (ap && !window.confirm("通过后他就能下载这份 PDF 了（抬头是学校）。确定吗？")) return;
+
+      busyOn(ap || rj, "处理中…");
+      C.reviewCertRequest(id, !!ap, note).then(function (res) {
+        busyOff(ap || rj);
+        var out = (res && res.data) || res;
+        if (!out || out.ok === false) {
+          throw new Error((out && out.error === "already_done" ? "这条已经被别人处理过了 —— 刷新看看最新状态。"
+            : out && out.error === "not_reviewer" ? "你不在审核人名单里。"
+            : out && out.error === "not_found" ? "找不到这条申请。"
+            : "写入失败"));
+        }
+        alertIn($("cert-alerts"), "ok", ap
+          ? "已通过 —— 该同学现在可以下载 PDF 了。"
+          : "已驳回 —— 学生会看到你写的理由，改完可以重新提交。");
+        loadCertReqs();
+      }).catch(function (err) {
+        busyOff(ap || rj);
+        alertIn($("cert-alerts"), "error", failMsg(err, "审核失败"));
+      });
+    });
+  }
+
+  var certFilterBox = $("cert-filter");
+  if (certFilterBox) {
+    certFilterBox.addEventListener("click", function (e) {
+      var b = e.target && e.target.closest ? e.target.closest(".seg-btn") : null;
+      if (!b) return;
+      Array.prototype.forEach.call(certFilterBox.querySelectorAll(".seg-btn"), function (x) {
+        x.classList.remove("is-on");
+      });
+      b.classList.add("is-on");
+      certFilter = b.getAttribute("data-st") || "";
+      loadCertReqs();
     });
   }
 
