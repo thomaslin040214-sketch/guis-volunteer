@@ -110,10 +110,32 @@
 .ci-hours-hint { flex: 1 1 14rem; min-width: 0; font-size: 0.75rem; color: var(--text-subtle); line-height: 1.6; }
 
 .act-evnote { font-size: 0.76rem; color: var(--text-subtle); }
-.cal-new-row { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.9rem; }
+.cal-new-row { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.9rem; align-items: center; }
+.cal-new-row .hint { margin: 0; }
+
+/* 「活动日历」页签里那张校内日程表单：默认藏起来，点「+ 新建校内日程」展开。
+   ⚠️ 下面给了 display，就必须补 [hidden]，否则收不回去。 */
+#cal-event-panel {
+  margin-top: 1rem; padding: 1rem 1.1rem 1.2rem;
+  border: 1px solid var(--hairline-strong); border-radius: var(--radius-lg);
+  background: var(--bg-soft, #F7F9FC);
+}
+#cal-event-panel[hidden] { display: none !important; }
+.cal-event-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 1rem; margin-bottom: 0.9rem;
+  padding-bottom: 0.7rem; border-bottom: 1px solid var(--hairline);
+}
+.cal-event-head strong { font-size: 0.98rem; }
+.cal-event-head + #cev-alerts:empty { display: none; }
+#cal-event-panel .form-grid { margin-top: 0.2rem; }
+#cal-event-panel .form-actions { margin-top: 1.1rem; }
+
+/* 日历本体 + 选中某天后的编辑区，包一层好让上面表单与它之间有稳定间距 */
+.cal-admin-wrap { margin-top: 1.2rem; }
 
 /* ⚠️ .field 自带 display:flex，会把 hidden 属性盖掉（UA 的 [hidden] 优先级更低）。
-   「校内日程」要靠 hidden 收起报名相关的字段，所以这里必须显式补一条。 */
+   凡是给 .field 加 hidden 的地方都靠这条兜底，别删。 */
 .field[hidden] { display: none !important; }
 /* 类型：义工活动 vs 校内日程 */
 .seg { display: flex; gap: 0.45rem; flex-wrap: wrap; }
@@ -156,8 +178,11 @@
 .range-box .range-cap { font-size: 0.73rem; color: var(--text-subtle); }
 .range-box .range-cap.start { grid-area: 1 / 1; }
 .range-box .range-cap.end { grid-area: 1 / 3; }
-.range-box #a-starts { grid-area: 2 / 1; }
-.range-box #a-ends { grid-area: 2 / 3; }
+/* 「活动管理」的两个时间点；下面那两个是「活动日历」里校内日程表单的，同款布局 */
+.range-box #a-starts,
+.range-box #cev-starts { grid-area: 2 / 1; }
+.range-box #a-ends,
+.range-box #cev-ends { grid-area: 2 / 3; }
 .range-box .range-dash { grid-area: 2 / 2; color: var(--text-subtle); font-weight: 700; }
 .range-box input {
   width: 100%; border: 0 !important; padding: 0; background: transparent;

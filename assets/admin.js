@@ -407,6 +407,12 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!which) return;
     if (TAB_LEAVE[currentTab]) TAB_LEAVE[currentTab]();
     currentTab = which;
+    /* 高亮也在这里同步：除了点按钮，还有别的地方会切页签
+       （日历某天点「新建活动」、列表里点日程的「编辑」），
+       只靠 click 监听的话那些路径会把按钮留在旧页签上。 */
+    Array.prototype.forEach.call(document.querySelectorAll(".tab-btn"), function (b) {
+      b.classList.toggle("is-on", b.getAttribute("data-tab") === which);
+    });
     TAB_IDS.forEach(function (id) {
       var el = $("tab-" + id);
       if (el) el.hidden = id !== which;
@@ -415,11 +421,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   Array.prototype.forEach.call(document.querySelectorAll(".tab-btn"), function (b) {
-    b.addEventListener("click", function () {
-      Array.prototype.forEach.call(document.querySelectorAll(".tab-btn"), function (x) { x.classList.remove("is-on"); });
-      b.classList.add("is-on");
-      showTab(b.getAttribute("data-tab"));
-    });
+    b.addEventListener("click", function () { showTab(b.getAttribute("data-tab")); });
   });
 
   /* ================= 编号 / 类型 / 职位（2026-10-02 加） =================
@@ -450,6 +452,14 @@ document.addEventListener("DOMContentLoaded", function () {
       "T" + pad(d.getHours()) + ":" + pad(d.getMinutes());
   }
 
+  /* 今天 → "YYYY-MM-DD"。
+     ⚠️ 必须本地时间拼：toISOString().slice(0,10) 走的是 UTC，
+        东八区在 00:00–08:00 之间会算成昨天，新建日程就会默认落在前一天。 */
+  function todayYmd() {
+    var d = new Date();
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  }
+
   /* 下一个流水号：两位年份 + 三位序号（26001、26002…）。
      拿本地已加载的同前缀活动算最大值 +1，纯粹是省手 ——
      真重号也炸不了：数据库上有 partial unique index，重复会报 23505，届时改一下就行。 */
@@ -465,8 +475,10 @@ document.addEventListener("DOMContentLoaded", function () {
     return yy + pad3(max + 1);
   }
 
-  /* ---------------- 类型切换 ---------------- */
-  var currentKind = "signup";
+  /* ---------------- 全天 / 时间格式 ----------------
+     ⚠️ 原来的「类型切换」（义工活动 / 校内日程）2026-10-02 撤了：
+     这张表只建义工活动，校内日程挪到「活动日历」页签里单独建（见 openEventForm）。
+     所以这里不再有 currentKind，也没有 .only-signup 的收放。 */
 
   /* 「全天」：勾上之后两个时间框从 datetime-local 变成 date（只要日期），
      跟苹果日历一样先决定是不是全天，再填开始 / 结束。
@@ -512,40 +524,6 @@ document.addEventListener("DOMContentLoaded", function () {
   var allDayBox = $("a-all-day");
   if (allDayBox) {
     allDayBox.addEventListener("change", function () { setAllDay(allDayBox.checked); });
-  }
-
-  function setKind(kind) {
-    currentKind = kind === "event" ? "event" : "signup";
-    var isEv = currentKind === "event";
-    Array.prototype.forEach.call(document.querySelectorAll("#a-kind-group .seg-btn"), function (b) {
-      b.classList.toggle("is-on", b.getAttribute("data-kind") === currentKind);
-    });
-    /* ⚠️ .field 自带 display:flex，会盖掉 hidden 的 UA 规则，
-       app.css 里补了 .field[hidden]{display:none} 才收得住 —— 别删那条。 */
-    Array.prototype.forEach.call(document.querySelectorAll(".only-signup"), function (el) {
-      el.hidden = isEv;
-    });
-    /* 校内日程按苹果日历那套建法：名称 + 地点 + 时间 + 备注，
-       板块 / 编号 / 名额 / 时长 / 职位 / 负责老师整段收起（上面 .only-signup 干的事）。 */
-    var tl = $("a-title-label");
-    if (tl) tl.innerHTML = (isEv ? "日程名称" : "活动名称") + ' <span class="req">*</span>';
-    var nl = $("a-notes-label");
-    if (nl) nl.textContent = isEv ? "备注（可选）" : "备注（排班说明、集合地点等）";
-    var titleIn = $("a-title");
-    if (titleIn) titleIn.placeholder = isEv ? "例如：秋季运动会" : "例如：教务处考场布置";
-    var t = $("act-form-title");
-    if (t) t.textContent = editingId ? ("编辑" + (isEv ? "校内日程" : "活动")) : (isEv ? "新建校内日程" : "新建义工活动");
-    var submit = $("act-submit");
-    if (submit && !editingId) submit.textContent = isEv ? "创建日程" : "创建活动";
-  }
-
-  var kindGroup = $("a-kind-group");
-  if (kindGroup) {
-    kindGroup.addEventListener("click", function (e) {
-      var b = e.target.closest ? e.target.closest(".seg-btn") : null;
-      if (!b) return;
-      setKind(b.getAttribute("data-kind"));
-    });
   }
 
   /* ---------------- 编号联动 ---------------- */
@@ -820,6 +798,8 @@ document.addEventListener("DOMContentLoaded", function () {
     if (editId) {
       var a = myActivities.filter(function (x) { return String(x.id) === String(editId); })[0];
       if (!a) return;
+      /* 校内日程不在这张表里改 —— 它没有报名字段，改到「活动日历」页签的日程表单去 */
+      if (a.kind === "event") { openEventForm(a); return; }
       editingId = a.id;
       $("act-form-title").textContent = "编辑活动";
       $("act-submit").textContent = "保存修改";
@@ -844,7 +824,6 @@ document.addEventListener("DOMContentLoaded", function () {
       $("a-code-prefix").dataset.touched =
         (a.code_prefix && catPrefix($("a-category").value) !== a.code_prefix) ? "1" : "0";
       $("a-show-pos").checked = a.show_positions !== false;
-      setKind(a.kind === "event" ? "event" : "signup");
       $("a-status").value = a.status || "open";
       $("a-notes").value = a.notes || "";
       $("a-manager").value = a.manager_email || "";
@@ -915,7 +894,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function resetForm() {
     editingId = null;
-    setKind("signup");
     $("act-reset").hidden = true;
     $("act-form").reset();
     $("a-capacity").value = 30;
@@ -947,7 +925,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     /* ⚠️ a-contact（负责人联系方式）2026-10-02 起整段删掉了：表单里没有这个输入框了，
        所以 payload 里也别再写 contact —— 写了会把旧数据覆盖成空。 */
-    var isEvent = currentKind === "event";
     var span = startEndPayload();
     var payload = {
       title: title,
@@ -959,21 +936,19 @@ document.addEventListener("DOMContentLoaded", function () {
       all_day: allDayOn(),
       notes: $("a-notes").value.trim() || null,
       hours: parseFloat($("a-hours").value),
-      /* 校内日程不编号：编号是给要报名的活动排的，日程只有名字和时间 */
-      code_prefix: isEvent ? null : ($("a-code-prefix").value.trim().toUpperCase() || null),
-      code_no: isEvent ? null : ($("a-code-no").value.trim() || null),
-      kind: isEvent ? "event" : "signup",
-      show_positions: isEvent ? false : $("a-show-pos").checked
+      code_prefix: $("a-code-prefix").value.trim().toUpperCase() || null,
+      code_no: $("a-code-no").value.trim() || null,
+      /* 这张表只出义工活动；校内日程走 saveEvent()，那边固定写 kind:"event" */
+      kind: "signup",
+      show_positions: $("a-show-pos").checked,
+      signup_opens_at: fromLocalInput($("a-opens").value),
+      capacity: parseInt($("a-capacity").value, 10) || null,
+      /* 名额满了还能收多少人进 waiting list；0 = 满了直接停 */
+      waitlist_capacity: Math.max(0, parseInt($("a-waitlist").value, 10) || 0),
+      status: $("a-status").value,
+      manager_email: $("a-manager").value || null
     };
     if (isNaN(payload.hours)) payload.hours = 2;
-    if (!isEvent) {
-      payload.signup_opens_at = fromLocalInput($("a-opens").value);
-      payload.capacity = parseInt($("a-capacity").value, 10) || null;
-      /* 名额满了还能收多少人进 waiting list；0 = 满了直接停 */
-      payload.waitlist_capacity = Math.max(0, parseInt($("a-waitlist").value, 10) || 0);
-      payload.status = $("a-status").value;
-      payload.manager_email = $("a-manager").value || null;
-    }
 
     var btn = $("act-submit");
     btn.disabled = true;
@@ -990,13 +965,13 @@ document.addEventListener("DOMContentLoaded", function () {
         return null;
       }
       var savedId = editingId || out[0].id;
-      /* 职位要在活动之后写（要用到 activity_id）；校内日程没有职位 */
-      return (isEvent ? Promise.resolve(0) : syncPositions(savedId)).then(function () { return savedId; });
+      /* 职位要在活动之后写（要用到 activity_id） */
+      return syncPositions(savedId).then(function () { return savedId; });
     }).then(function (savedId) {
       if (savedId == null) return;
       btn.disabled = false; btn.textContent = label;
       alertIn($("act-alerts"), "ok",
-        editingId ? "已保存修改。" : (isEvent ? "校内日程已创建，会显示在日历里。" : "活动已创建，学生现在可以在报名页看到它。"));
+        editingId ? "已保存修改。" : "活动已创建，学生现在可以在报名页看到它。");
       resetForm();
       loadActivities();
       loadActivityOptions();
@@ -1091,14 +1066,16 @@ document.addEventListener("DOMContentLoaded", function () {
     wireAdminDayButtons();
   }
 
-  /* 日历底下那排「在这一天新建 …」—— 活动和校内日程两个入口，
+  /* 日历底下那排「在这一天新建 …」：
+     活动 → 把日期带进「活动管理」的表单（那边建）；
+     日程 → 就地展开下面那张日程表单，日期直接填好。
      ⚠️ id 只能是页面上唯一的元素，所以按钮改用 class + data-day 定位。 */
   function newDayButtons(ymd) {
     return '<div class="cal-new-row">' +
-      '<button type="button" class="btn btn-secondary btn-sm cal-admin-new" data-day="' + esc(ymd) + '" data-kind="signup">' +
+      '<button type="button" class="btn btn-secondary btn-sm cal-admin-new" data-day="' + esc(ymd) + '">' +
         "在这一天新建活动</button>" +
-      '<button type="button" class="btn btn-secondary btn-sm cal-admin-new" data-day="' + esc(ymd) + '" data-kind="event">' +
-        "在这一天新建校内日程</button>" +
+      '<button type="button" class="btn btn-secondary btn-sm cal-admin-new cal-ev-new" data-day="' + esc(ymd) + '">' +
+        "在这一天新建日程</button>" +
       "</div>";
   }
 
@@ -1113,7 +1090,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
       var newBtn = e.target.closest ? e.target.closest(".cal-admin-new") : null;
       if (newBtn) {
-        newActivityOn(newBtn.getAttribute("data-day"), newBtn.getAttribute("data-kind"));
+        var day = newBtn.getAttribute("data-day");
+        if (newBtn.classList.contains("cal-ev-new")) openEventForm(null, day);
+        else newActivityOn(day);
         return;
       }
     });
@@ -1168,28 +1147,154 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  /* 在选中的这天新建东西：把开始时间填进「活动管理」的表单并切过去。
-     kind = 'signup' 义工活动 / 'event' 校内日程 —— 日历里两种都能建，
-     这也是「日程不一定需要报名」这条需求的入口。 */
-  function newActivityOn(ymd, kind) {
+  /* 在选中的这天新建义工活动：把开始时间填进「活动管理」的表单并切过去。
+     （校内日程不走这里，见下面的 openEventForm —— 它就地在日历页展开。） */
+  function newActivityOn(ymd) {
     if (!isOwner()) return;
     resetForm();
     showTab("acts");
-    Array.prototype.forEach.call(document.querySelectorAll(".tab-btn"), function (x) {
-      x.classList.toggle("is-on", x.getAttribute("data-tab") === "acts");
-    });
-    setKind(kind === "event" ? "event" : "signup");
     var starts = $("a-starts");
     if (starts) {
       starts.value = ymd ? ymd + "T09:00" : "";
       var ends = $("a-ends");
-      /* 校内日程通常是一整段活动（早会 / 讲座），给个两小时的默认区间 */
-      if (ends) ends.value = ymd ? ymd + "T11:00" : "";
+      if (ends) ends.value = ymd ? ymd + "T12:00" : "";
       var formPanel = $("act-form-panel");
       if (formPanel) formPanel.scrollIntoView({ behavior: "smooth", block: "start" });
       starts.focus();
     }
   }
+
+  /* ================= 校内日程（在「活动日历」页签里就地建 / 改） =================
+     为什么挪出「活动管理」：它没有名额、没有时长、没有编号、不用指定负责老师，
+     和义工活动除了都占日历格子之外几乎不是一种东西，混在一张表单里只会互相干扰。
+     按苹果日历那套：名称 + 地点 + 全天/起止 + 备注，四项就够。 */
+
+  var editingEventId = null;
+
+  function allDayOnCev() { var c = $("cev-all-day"); return !!(c && c.checked); }
+
+  function setAllDayCev(on) {
+    var s = $("cev-starts"), e = $("cev-ends");
+    if (!s || !e) return;
+    var vs = s.value, ve = e.value;
+    if (on) {
+      s.type = "date"; e.type = "date";
+      s.value = dtToDate(vs); e.value = dtToDate(ve);
+    } else {
+      s.type = "datetime-local"; e.type = "datetime-local";
+      s.value = dateToDt(dtToDate(vs), "T09:00"); e.value = dateToDt(dtToDate(ve), "T11:00");
+    }
+    var cs = $("cev-cap-start"), ce = $("cev-cap-end");
+    if (cs) cs.textContent = on ? "开始日期" : "开始时间";
+    if (ce) ce.textContent = on ? "结束日期" : "结束时间";
+  }
+
+  /* ev = 要改的日程（null 就是新建）；ymd = 从日历某天点进来时预填的日期 */
+  function openEventForm(ev, ymd) {
+    if (!isOwner()) return;
+    /* 从「活动列表」的「编辑」进来时人还停在别的页签上，先切到日历 ——
+       showTab 会顺带跑 TAB_ENTER.calendar（= loadAdminCalendar），不需要再手动拉一次。 */
+    if (ev) showTab("calendar");
+
+    var panel = $("cal-event-panel");
+    if (!panel) return;
+
+    editingEventId = ev ? ev.id : null;
+    $("cev-head").textContent = ev ? "编辑校内日程" : "新建校内日程";
+    $("cev-save").textContent = ev ? "保存修改" : "创建日程";
+    $("cev-name").value = ev ? (ev.title || "") : "";
+    $("cev-location").value = ev ? (ev.location || "") : "";
+    $("cev-notes").value = ev ? (ev.notes || "") : "";
+
+    /* 全天要先设勾选再换框类型：setAllDayCev 会把值截成日期 */
+    var allDay = ev ? !!ev.all_day : false;
+    $("cev-all-day").checked = allDay;
+    var s = $("cev-starts"), e = $("cev-ends");
+    if (ev) {
+      s.value = toLocalInput(ev.starts_at);
+      e.value = toLocalInput(ev.ends_at);
+    } else {
+      s.value = ymd ? ymd + "T09:00" : "";
+      e.value = ymd ? ymd + "T11:00" : "";
+    }
+    setAllDayCev(allDay);
+
+    clear($("cev-alerts"));
+    panel.hidden = false;
+    panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    $("cev-name").focus();
+  }
+
+  function closeEventForm() {
+    var panel = $("cal-event-panel");
+    if (panel) panel.hidden = true;
+    editingEventId = null;
+    clear($("cev-alerts"));
+  }
+
+  function saveEvent() {
+    var name = ($("cev-name").value || "").trim();
+    if (!name) { alertIn($("cev-alerts"), "error", "日程名称是必填的。"); return; }
+
+    var allDay = allDayOnCev();
+    var sv = $("cev-starts").value, ev2 = $("cev-ends").value;
+    var starts, ends;
+    if (allDay) {
+      var sd = dtToDate(sv), ed = dtToDate(ev2) || dtToDate(sv);
+      starts = sd ? sd + "T00:00" : null;
+      ends = ed ? ed + "T23:59" : null;
+    } else {
+      starts = fromLocalInput(sv);
+      ends = fromLocalInput(ev2);
+    }
+    if (!starts) { alertIn($("cev-alerts"), "error", "请填开始时间。"); return; }
+
+    var payload = {
+      title: name,
+      location: ($("cev-location").value || "").trim() || null,
+      notes: ($("cev-notes").value || "").trim() || null,
+      starts_at: starts,
+      ends_at: ends,
+      all_day: allDay,
+      /* 日程固定这四项：不编号、不占名额、不计时长、不用负责老师 */
+      kind: "event",
+      code_prefix: null,
+      code_no: null,
+      show_positions: false
+    };
+
+    var btn = $("cev-save");
+    busyOn(btn, "保存中…");
+    clear($("cev-alerts"));
+    var req = editingEventId ? C.updateActivity(editingEventId, payload) : C.createActivity(payload);
+
+    req.then(function (res) {
+      var out = C.unwrap(res, "保存失败") || [];
+      busyOff(btn);
+      if (!out.length) {
+        alertIn($("cev-alerts"), "error",
+          "没有改动 —— 服务端没有写入任何一行。只有执委会能新建或修改日程。");
+        return;
+      }
+      var wasEdit = !!editingEventId;
+      closeEventForm();
+      alertIn($("cal-admin-alerts"), "ok", wasEdit ? "日程已保存。" : "校内日程已创建，会显示在日历里。");
+      loadAdminCalendar(true);
+      loadActivities();
+    }).catch(function (err) {
+      busyOff(btn);
+      alertIn($("cev-alerts"), "error", failMsg(err, "保存失败"));
+    });
+  }
+
+  $("cal-new-event").addEventListener("click", function () {
+    var panel = $("cal-event-panel");
+    if (panel && !panel.hidden) { closeEventForm(); return; }   /* 再点一次收起 */
+    openEventForm(null, todayYmd());
+  });
+  $("cev-cancel").addEventListener("click", closeEventForm);
+  $("cev-save").addEventListener("click", saveEvent);
+  $("cev-all-day").addEventListener("change", function () { setAllDayCev($("cev-all-day").checked); });
 
   $("cal-refresh").addEventListener("click", function () { loadAdminCalendar(true); });
 

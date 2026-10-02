@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-ver="20261002k">
+<html lang="zh-CN" data-ver="20261002l">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,7 +10,7 @@
    于是点站内链接（全是裸路径）进去时整页退回旧设计。
    这里比对 <html data-ver>：不是当前版本就带查询串重拉一次（查询串必定回源）。 */
 (function () {
-  var VER = "20261002k";
+  var VER = "20261002l";
   try {
     var el = document.documentElement;
     var healed = /[?&]_v=/.test(location.search);
@@ -49,8 +49,8 @@
 <meta name="description" content="GUIS 义工组织后台管理：创建义工活动、查看报名名单、导出 Excel。" />
 <meta name="theme-color" content="#FFFFFF" />
 <meta name="robots" content="noindex, nofollow" />
-<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261002k" />
-<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261002k" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261002l" />
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261002l" />
 <!-- 品牌标志兜底样式（内联，随 HTML 一起下发）。
      即使 assets/site.css 被浏览器缓存成旧版本，标志也不会按图片原始尺寸撑破布局。
      这里只设尺寸上限（max-*），正常加载 site.css 时这些上限都不会生效。 -->
@@ -74,8 +74,8 @@
   .hero-brand .hero-va{max-height:40px}
 }
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20261002k" />
-<link rel="stylesheet" href="assets/app.css?v=20261002k" />
+<link rel="stylesheet" href="assets/site.css?v=20261002l" />
+<link rel="stylesheet" href="assets/app.css?v=20261002l" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
@@ -265,7 +265,7 @@
             <div class="panel-head">
               <div>
                 <h2 id="act-form-title">新建义工活动</h2>
-                <div class="sub">创建后学生即可在报名页看到并报名；切到「校内日程」就只剩名称、地点、时间、备注四项，像日历那样建。</div>
+                <div class="sub">创建后学生即可在报名页看到并报名。校内日程不在这里建 —— 去「活动日历」页签。</div>
               </div>
               <button type="button" class="link-btn" id="act-reset" hidden>取消编辑</button>
             </div>
@@ -273,19 +273,11 @@
               <div id="act-alerts"></div>
               <form id="act-form" novalidate>
                 <div class="form-grid">
-                  <!-- 类型摆在最前面：选了「校内日程」之后，报名相关的字段会整段收起来
-                       （.only-signup 这一批），避免出现「日程却有报名名额」的怪组合。
-                       ⚠️ 隐藏用 hidden 属性，但 .field 自带 display:flex 会盖掉它的 UA 规则，
-                          所以 app.css 里补了 .field[hidden]{display:none} —— 别删。 -->
-                  <div class="field span-2">
-                    <label>这条记录的类型</label>
-                    <div class="seg" id="a-kind-group">
-                      <button type="button" class="seg-btn is-on" data-kind="signup">义工活动 · 可报名</button>
-                      <button type="button" class="seg-btn" data-kind="event">校内日程 · 不需要报名</button>
-                    </div>
-                    <span class="hint">义工活动会出现在报名页和日历里；校内日程只出现在日历里，给全校看时间用。</span>
-                  </div>
-
+                  <!-- 这张表只建「义工活动」。原来的「类型」分段开关（义工活动 / 校内日程）
+                       2026-10-02 撤掉了 —— 校内日程改到「活动日历」页签里单独建，
+                       免得一个表单既管报名又管日历，字段互相收放还容易出「日程却有名额」的怪组合。
+                       ⚠️ 下面 .only-signup 这批现在恒常显示，留着只是为了标出「这些是报名活动才有的字段」。
+                          另有 .field[hidden]{display:none} 那条 CSS 也别删，日历里的表单还在用它。 -->
                   <div class="field span-2">
                     <label for="a-title" id="a-title-label">活动名称 <span class="req">*</span></label>
                     <input id="a-title" type="text" required placeholder="例如：教务处考场布置" />
@@ -435,16 +427,65 @@
             <div class="panel-head">
               <div>
                 <h2>活动日历</h2>
-                <div class="sub">点日历上的任意一天，在下面改这一天的活动开始 / 结束 / 报名截止时间。只有执委会能改。</div>
+                <div class="sub">点日历上的任意一天，在下面改这一天的开始 / 结束时间；校内日程也在这里建。只有执委会能改。</div>
               </div>
               <button type="button" class="link-btn" id="cal-refresh">刷新</button>
             </div>
             <div class="panel-body">
               <div id="cal-admin-alerts"></div>
-              <div id="cal-admin-loading" class="empty"><span class="loading"></span> 正在读取…</div>
-              <div id="cal-admin-root" hidden></div>
-              <!-- 选中某天后的编辑区，由 admin.js 渲染 -->
-              <div id="cal-admin-day" hidden style="margin-top:1.5rem;"></div>
+
+              <!-- 校内日程：只进日历，学生看时间用。名字、地点、时间、备注四项，
+                   没有名额 / 时长 / 编号 / 负责老师这些报名才需要的字段。 -->
+              <div class="cal-new-row">
+                <button type="button" class="btn btn-secondary btn-sm" id="cal-new-event">+ 新建校内日程</button>
+                <span class="hint">建完只出现在日历里，学生看时间用；不占名额、不计义工小时。</span>
+              </div>
+              <div id="cal-event-panel" hidden>
+                <div class="cal-event-head">
+                  <strong id="cev-head">新建校内日程</strong>
+                  <button type="button" class="link-btn" id="cev-cancel">取消</button>
+                </div>
+                <div id="cev-alerts"></div>
+                <div class="form-grid">
+                  <div class="field span-2">
+                    <label for="cev-name">日程名称 <span class="req">*</span></label>
+                    <input id="cev-name" type="text" placeholder="例如：秋季运动会 / 家长开放日" />
+                  </div>
+                  <div class="field">
+                    <label for="cev-location">地点</label>
+                    <input id="cev-location" type="text" placeholder="例如：体育馆 / 大礼堂" />
+                  </div>
+                  <div class="field">
+                    <label for="cev-starts">时间 <span class="req">*</span></label>
+                    <label class="check-line">
+                      <input type="checkbox" id="cev-all-day" />
+                      全天（不写几点，日历里整天都占着）
+                    </label>
+                    <div class="range-box">
+                      <span class="range-cap start" id="cev-cap-start">开始时间</span>
+                      <input id="cev-starts" type="datetime-local" />
+                      <span class="range-dash" aria-hidden="true">–</span>
+                      <span class="range-cap end" id="cev-cap-end">结束时间</span>
+                      <input id="cev-ends" type="datetime-local" />
+                    </div>
+                    <span class="hint">跨天的话，日历里每一天都会画出来。</span>
+                  </div>
+                  <div class="field span-2">
+                    <label for="cev-notes">备注</label>
+                    <textarea id="cev-notes" placeholder="例如：全体师生参加，无需集合点名"></textarea>
+                  </div>
+                </div>
+                <div class="form-actions">
+                  <button type="button" class="btn btn-primary" id="cev-save">创建日程</button>
+                </div>
+              </div>
+
+              <!-- 日历本体 + 选中某天后的编辑区（编辑区由 admin.js 渲染） -->
+              <div class="cal-admin-wrap">
+                <div id="cal-admin-loading" class="empty"><span class="loading"></span> 正在读取…</div>
+                <div id="cal-admin-root" hidden></div>
+                <div id="cal-admin-day" hidden style="margin-top:1.5rem;"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -919,17 +960,17 @@
 <!-- 导出 Excel：ExcelJS 才能往表里插 logo（SheetJS 社区版写不了图片），加载失败时用 SheetJS 降级 -->
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="assets/cloud-config.js?v=20261002k"></script>
-<script src="assets/cloud.js?v=20261002k"></script>
-<script src="assets/navfit.js?v=20261002k"></script>
-<script src="assets/session.js?v=20261002k"></script>
-<script src="assets/qr.js?v=20261002k"></script>
-<script src="assets/board.js?v=20261002k"></script>
-<script src="assets/calendar.js?v=20261002k"></script>
-<script src="assets/export.js?v=20261002k"></script>
-<script src="assets/editor.js?v=20261002k"></script>
-<script src="assets/feed.js?v=20261002k"></script>
-<script src="assets/backup.js?v=20261002k"></script>
-<script src="assets/admin.js?v=20261002k"></script>
+<script src="assets/cloud-config.js?v=20261002l"></script>
+<script src="assets/cloud.js?v=20261002l"></script>
+<script src="assets/navfit.js?v=20261002l"></script>
+<script src="assets/session.js?v=20261002l"></script>
+<script src="assets/qr.js?v=20261002l"></script>
+<script src="assets/board.js?v=20261002l"></script>
+<script src="assets/calendar.js?v=20261002l"></script>
+<script src="assets/export.js?v=20261002l"></script>
+<script src="assets/editor.js?v=20261002l"></script>
+<script src="assets/feed.js?v=20261002l"></script>
+<script src="assets/backup.js?v=20261002l"></script>
+<script src="assets/admin.js?v=20261002l"></script>
 </body>
 </html>

@@ -317,7 +317,7 @@ window.SITE_I18N = {
     "cal.place": "地点",
     "cal.tbd": "待定",
     "cal.goSignup": "去报名",
-    /* 2026-10-02：校内日程（不需要报名的日历条目） */
+    /* 2026-10-02：校内日程（只占日历格子、不进报名列表的条目） */
     "cal.event": "校内日程",
     /* 全天的条目不印时刻，只写「全天」；跨天时后面接日期区间 */
     "cal.allDay": "全天",
@@ -382,7 +382,7 @@ window.SITE_I18N = {
     "sg.posWait": "满 · 可排备选",
     "sg.noLimit": "充足",
     "sg.posAllFull": "这个活动的每个职位都报满了，暂时无法报名。",
-    "sg.eventOnly": "这是校内日程，不需要报名 —— 在下面日历里可以看到它的时间。",
+    "sg.eventOnly": "这是校内日程 —— 它的时间在下面日历里能看到。",
 
     "f.name": "姓名 <span class=\"req\">*</span>",
     "f.email": "邮箱 <span class=\"req\">*</span>",
@@ -805,7 +805,7 @@ window.SITE_I18N = {
     "sg.posWait": "Full · waitlist open",
     "sg.noLimit": "plenty",
     "sg.posAllFull": "Every position for this activity is full — sign-up isn't possible right now.",
-    "sg.eventOnly": "That's a school calendar entry, not something you sign up for — check the calendar below for its timing.",
+    "sg.eventOnly": "That's a school calendar entry — check the calendar below for its timing.",
 
     "f.name": "Full name <span class=\"req\">*</span>",
     "f.email": "Email <span class=\"req\">*</span>",

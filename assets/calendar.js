@@ -348,7 +348,7 @@
         dayTimelineHTML(list, key) +
         '<div class="cal-day-list">' + list.map(function (it) {
           var a = it.a;
-          /* 校内日程（kind = 'event'）不需要报名 —— 别再挂「去报名」按钮、
+          /* 校内日程（kind = 'event'）只占日历格子 —— 别再挂「去报名」按钮、
              也别显示报名开始时间和「已报名 x / y 人」这种只对系列活动有意义的数字。 */
           var isEv = a.kind === "event";
           var allDay = !!a.all_day;
