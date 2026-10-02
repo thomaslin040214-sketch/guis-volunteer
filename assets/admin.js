@@ -709,6 +709,12 @@ document.addEventListener("DOMContentLoaded", function () {
        否则徽章和按钮文案会停在旧状态。 */
     return C.listMyActivities().then(function (res) {
       var rows = C.unwrap(res, "读取失败") || [];
+      /* ⚠️ 2026-10-02：这一页只管「需要报名的活动」。
+         校内日程（kind = 'event'）一律挡在外面 —— 它归「活动日历」页签管，
+         那边能建、能改、也能看见。以前这里会把日程也列出来（还挂个「校内日程」徽章），
+         等于两边都能管、改哪边都要想一下，所以这里直接过滤掉。
+         过滤之后「报名名单」下拉框和「过往活动」也跟着干净了 —— 它们共用 myActivities。 */
+      rows = rows.filter(function (a) { return a.kind !== "event"; });
       /* 名额先并进活动对象，「已报名 x 人 / 备选 y 人」才显示得出来 */
       return (window.GUISBoard && window.GUISBoard.withCounts
         ? window.GUISBoard.withCounts(C, rows) : Promise.resolve(rows))
@@ -721,27 +727,26 @@ document.addEventListener("DOMContentLoaded", function () {
 
       if (!rows.length) { $("act-list-empty").hidden = false; return; }
 
+      /* ⚠️ 走到这里的都是 kind = 'signup' 的报名活动（上面已经把校内日程滤掉了），
+         所以下面不用再判断类型 —— 徽章、灯、名额、四个按钮一律按报名活动画。 */
       var html = "";
       rows.forEach(function (a) {
         /* 看板灯色：绿 = 报名中｜黄 = 已截止、待通知｜红 = 已邮件通知（人工标记） */
         var B = window.GUISBoard;
         var light = B ? B.lightOf(a) : "green";
-        var isEv = a.kind === "event";
         var code = fullCode(a);
-        var badgeCls = isEv ? "badge-event" : a.status === "open" ? "badge-open" : a.status === "closed" ? "badge-closed" : "badge-draft";
-        var badgeTxt = isEv ? "校内日程" : (a.status === "open" ? "开放报名" : a.status === "closed" ? "停止报名" : "草稿");
-        /* 全天的（日程或整天的活动）不印时刻，只印日期 + 「全天」 */
+        var badgeCls = a.status === "open" ? "badge-open" : a.status === "closed" ? "badge-closed" : "badge-draft";
+        var badgeTxt = a.status === "open" ? "开放报名" : a.status === "closed" ? "停止报名" : "草稿";
+        /* 全天的活动不印时刻，只印日期 + 「全天」 */
         var when = a.all_day
           ? (a.starts_at ? fmtDay(a.starts_at) + " · 全天" : "全天")
           : (a.starts_at ? fmtDT(a.starts_at) : "待定");
         var meta = [];
-        /* 校内日程没有板块 —— 板块是要报名的活动才分组用的 */
-        if (!isEv && a.category) meta.push(esc(a.category));
+        if (a.category) meta.push(esc(a.category));
         if (a.location) meta.push(esc(a.location));
-        if (!isEv && a.capacity) meta.push("计划 " + a.capacity + " 人" +
+        if (a.capacity) meta.push("计划 " + a.capacity + " 人" +
           (a.waitlist_capacity ? " · 备选 " + a.waitlist_capacity + " 人" : ""));
-        var B0 = window.GUISBoard;
-        if (B0 && (a._taken || a._waiting)) {
+        if (B && (a._taken || a._waiting)) {
           meta.push("已报名 " + (a._taken || 0) + (a._waiting ? " · 备选 " + a._waiting : ""));
         }
 
@@ -751,8 +756,7 @@ document.addEventListener("DOMContentLoaded", function () {
               (code ? '<span class="act-code">' + esc(code) + "</span> " : "") +
               esc(a.title) +
               ' <span class="badge ' + badgeCls + '">' + badgeTxt + "</span>" +
-              /* 校内日程没有报名，不参与红黄绿的那套判定 */
-              (!isEv && B ? ' ' + B.lampHTML(light, { short: true }) : '') +
+              (B ? ' ' + B.lampHTML(light, { short: true }) : '') +
             "</div>" +
             (a.summary ? '<div class="act-summary">' + esc(a.summary) + '</div>' : '') +
             '<div class="act-meta"><span>' + when + '</span>' +
@@ -762,17 +766,13 @@ document.addEventListener("DOMContentLoaded", function () {
           '<div class="act-side">' +
             '<div class="row-actions">' +
               '<button type="button" class="tbl-btn" data-edit="' + a.id + '">编辑</button>' +
-              /* 校内日程没有报名，这两个开关对它没有意义 —— 直接不显示 */
-              (isEv ? '' :
-                '<button type="button" class="tbl-btn" data-toggle="' + a.id + '">' + (a.status === "open" ? "停止报名" : "开放报名") + '</button>' +
-                /* 红灯由后台人工点出来；再点一次撤销，回到按截止时间自动判定的绿 / 黄 */
-                '<button type="button" class="tbl-btn" data-notify="' + a.id + '">' +
-                  (light === "red" ? "撤销邮件通知" : "标记已邮件通知") + '</button>') +
+              '<button type="button" class="tbl-btn" data-toggle="' + a.id + '">' + (a.status === "open" ? "停止报名" : "开放报名") + '</button>' +
+              /* 红灯由后台人工点出来；再点一次撤销，回到按截止时间自动判定的绿 / 黄 */
+              '<button type="button" class="tbl-btn" data-notify="' + a.id + '">' +
+                (light === "red" ? "撤销邮件通知" : "标记已邮件通知") + '</button>' +
               '<button type="button" class="tbl-btn danger" data-del="' + a.id + '">删除</button>' +
             '</div>' +
-            /* 校内日程不能报名，那个按钮换成跳日历 */
-            (isEv ? '<span class="act-evnote">只显示在日历里</span>'
-                  : '<a class="tbl-btn" style="text-align:center;" href="signup.html?activity=' + a.id + '">查看报名页</a>') +
+            '<a class="tbl-btn" style="text-align:center;" href="signup.html?activity=' + a.id + '">查看报名页</a>' +
           '</div>' +
         '</div>';
       });
@@ -798,7 +798,9 @@ document.addEventListener("DOMContentLoaded", function () {
     if (editId) {
       var a = myActivities.filter(function (x) { return String(x.id) === String(editId); })[0];
       if (!a) return;
-      /* 校内日程不在这张表里改 —— 它没有报名字段，改到「活动日历」页签的日程表单去 */
+      /* 兜底：列表已经只出报名活动了，这里按理不会碰到校内日程。
+         万一碰到（比如旧数据），别拿这张报名表去改它 —— 它没有报名字段，
+         送去「活动日历」页签的日程表单。 */
       if (a.kind === "event") { openEventForm(a); return; }
       editingId = a.id;
       $("act-form-title").textContent = "编辑活动";
