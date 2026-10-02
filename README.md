@@ -280,17 +280,22 @@ guis-volunteer/
 → 补上证件类型/号码、其他说明、出具日期、经办人 → 右边实时预览 → 一键下载 `.docx`，
 或在页面里直接打印/另存 PDF。入口在 `me.html` 的账户区，以及 `me.html` / `external.html` 的导航。
 
-**版式对着学校那份原件抄的**（`广州优联国际学校ULC学部-志愿服务记录证明.docx`）：
+**版式对着学校那份原件抄的**（`广州优联国际学校ULC学部-志愿服务记录证明.docx`）
+—— 下面每个数都是从原件 `word/document.xml` 里量出来的，**不是估的**：
 
 | 元素 | 取值 |
 |------|------|
-| 校徽 | 原模板里的 976×181 PNG，存在 `assets/logo/cert-crest.png`，drawing 尺寸 4058285×752475 EMU |
-| 校名 / 标题 | 楷体，26pt / 28pt；英文校名 Calibri 14pt，`(Certificate of Voluntary Service)` 12pt |
-| 表格 | 7 行 3 列，`tblGrid` 2735 / 2843 / 2713 twips；合并后 5556（跨 2 列）、8291（跨 3 列） |
-| 行高 | 第 3 行 501、第 6 行 782、第 7 行 425 twips |
-| 单元格 | 等线 10.5pt（`w:sz="21"`）；中文一行、英文一行**分两段**，不是一句话 |
-| 落款格（第 7 行） | 5 段：空 / `学生事务副校长签字:` + 空格 + `(印章Seal)` / `(Signed by Deputy Principal of Pastoral)` / 空（首行缩进 150 字）/ 空格 + 日期（悬挂缩进） |
-| 页面 | A4 11906×16838 twips，上下 1440、左右 1800 |
+| 校徽 | 原模板里的 976×181 PNG，存在 `assets/logo/cert-crest.png`；`wp:extent` 4058285×752475 EMU，图片自身 `a:ext` 4313083×799680（原件两个值就不一样，别统一） |
+| 校名 / 标题 | 楷体 26pt（`sz=52`）/ 28pt（`sz=56`）；英文校名 Calibri 14pt、`(Certificate of Voluntary Service)` 12pt |
+| 页面 | A4 `11906×16838`，**页边距四边都是 720 twips（1.27cm）**；`docGrid` linePitch 312 |
+| 表格 | `tblGrid` 2735 / **2128** / **3685**；`tblInd` **1086**（不贴左边距）；跨 2 列 5813、跨 3 列 8548 |
+| 行高 | 第 3 行 501、第 6 行 782、第 7 行 425 twips（其余按内容撑） |
+| 单元格 | 等线 10.5pt（`w:sz="21"`，靠 `docDefaults` 继承）；中文一行、英文一行**分两段** |
+| 第 1 行 | 首尾各有一个**空段**（行才够高、「学生信息」竖排居中才对）；第 4 行首格原件**没有** `vAlign` |
+| 落款格（第 7 行） | 5 段：空 / `学生事务副校长签字:` + 空格 + `(印章Seal)` / `(Signed by Deputy Principal of Pastoral)` / 空（首行缩进 150 字）/ 空格 + 日期（`left=5355 hanging=5040`） |
+| 表下三行 | **不在表格里**，靠制表符对齐：经办人（9 个 tab）+ 电话、两条横线（8 个 tab，左 10 个「—」右 12 个）、两个标签（9 个 tab） |
+| `word/settings.xml` | `defaultTabStop = 420` —— **少这个文件，上面所有制表符落点全变，就会「全挤在一起」** |
+| 样式 | `docDefaults` 等线 10.5pt；⚠️ **不要写 `<w:spacing>`**，行距靠 `docGrid` 撑，写了会把行压扁 |
 
 ⚠️ 改版式要**同时改两处**：`assets/cert.js` 里的 OOXML 与 `app.css` 里的 `.cert-sheet` 预览样式，
 两边对不上就会出现「预览好看、下载出来不对」。

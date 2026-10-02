@@ -248,12 +248,11 @@
 
     var handler = ($("ct-handler").value || "").trim();
     var phone = ($("ct-phone").value || "").trim();
-    var gap = handler.length < 6 ? "\u00a0".repeat(26) : "\u00a0".repeat(10);
-    $("pv-handler").innerHTML = htmlEsc(handler) + gap + htmlEsc(phone);
+    $("pv-handler").textContent = handler;
+    $("pv-phone").textContent = phone;
 
-    $("pv-sign").textContent =
-      "学生事务副校长签字:                        (印章Seal)(Signed by Deputy Principal of Pastoral)              " +
-      (cnDate($("ct-date").value) || cnDate(ymd()));
+    /* 落款日期单独一格：Word 里它跟前面几行靠缩进分开，这里交给 CSS */
+    $("pv-sign-date").textContent = cnDate($("ct-date").value) || cnDate(ymd());
 
     $("ct-hours-hint").textContent = "按勾选自动算的；跟实际不符就自己改，改完点右边「按勾选重算」可以还原。";
     fitSheet();
@@ -273,18 +272,35 @@
   }
   window.addEventListener("resize", fitSheet);
 
-  /* ================= 打包成 .docx ================= */
+  /* ================= 打包成 .docx =================
+     ⚠️ 下面每个数字都是从学校那份原件《广州优联国际学校ULC学部-志愿服务记录证明.docx》
+     的 word/document.xml 里直接量出来的，不是估的：
+
+       页边距       四边 720 twips（1.27cm）—— 不是 Word 默认的 1440 / 1800
+       表格         缩进 1086 twips，总宽 8548（所以表格不贴左边，右边留白）
+       列宽         2735 / 2128 / 3685（跨两列 5813，跨三列 8548）
+       行高         第 3 行 501、第 6 行 782、第 7 行 425，其余按内容撑
+       默认制表位   420 twips —— 在 word/settings.xml 里；底下那几条对齐线全靠它，
+                    漏了这个文件，制表符落点全变，就会「挤在一起」
+       正文         等线 10.5pt（sz 21），行距靠 docGrid 的 linePitch 312 撑开，
+                    ⚠️ 不要在 styles 里再写 spacing —— 写平了行会挤
+       校名 / 标题  楷体 26pt（sz 52）/ 28pt（sz 56）/ 英文 Calibri 14pt、12pt
+
+     改版式要回去量原件；只改一半会变成「预览对了、Word 里错位」。 */
 
   /* ---- OOXML 小工具 ---- */
   function rpr(o) {
     o = o || {};
     var s = "<w:rPr>";
     if (o.font) {
-      s += '<w:rFonts w:ascii="' + o.font + '" w:eastAsia="' + o.font +
-        '" w:hAnsi="' + o.font + '"' + (o.hint === false ? "" : ' w:hint="eastAsia"') + "/>";
+      s += '<w:rFonts w:ascii="' + o.font + '" w:eastAsia="' + (o.eaFont || o.font) +
+        '" w:hAnsi="' + o.font + '" w:cs="' + o.font + '"' +
+        (o.hint === false ? "" : ' w:hint="eastAsia"') + "/>";
     }
+    if (o.noProof) s += "<w:noProof/>";
     if (o.bold) s += "<w:b/><w:bCs/>";
-    if (o.sz) s += '<w:sz w:val="' + o.sz + '"/><w:szCs w:val="' + o.sz + '"/>';
+    /* szCs 只影响复杂文种，但模板里楷体 26pt / 28pt 写的是 72 / 96，照抄 */
+    if (o.sz) s += '<w:sz w:val="' + o.sz + '"/><w:szCs w:val="' + (o.szCs || o.sz) + '"/>';
     s += "</w:rPr>";
     return s;
   }
@@ -316,53 +332,62 @@
     return s;
   }
 
-  var CELL_BORDERS = "<w:tcBorders>" +
-    ["top", "left", "bottom", "right"].map(function (side) {
-      return "<w:" + side + ' w:val="single" w:sz="4" w:space="0" w:color="auto"/>';
-    }).join("") + "</w:tcBorders>";
-
+  /* 边框走表格级的 <w:tblBorders>（等价于模板引用的 Table Grid 样式），
+     ⚠️ 不要逐格写 tcBorders —— 原件里没有，多写了会让某些渲染器画出双线。 */
   function cell(o) {
     var tc = "<w:tc><w:tcPr><w:tcW w:w=\"" + o.w + '" w:type="dxa"/>';
     if (o.span > 1) tc += '<w:gridSpan w:val="' + o.span + '"/>';
     if (o.vmerge === "restart") tc += '<w:vMerge w:val="restart"/>';
     else if (o.vmerge === "continue") tc += "<w:vMerge/>";
-    tc += CELL_BORDERS;
     if (o.valign) tc += '<w:vAlign w:val="' + o.valign + '"/>';
     tc += "</w:tcPr>" + (o.inner || para("", { jc: "center" })) + "</w:tc>";
     return tc;
   }
 
-  /* 列宽 / 合并后的宽度 / 行高，全部照模板的 tblGrid 与 tcW 量出来 */
-  var COL_W = [2735, 2843, 2713];
-  var SPAN2 = 5556;      /* 2843 + 2713 */
-  var SPAN3 = 8291;      /* 2735 + 2843 + 2713 */
-  var LABEL = { font: "等线", bold: true, sz: 21 };   /* 标签：加粗 10.5pt */
-  var VAL = { font: "等线", sz: 21 };                 /* 正文：10.5pt */
+  /* 列宽 / 合并宽度 / 缩进，全部照原件 tblGrid 与 tcW 量出来 */
+  var COL_W = [2735, 2128, 3685];
+  var SPAN2 = 5813;      /* 2128 + 3685 */
+  var SPAN3 = 8548;      /* 2735 + 2128 + 3685 */
+  var TBL_IND = 1086;    /* 表格缩进：原件里表格不贴左边距 */
+  var TAB_STOP = 420;    /* 默认制表位，写进 word/settings.xml */
+  var PG_MAR = 720;      /* 页边距四边都是 720（1.27cm） */
 
-  /* 标签格是「中文一行 + 英文一行」两段（模板就是这么分的，不是一句话） */
+  /* 标签格是「中文一行 + 英文一行」两段（原件就是这么分的，不是「姓名(Name)」一句） */
   function labelCell(lines, o) {
     o = o || {};
-    var inner = lines.map(function (ln) {
-      return para(run(ln, LABEL), { jc: "center" });
-    }).join("");
+    var inner = "";
+    if (o.padTop) inner += para("", { jc: "center", rpr: { bold: true } });
+    lines.forEach(function (ln) {
+      inner += para(run(ln, { bold: true }), { jc: "center", rpr: { bold: true } });
+    });
+    if (o.padBottom) inner += para("", { jc: "center", rpr: { bold: true } });
+    return cell({ w: o.w, span: o.span, vmerge: o.vmerge, valign: o.valign, inner: inner });
+  }
+
+  function blankCell(o) {
+    o = o || {};
     return cell({
-      w: o.w, span: o.span, vmerge: o.vmerge,
-      valign: o.valign,
-      inner: inner
+      w: o.w, span: o.span, vmerge: o.vmerge, valign: o.valign,
+      inner: para("", { jc: "center", rpr: { bold: true } })
     });
   }
 
   /* 值格：多行内容用 <w:br/>，别塞进单个 <w:t> */
   function valueCell(text, o) {
     o = o || {};
-    var s = String(text || "");
+    var s = String(text == null ? "" : text);
     var inner = s.indexOf("\n") >= 0
-      ? para(runLines(s, VAL), { jc: o.jc || "left" })
-      : para(run(s, VAL), { jc: o.jc || "center" });
+      ? para(runLines(s, {}), { jc: o.jc || "left" })
+      : para(run(s, {}), { jc: o.jc || "center" });
     return cell({ w: o.w, span: o.span, valign: o.valign, inner: inner });
   }
 
-  var IMG_EXTENT = { cx: 4058285, cy: 752475 };   /* 与模板一致：4.44in × 0.82in */
+  /* 校徽尺寸：原件的 wp:extent 是 4058285×752475 EMU（4.44in × 0.82in），
+     而图片自身 spPr 的 a:ext 略大一点（4313083×799680）—— 两个值不一样是原件就
+     这样，照抄，别「顺手统一」成同一个数。 */
+  var IMG_EXTENT = { cx: 4058285, cy: 752475 };
+  var IMG_SHAPE = { cx: 4313083, cy: 799680 };
+  var KAI_LOGO = { font: "楷体", noProof: true, sz: 56, szCs: 96 };
 
   function imageParagraph() {
     var drawing =
@@ -377,80 +402,86 @@
       "<pic:nvPicPr><pic:cNvPr id=\"1\" name=\"GUIS | ULC\"/>" +
       '<pic:cNvPicPr><a:picLocks noChangeAspect="1"/></pic:cNvPicPr></pic:nvPicPr>' +
       '<pic:blipFill><a:blip r:embed="rId5"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>' +
-      '<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="' + IMG_EXTENT.cx + '" cy="' + IMG_EXTENT.cy + '"/></a:xfrm>' +
+      '<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="' + IMG_SHAPE.cx + '" cy="' + IMG_SHAPE.cy + '"/></a:xfrm>' +
       '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>' +
       "</pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing>";
-    return para("<w:r>" + rpr({ font: "楷体", sz: 56 }) + drawing + "</w:r>", { jc: "center" });
+    return para("<w:r>" + rpr(KAI_LOGO) + drawing + "</w:r>",
+      { jc: "center", rpr: { font: "楷体", sz: 56, szCs: 96 } });
   }
 
   function documentXml(d) {
-    /* ⚠️ 每格里的段落数量、对齐、合并宽度都是照着原始模板量出来的（见文件头注释），
-       别图省事把「中文 + 英文」并成一行 —— 那会变成一行挤在一起、表格高度也不对。 */
+    /* ⚠️ 段落数量、对齐、合并宽度、行高全部照原件量出来（见本节开头的参数表）。
+       表下那几行不在表格里，靠制表符对齐 —— 不是空格：空格宽度随字体变，换台机器就错位。 */
     function tr(inner, h) {
       return "<w:tr>" + (h ? '<w:trPr><w:trHeight w:val="' + h + '"/></w:trPr>' : "") + inner + "</w:tr>";
     }
-    function emptyCell(w, o) {
-      o = o || {};
-      return cell({
-        w: w, span: o.span, vmerge: o.vmerge,
-        inner: para("", { jc: "center" })
-      });
-    }
+
+    var B = { bold: true };
+    var B9 = { bold: true, sz: 18, szCs: 21 };
 
     var rowsXml =
       tr(
+        /* 第 1 行：原件在这里多放了首尾两个空段，行才够高、「学生信息」竖排居中才对 */
         labelCell(["学生信息", "(Student Information)"],
-          { w: COL_W[0], vmerge: "restart", valign: "center" }) +
+          { w: COL_W[0], vmerge: "restart", valign: "center", padTop: true, padBottom: true }) +
         labelCell(["姓名", "(Name)"], { w: COL_W[1] }) +
         valueCell(d.name, { w: COL_W[2] })
       ) +
       tr(
-        emptyCell(COL_W[0], { vmerge: "continue" }) +
+        blankCell({ w: COL_W[0], vmerge: "continue" }) +
         labelCell(["证件号码", "(Proof of ID No.)"], { w: COL_W[1] }) +
-        valueCell(d.idno, { w: COL_W[2] })
+        valueCell(d.idno, { w: COL_W[2], valign: "center" })
       ) +
       tr(
-        emptyCell(COL_W[0], { vmerge: "continue" }) +
+        blankCell({ w: COL_W[0], vmerge: "continue" }) +
         labelCell(["证件类型", "（Type of ID）"], { w: COL_W[1] }) +
-        valueCell(d.idtype, { w: COL_W[2] }),
+        valueCell(d.idtype, { w: COL_W[2], valign: "center" }),
         501
       ) +
       tr(
+        /* ⚠️ 这一格原件里**没有** vAlign，别顺手补上（虽然内容刚好两行、看不出来） */
         labelCell(["志愿服务时长", "(Volunteer Service Time)"], { w: COL_W[0] }) +
         valueCell(d.hours, { w: SPAN2, span: 2 })
       ) +
       tr(
-        labelCell(["志愿服务内容", "(Volunteer Service Content)"], { w: COL_W[0] }) +
-        valueCell(d.content, { w: SPAN2, span: 2, jc: d.content.indexOf("\n") >= 0 ? "left" : "center" })
+        labelCell(["志愿服务内容", "(Volunteer Service Content)"], { w: COL_W[0], valign: "center" }) +
+        valueCell(d.content, { w: SPAN2, span: 2, jc: "left" })
       ) +
       tr(
-        labelCell(["其他需要说明的事项", "(Other information)"], { w: COL_W[0] }) +
+        labelCell(["其他需要说明的事项", "(Other information)"], { w: COL_W[0], valign: "center" }) +
         valueCell(d.other, { w: SPAN2, span: 2, jc: d.other.indexOf("\n") >= 0 ? "left" : "center" }),
         782
       ) +
+      /* 第 7 行：签字 / 盖章 / 落款日期。原件是 5 段（中间夹两段空行），照抄；
+         日期那段的 left / hanging 是量出来的，改了日期就跑到别处去 */
       tr(
         cell({
           w: SPAN3, span: 3,
-          vmerge: undefined, valign: undefined,
           inner:
-            para("", { jc: "left" }) +
-            /* 签字与盖章挤在同一行靠空格排 —— 模板就是这么排的，别换成制表符（宽度对不上会折行） */
-            para(run("学生事务副校长签字:" + " ".repeat(15), { bold: true }) +
-                 run(" ".repeat(32) + "(印章Seal)", { bold: true }), { jc: "left" }) +
-            para(run("(Signed by Deputy Principal of Pastoral)", { bold: true }), { jc: "left" }) +
-            para("", { jc: "left", ind: 'w:firstLineChars="150" w:firstLine="315"' }) +
-            para(run(" ".repeat(75) + d.dateCn, { bold: true }),
-              { jc: "left", ind: 'w:leftChars="150" w:left="4830" w:hangingChars="2150" w:hanging="4515"' })
+            para("", { jc: "left", rpr: B }) +
+            para(run("学生事务副校长签字:" + " ".repeat(15), B) +
+                 run(" ".repeat(32) + "(印章Seal)", B), { jc: "left", rpr: B }) +
+            para(run("(Signed by Deputy Principal of Pastoral)", B), { jc: "left", rpr: B }) +
+            para("", { jc: "left", ind: 'w:firstLineChars="150" w:firstLine="315"', rpr: B }) +
+            para(run(" ".repeat(31), B) + run(" ".repeat(43) + d.dateCn, B),
+              { jc: "left", ind: 'w:leftChars="150" w:left="5355" w:hangingChars="2400" w:hanging="5040"', rpr: B })
         }),
         425
       );
 
-    var body = imageParagraph() +
-      para(run("广州优联国际学校ULC学部", { font: "楷体", sz: 52 }), { jc: "center" }) +
+    var body =
+      /* —— 页头：校徽 / 中文校名 / 英文校名 / 标题，五行全部居中 —— */
+      imageParagraph() +
+      para(run("广州优联国际学校ULC学部", { font: "楷体", sz: 52, szCs: 72 }),
+        { jc: "center", rpr: { font: "楷体", sz: 52, szCs: 72 } }) +
       para(run("Guangzhou ULink International School – ULC Division",
-        { font: "Calibri", hint: false, sz: 28 }), { jc: "center" }) +
-      para(run("志愿服务记录证明", { font: "楷体", sz: 56 }), { jc: "center" }) +
-      para(run("(Certificate of Voluntary Service)", { font: "Calibri", hint: false, sz: 24 }), { jc: "center" }) +
+        { font: "Calibri", eaFont: "楷体", hint: false, sz: 28, szCs: 36 }),
+        { jc: "center", rpr: { font: "Calibri", sz: 28, szCs: 36 } }) +
+      para(run("志愿服务记录证明", { font: "楷体", sz: 56, szCs: 96 }),
+        { jc: "center", rpr: { font: "楷体", sz: 56, szCs: 96 } }) +
+      para(run("(Certificate of Voluntary Service)",
+        { font: "Calibri", eaFont: "楷体", hint: false, sz: 24, szCs: 32 }),
+        { jc: "center", rpr: { font: "Calibri", sz: 24, szCs: 32 } }) +
       para("", { jc: "center" }) +
       "<w:tbl>" +
         "<w:tblPr>" +
@@ -460,29 +491,32 @@
               return "<w:" + side + ' w:val="single" w:sz="4" w:space="0" w:color="auto"/>';
             }).join("") +
           "</w:tblBorders>" +
-          '<w:tblInd w:w="5" w:type="dxa"/>' +
+          '<w:tblInd w:w="' + TBL_IND + '" w:type="dxa"/>' +
           '<w:tblLook w:val="04A0" w:firstRow="1" w:lastRow="0" w:firstColumn="1" w:lastColumn="0" w:noHBand="0" w:noVBand="1"/>' +
         "</w:tblPr>" +
         "<w:tblGrid>" + COL_W.map(function (w) { return '<w:gridCol w:w="' + w + '"/>'; }).join("") + "</w:tblGrid>" +
         rowsXml +
       "</w:tbl>" +
+      /* —— 表下（这几行在表格外面）：经办人 / 联系电话 → 两条横线 → 两个标签 ——
+         ⚠️ 横线是两段独立的「——」用 8 个制表符隔开：一条在左、一条在右。
+            合成一条长横线就不是原件的样子；制表符个数也是照原件数的，别随手改。 */
       para("", { jc: "left" }) +
-      para(
-        run(d.handler, { bold: true }) + tabs(4, { bold: true }) + run(d.phone, { bold: true }),
-        { jc: "left", ind: 'w:firstLineChars="50" w:firstLine="105"', rpr: { bold: true } }
-      ) +
-      para(run("——————————————————————", { bold: true }), { jc: "left", rpr: { bold: true } }) +
-      para(
-        run("经办人(Handled By)", { bold: true, sz: 18 }) +
-        tabs(4, { bold: true, sz: 18 }) +
-        run("联系电话 (Contact No.)", { bold: true, sz: 18 }),
-        { jc: "left", ind: 'w:firstLineChars="100" w:firstLine="180"', rpr: { bold: true, sz: 18 } }
-      ) +
-      para("", { jc: "left", rpr: { bold: true, sz: 18 } }) +
-      /* A4：11906 × 16838 twips；上下 2.54cm、左右 3.17cm —— 跟模板一致 */
+      para(run(d.handler, B) + tabs(9, B) + run("  ", B) + run(" ", B) + run(d.phone, B),
+        { jc: "left", ind: 'w:firstLineChars="250" w:firstLine="525"', rpr: B }) +
+      para(run("——————————", B) + tabs(8, B) + run(" ", B) + run("————————————", B),
+        { jc: "left", ind: 'w:firstLineChars="250" w:firstLine="525"', rpr: B }) +
+      para(run("经办人(Handled By)", B9) + tabs(9, B9) + run("     ", B9) +
+           run("联系电话 (Contact No.)", B9),
+        { jc: "left", ind: 'w:firstLineChars="350" w:firstLine="630"', rpr: B9 }) +
+      para("", { jc: "left", rpr: B9 }) +
+      /* ⚠️ 这句话原件里就没写完（「…会使用」后面是空的）。照抄 —— 生成的证明要交给
+         学校的，别自己补全；真要补，先跟老师确认原文。 */
+      para(run("请注意GUIS-ULC学生处办公室会使用", B9), { jc: "left", rpr: B9 }) +
+      /* A4：11906 × 16838 twips，四边 720（1.27cm），跟原件一致 */
       "<w:sectPr>" +
         '<w:pgSz w:w="11906" w:h="16838"/>' +
-        '<w:pgMar w:top="1440" w:right="1800" w:bottom="1440" w:left="1800" w:header="851" w:footer="992" w:gutter="0"/>' +
+        '<w:pgMar w:top="' + PG_MAR + '" w:right="' + PG_MAR + '" w:bottom="' + PG_MAR +
+          '" w:left="' + PG_MAR + '" w:header="851" w:footer="992" w:gutter="0"/>' +
         '<w:cols w:space="425"/>' +
         '<w:docGrid w:type="lines" w:linePitch="312"/>' +
       "</w:sectPr>";
@@ -503,6 +537,7 @@
     '<Default Extension="xml" ContentType="application/xml"/>' +
     '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>' +
     '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>' +
+    '<Override PartName="/word/settings.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/>' +
     "</Types>";
 
   var ROOT_RELS = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
@@ -513,23 +548,41 @@
   var DOC_RELS = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
     '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
     '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>' +
+    '<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/settings" Target="settings.xml"/>' +
     '<Relationship Id="rId5" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/image1.png"/>' +
     "</Relationships>";
 
-  /* 只留 docDefaults + Normal：版式全靠 document.xml 里的直接格式，
-     不需要模板那份几十 KB 的 styles.xml。 */
+  /* word/settings.xml —— 只有一行，但很关键：
+     defaultTabStop 420 决定了表下那几行 <w:tab/> 的落点（420 twips = 2 个 10.5pt 汉字）。
+     少了这个文件，Word 用默认 720，电话/横线/标签就会全挤到中间去。 */
+  var SETTINGS = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<w:settings xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
+    '<w:defaultTabStop w:val="' + TAB_STOP + '"/>' +
+    "</w:settings>";
+
+  /* 只留 docDefaults + Normal：版式全靠 document.xml 里的直接格式。
+     ⚠️ 默认字体必须写 等线 10.5pt —— 原件里标签/横线那些 run 不写 rFonts，
+        全靠继承；这里写错，行宽和制表符落点就跟着错。
+     ⚠️ 这里**不要**写 <w:spacing>：原件靠 docGrid 的 linePitch 312 撑行距，
+        自己写一个 line=259 会把行压扁 —— 「全都挤在一起」就是这么来的。 */
   var STYLES = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
     '<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
     "<w:docDefaults>" +
       "<w:rPrDefault><w:rPr>" +
-        '<w:rFonts w:ascii="Calibri" w:eastAsia="等线" w:hAnsi="Calibri" w:cs="Calibri"/>' +
-        '<w:sz w:val="21"/><w:szCs w:val="22"/>' +
+        '<w:rFonts w:ascii="等线" w:eastAsia="等线" w:hAnsi="等线" w:cs="等线"/>' +
+        '<w:lang w:val="en-US" w:eastAsia="zh-CN" w:bidi="ar-SA"/>' +
+        '<w:sz w:val="21"/><w:szCs w:val="24"/>' +
       "</w:rPr></w:rPrDefault>" +
-      "<w:pPrDefault><w:pPr>" +
-        '<w:spacing w:after="0" w:line="259" w:lineRule="auto"/>' +
-      "</w:pPr></w:pPrDefault>" +
+      "<w:pPrDefault/>" +
     "</w:docDefaults>" +
-    '<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style>' +
+    '<w:style w:type="paragraph" w:default="1" w:styleId="Normal">' +
+      '<w:name w:val="Normal"/><w:qFormat/>' +
+      '<w:pPr><w:widowControl w:val="0"/><w:jc w:val="both"/></w:pPr>' +
+      "<w:rPr>" +
+        '<w:rFonts w:ascii="等线" w:eastAsia="等线" w:hAnsi="等线" w:cs="等线"/>' +
+        '<w:kern w:val="2"/><w:sz w:val="21"/><w:szCs w:val="24"/>' +
+      "</w:rPr>" +
+    "</w:style>" +
     "</w:styles>";
 
   var crestCache = null;
@@ -595,6 +648,7 @@
         { name: "word/document.xml", data: documentXml(d) },
         { name: "word/_rels/document.xml.rels", data: DOC_RELS },
         { name: "word/styles.xml", data: STYLES },
+        { name: "word/settings.xml", data: SETTINGS },
         { name: "word/media/image1.png", data: png }
       ]);
       D.save(blob, fileName(d));

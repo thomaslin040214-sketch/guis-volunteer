@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-ver="20261002m">
+<html lang="zh-CN" data-ver="20261002o">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,8 +7,8 @@
 <meta name="description" content="用你已核定的义工小时，一键生成学校格式的中英双语志愿服务记录证明。" />
 <meta name="theme-color" content="#FFFFFF" />
 <meta name="robots" content="noindex, nofollow" />
-<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261002m" />
-<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261002m" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261002o" />
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261002o" />
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate" />
 <script>
 /* 文档自愈：托管服务器只给 last-modified，没有 Cache-Control / ETag，
@@ -16,7 +16,7 @@
    于是点站内链接（全是裸路径）进去时整页退回旧设计。
    这里比对 <html data-ver>：不是当前版本就带查询串重拉一次（查询串必定回源）。 */
 (function () {
-  var VER = "20261002m";
+  var VER = "20261002o";
   try {
     var el = document.documentElement;
     var healed = /[?&]_v=/.test(location.search);
@@ -63,8 +63,8 @@
   .footer-brand img{max-height:24px}
 }
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20261002m" />
-<link rel="stylesheet" href="assets/app.css?v=20261002m" />
+<link rel="stylesheet" href="assets/site.css?v=20261002o" />
+<link rel="stylesheet" href="assets/app.css?v=20261002o" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
@@ -267,41 +267,49 @@
                     <p class="cert-title">志愿服务记录证明</p>
                     <p class="cert-title-en">(Certificate of Voluntary Service)</p>
                     <table class="cert-table">
-                      <colgroup><col style="width:33%" /><col style="width:34.3%" /><col style="width:32.7%" /></colgroup>
+                      <colgroup><col style="width:32%" /><col style="width:24.9%" /><col style="width:43.1%" /></colgroup>
                       <tbody>
                         <tr>
                           <td class="cert-k" rowspan="3">学生信息<br />(Student Information)</td>
-                          <td class="cert-l">姓名(Name)</td>
+                          <td class="cert-l">姓名<br />(Name)</td>
                           <td class="cert-v" id="pv-name"></td>
                         </tr>
                         <tr>
-                          <td class="cert-l">证件号码(Proof of ID No.)</td>
+                          <td class="cert-l">证件号码<br />(Proof of ID No.)</td>
                           <td class="cert-v" id="pv-idno"></td>
                         </tr>
                         <tr>
-                          <td class="cert-l">证件类型（Type of ID）</td>
+                          <td class="cert-l">证件类型<br />（Type of ID）</td>
                           <td class="cert-v" id="pv-idtype"></td>
                         </tr>
                         <tr>
                           <td class="cert-l">志愿服务时长<br />(Volunteer Service Time)</td>
-                          <td class="cert-v ct-pv-center" colspan="2" id="pv-hours"></td>
+                          <td class="cert-v" colspan="2" id="pv-hours"></td>
                         </tr>
                         <tr>
                           <td class="cert-l">志愿服务内容<br />(Volunteer Service Content)</td>
-                          <td class="cert-v" colspan="2" id="pv-content"></td>
+                          <td class="cert-v cert-v-top" colspan="2" id="pv-content"></td>
                         </tr>
                         <tr>
                           <td class="cert-l">其他需要说明的事项<br />(Other information)</td>
                           <td class="cert-v" colspan="2" id="pv-other"></td>
                         </tr>
                         <tr>
-                          <td class="cert-sign" colspan="3" id="pv-sign"></td>
+                          <td class="cert-sign" colspan="3">
+                            <p class="cert-gap">&nbsp;</p>
+                            <p class="cert-sign-1"><span>学生事务副校长签字:</span><span>(印章Seal)</span></p>
+                            <p class="cert-sign-en">(Signed by Deputy Principal of Pastoral)</p>
+                            <p class="cert-gap">&nbsp;</p>
+                            <p class="cert-sign-date" id="pv-sign-date"></p>
+                          </td>
                         </tr>
                       </tbody>
                     </table>
-                    <p class="cert-handler" id="pv-handler"></p>
-                    <p class="cert-rule">——————————————————————</p>
-                    <p class="cert-labels">经办人(Handled By)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;联系电话 (Contact No.)</p>
+                    <!-- 表下这几行不在表格里，靠制表符（Word）/ 左右两栏（这里）对齐 -->
+                    <p class="cert-line cert-handler"><span id="pv-handler"></span><span id="pv-phone"></span></p>
+                    <p class="cert-line cert-rule"><span>——————————</span><span>————————————</span></p>
+                    <p class="cert-line cert-labels"><span>经办人(Handled By)</span><span>联系电话 (Contact No.)</span></p>
+                    <p class="cert-last">请注意GUIS-ULC学生处办公室会使用</p>
                   </div>
                 </div>
               </div>
@@ -335,11 +343,11 @@
 <div id="cert-print-portal" aria-hidden="true"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
-<script src="assets/cloud-config.js?v=20261002m"></script>
-<script src="assets/cloud.js?v=20261002m"></script>
-<script src="assets/navfit.js?v=20261002m"></script>
-<script src="assets/session.js?v=20261002m"></script>
-<script src="assets/docx.js?v=20261002m"></script>
-<script src="assets/cert.js?v=20261002m"></script>
+<script src="assets/cloud-config.js?v=20261002o"></script>
+<script src="assets/cloud.js?v=20261002o"></script>
+<script src="assets/navfit.js?v=20261002o"></script>
+<script src="assets/session.js?v=20261002o"></script>
+<script src="assets/docx.js?v=20261002o"></script>
+<script src="assets/cert.js?v=20261002o"></script>
 </body>
 </html>
