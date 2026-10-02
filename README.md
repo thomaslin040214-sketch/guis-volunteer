@@ -27,21 +27,44 @@ python3 -m http.server 8080
 ```
 guis-volunteer/
 ├── index.html                  # 主页（全部板块）
-├── join.html                   # 社长欢迎信（对应原站的 welcome.html）
+├── programs.html               # 项目类型（原「服务项目」，2026-10-02 改名）
+├── signup.html                 # 活动报名（选活动 → 填表 → 提交；日历在下方）
+├── announcements.html          # 公告列表
+├── article.html                # 公告 / 刊物正文
+├── activity.html               # 单个活动详情
+├── team.html                   # 部门成员 + 管理层（数据在 assets/team.js）
+├── journey.html                # 发展历程
+├── join.html                   # 社长欢迎信
+├── login.html                  # 登录 / 首次开通（10 个内容页用）
+├── me.html                     # 学生账户：签到码 + 义工记录 + 生成证明入口
+├── external.html               # 校外义工时长认定（申请端）
+├── certificate.html            # 志愿服务记录证明 · 自助生成
+├── admin.html                  # 后台门户（活动/日历/名单/刊物/公告/人员/学生/时长审核）
+├── checkin.html                # 扫码签到台
 ├── README.md
-├── signup.html                 # 学生报名页（选活动 → 填表 → 提交，无需登录）
-├── admin.html                  # 后台门户（登录 / 建活动 / 审核报名 / 导出 Excel）
 └── assets/
-    ├── site.css                # 全部样式（白色主题 + 品牌蓝）
-    ├── app.css                 # 表单 / 表格 / 后台 的附加样式
+    ├── site.css                # 全站基础样式（白色主题 + 品牌蓝）
+    ├── app.css                 # 表单 / 表格 / 后台 / 证明版式 的附加样式
     ├── main.js                 # 交互：语言切换 / 滚动动画 / 计数 / 进度条 / 下拉履历 / 灯箱
-    ├── navfit.js               # 把导航的真实高度写进 --nav-h（手机端两行导航靠它对齐，见第八节）
+    ├── navfit.js               # 把导航真实高度写进 --nav-h（手机端两行导航靠它，见第八节）
+    ├── nav.js                  # 导航下拉（桌面悬停即开）
     ├── cloud-config.js         # 云服务 publicConfig（endpoint + publishableKey）
-    ├── cloud.js                # 云服务客户端：初始化一次 + 活动/报名的增删改查
-    ├── i18n.js                 # 中英双语词典（中英一一对应）
+    ├── cloud.js                # 云服务客户端：初始化一次 + 所有表的增删改查
+    ├── queue.js                # 幂等读 + 一次性报名提交的重试包装（不包后台写）
+    ├── session.js              # 登录态 + 右上角头像（15 页全挂）
+    ├── i18n.js                 # 中英双语词典（10 个内容页用；app 类页面纯中文）
+    ├── board.js                # 报名看板：名额/备选名单/红黄绿灯（signup 与后台共用）
+    ├── calendar.js             # 活动日历（报名页与后台共用）
+    ├── qr.js                   # 签到码生成与扫码
+    ├── team.js / team-render.js  # 部门与管理层数据 / 渲染
+    ├── editor.js / feed.js / export.js / backup.js   # 富文本 / 刊物流 / 导出 / 备份
+    ├── docx.js                 # 最小 docx 打包器（STORE zip + CRC-32，无依赖）
+    ├── cert.js                 # 证明生成页逻辑 + 证明的 OOXML
     ├── fonts/                  # 导航书法体（只含「义工组织」四个字的子集，见第八节）
+    ├── vendor/                 # qrcodejs / jsQR（自托管，不走 CDN）
     ├── logo/                   # 品牌标志
     │   ├── guis-ulc-lockup.png        GUIS | ULC 联合标志 → 导航栏左、Hero、后台登录卡
+    │   ├── cert-crest.png             证明文件顶部用的校徽（= 学校模板 docx 里那张，976×181）
     │   ├── va-logo.png                义工组织 V.A. 标志（橙蓝 V）→ 导航栏、Hero、页脚、favicon 底图
     │   ├── ulc-mark.svg               背景水印用的 ULC 标记（右侧）
     │   ├── guis-phoenix-blue.png      背景水印用的凤凰（左侧）
@@ -248,6 +271,38 @@ guis-volunteer/
 数据表：`external_hour_requests`（申请本体）、`admin_inbox`（执委会收件箱）。
 证明图片存云存储 `shared/<uid>/ext-hours/`，审核时现签一个 15 分钟有效的链接来看
 （用 `shared` 而不是 `users/`，是因为 `users/` 只有本人能读，执委会看不到图就没法核）。
+
+### 🧾 志愿服务记录证明 · 学生自助生成（2026-10-02 加）
+
+`certificate.html` + `assets/cert.js` + `assets/docx.js`。
+
+学生登录后：勾出要计入的记录（默认只勾**已签到**和**校外认定已通过**的）
+→ 补上证件类型/号码、其他说明、出具日期、经办人 → 右边实时预览 → 一键下载 `.docx`，
+或在页面里直接打印/另存 PDF。入口在 `me.html` 的账户区，以及 `me.html` / `external.html` 的导航。
+
+**版式对着学校那份原件抄的**（`广州优联国际学校ULC学部-志愿服务记录证明.docx`）：
+
+| 元素 | 取值 |
+|------|------|
+| 校徽 | 原模板里的 976×181 PNG，存在 `assets/logo/cert-crest.png`，drawing 尺寸 4058285×752475 EMU |
+| 校名 / 标题 | 楷体，26pt / 28pt；英文校名 Calibri 14pt，`(Certificate of Voluntary Service)` 12pt |
+| 表格 | 7 行 3 列，`tblGrid` 2735 / 2843 / 2713 twips；合并后 5556（跨 2 列）、8291（跨 3 列） |
+| 行高 | 第 3 行 501、第 6 行 782、第 7 行 425 twips |
+| 单元格 | 等线 10.5pt（`w:sz="21"`）；中文一行、英文一行**分两段**，不是一句话 |
+| 落款格（第 7 行） | 5 段：空 / `学生事务副校长签字:` + 空格 + `(印章Seal)` / `(Signed by Deputy Principal of Pastoral)` / 空（首行缩进 150 字）/ 空格 + 日期（悬挂缩进） |
+| 页面 | A4 11906×16838 twips，上下 1440、左右 1800 |
+
+⚠️ 改版式要**同时改两处**：`assets/cert.js` 里的 OOXML 与 `app.css` 里的 `.cert-sheet` 预览样式，
+两边对不上就会出现「预览好看、下载出来不对」。
+
+⚠️ 另外三条：
+
+1. **不留存。** 证件号码只在内存里过一遍 —— 不写 localStorage / sessionStorage，不上传云端。
+   页面上那句「本页不留存这些内容」是承诺，别为了「记住上次填的」偷偷加缓存。
+2. **docx 是自己拼的。** `assets/docx.js` 是一个最小 zip 打包器（**STORE 不压缩**，自己算 CRC-32），
+   不引 JSZip、不依赖 `DecompressionStream`。zip 条目要带 `0x0800` 标志位，否则中文文件名乱码。
+3. **日期一律本地时间拼**：`toISOString().slice(0,10)` 走的是 UTC，东八区在 00:00–08:00
+   之间会算成昨天，证明上的出具日期就错了。
 
 ### 👤 登录态：右上角头像（全站共用 `assets/session.js`）
 
@@ -471,7 +526,7 @@ curl -A "Mozilla/5.0" "<上面取到的 fonts.gstatic.com 地址>" \
 
 现在：
 
-1. **`assets/navfit.js`（13 页全挂，必须排在 `session.js` 之前）**量出导航真实高度写回 `--nav-h`，
+1. **`assets/navfit.js`（全部页面都挂，必须排在 `session.js` 之前）**量出导航真实高度写回 `--nav-h`，
    并用 `ResizeObserver` + `document.fonts.ready` 跟随字体落地、语言切换、头像插入等变化。
    CSS 里只留一个偏大的兜底值 `84px`（禁 JS 时宁可多留也不要盖住）。
 2. **导航拆成三段**：`.nav-logo` / `.nav-links` / `.nav-right`。手机端第 1 行是

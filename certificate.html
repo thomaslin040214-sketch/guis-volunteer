@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-ver="20261002m">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>志愿服务证明 | GUIS 义工组织</title>
+<meta name="description" content="用你已核定的义工小时，一键生成学校格式的中英双语志愿服务记录证明。" />
+<meta name="theme-color" content="#FFFFFF" />
+<meta name="robots" content="noindex, nofollow" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261002m" />
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261002m" />
+<meta http-equiv="Cache-Control" content="no-cache, must-revalidate" />
+<script>
+/* 文档自愈：托管服务器只给 last-modified，没有 Cache-Control / ETag，
+   浏览器会启发式复用旧版 HTML —— 旧版里引用的还是旧版本号的 CSS/JS，
+   于是点站内链接（全是裸路径）进去时整页退回旧设计。
+   这里比对 <html data-ver>：不是当前版本就带查询串重拉一次（查询串必定回源）。 */
+(function () {
+  var VER = "20261002m";
+  try {
+    var el = document.documentElement;
+    var healed = /[?&]_v=/.test(location.search);
+
+    /* ① 这台电脑见过更新的版本，却拿到了更旧的一份 —— 一定是缓存，重拉一次。
+       版本号是定长 YYYYMMDD+字母，字典序就能比大小。 */
+    var seen = "";
+    try { seen = localStorage.getItem("guis-doc-ver-seen") || ""; } catch (e) {}
+    if (seen && seen > VER && !healed) {
+      sessionStorage.setItem("guis-doc-ver", VER);
+      var su = location.href.split("#")[0];
+      location.replace(su + (su.indexOf("?") >= 0 ? "&" : "?") + "_v=" + VER + "&cb=" + Date.now() + (location.hash || ""));
+      return;
+    }
+    try { if (VER > seen) localStorage.setItem("guis-doc-ver-seen", VER); } catch (e) {}
+
+    /* ② 常规比对：<html data-ver> 不是当前版本就重拉一次 */
+    if (el.getAttribute("data-ver") === VER) {
+      if (healed && history.replaceState) {
+        var q = location.search.replace(/[?&]_v=[^&]*/, "").replace(/[?&]cb=[^&]*/g, "").replace(/^\?&/, "?");
+        history.replaceState(null, "", location.pathname + (q === "?" ? "" : q) + location.hash);
+      }
+      return;
+    }
+    if (healed) return;                                          /* 带串进来还是旧的，别再跳 */
+    if (sessionStorage.getItem("guis-doc-ver") === VER) return;   /* 本次会话只试一次 */
+    sessionStorage.setItem("guis-doc-ver", VER);
+    var u = location.href.split("#")[0];
+    location.replace(u + (u.indexOf("?") >= 0 ? "&" : "?") + "_v=" + VER + "&cb=" + Date.now() + (location.hash || ""));
+  } catch (e) {}
+})();
+</script>
+<style>
+.nav-logo{display:flex;align-items:center;gap:.5rem}
+.footer-brand{display:flex;align-items:center;gap:.9rem}
+.nav-logo .logo-img,.nav-logo .logo-va{max-height:34px;width:auto}
+.footer-brand img{max-height:34px;width:auto}
+@media (max-width:640px){
+  .nav-logo .logo-img,.nav-logo .logo-va{max-height:26px}
+  .footer-brand img{max-height:26px}
+}
+@media (max-width:480px){
+  .nav-logo .logo-img,.nav-logo .logo-va{max-height:24px}
+  .footer-brand img{max-height:24px}
+}
+</style>
+<link rel="stylesheet" href="assets/site.css?v=20261002m" />
+<link rel="stylesheet" href="assets/app.css?v=20261002m" />
+<script>document.documentElement.classList.add("js");</script>
+</head>
+<body>
+
+<div class="bg" aria-hidden="true">
+  <div class="bg-mesh"></div>
+  <div class="bg-blob blob-a"></div>
+  <div class="bg-blob blob-b"></div>
+</div>
+
+<nav>
+  <a href="index.html" class="nav-logo">
+    <img class="logo-img" src="assets/logo/guis-ulc-lockup.png" alt="GUIS · Guangzhou Ulink International School | ULC · Ulink College" />
+    <span class="logo-div"></span>
+    <img class="logo-va" src="assets/logo/va-logo.png" alt="GUIS Volunteer Association" />
+    <span class="org"><span class="org-script">义工组织</span> · 志愿服务证明</span>
+  </a>
+  <div class="nav-links">
+    <a href="index.html">回到主页</a>
+    <a href="signup.html">报名活动</a>
+    <a href="me.html">我的义工账户</a>
+    <a href="external.html">校外时长认定</a>
+    <a href="certificate.html" class="is-active">义工证明</a>
+  </div>
+</nav>
+
+<main class="page-head">
+  <section style="padding-top:0;">
+    <div class="wrap">
+
+      <div class="origin-banner" id="origin-banner" hidden>
+        <b>当前访问地址未绑定到云服务。</b>
+        小时数据读不出来。请改用
+        <a id="origin-link" href="#"></a> 访问本页。
+      </div>
+
+      <div id="ct-boot" class="empty"><span class="loading"></span> 正在读取你的义工记录…</div>
+
+      <!-- ============ 未登录 ============ -->
+      <div id="ct-gate" hidden>
+        <div class="panel" style="max-width:520px;margin:0 auto;">
+          <div class="panel-body" style="text-align:center;">
+            <img src="assets/logo/guis-ulc-lockup.png" alt="GUIS | ULC" style="width:200px;margin:0 auto 1rem;" />
+            <h2 style="margin:0 0 .5rem;">先用学校邮箱登录</h2>
+            <p class="hint" style="margin:0 0 1.25rem;">
+              证明上的时长要取自你自己的义工记录，所以得先登录。
+            </p>
+            <a class="btn btn-primary" href="login.html?next=certificate.html">去登录</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ 已登录 ============ -->
+      <div id="ct-app" hidden>
+
+        <div class="ct-head">
+          <h1>志愿服务记录证明</h1>
+          <p class="ct-lede">
+            挑出要计入的记录 → 补上证件信息 → 生成。样式跟学校那份
+            <b>《广州优联国际学校ULC学部 · 志愿服务记录证明》</b>一致，下载下来是 .docx，可以直接打印或转 PDF。
+          </p>
+        </div>
+
+        <div id="ct-alerts"></div>
+
+        <div class="ct-grid">
+
+          <!-- ---------------- 左：填表 ---------------- -->
+          <div class="ct-col">
+
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <h2>1 · 要计入的记录</h2>
+                  <div class="sub">默认只勾「已签到」和「校外认定已通过」的 —— 还没核定的小时不该出现在证明上。</div>
+                </div>
+                <button type="button" class="link-btn" id="ct-refresh">刷新</button>
+              </div>
+              <div class="panel-body">
+                <div id="ct-picks-loading" class="empty"><span class="loading"></span> 正在读取…</div>
+                <div id="ct-picks" hidden></div>
+                <div class="ct-sum">
+                  <span>已勾选 <b id="ct-pick-count">0</b> 条 · 合计</span>
+                  <span class="ct-sum-h"><b id="ct-pick-hours">0</b> 小时</span>
+                  <button type="button" class="link-btn" id="ct-pick-all">全选已核定</button>
+                </div>
+                <p class="hint" id="ct-picks-empty" hidden>
+                  你还没有已核定的义工记录 —— 先去
+                  <a href="signup.html">报个活动</a>，或在
+                  <a href="external.html">校外时长认定</a>里提交校外证明。也可以什么都不勾，直接在下面手填时长。
+                </p>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <h2>2 · 填证明上的内容</h2>
+                  <div class="sub">这些字直接写进证明里。页面不留存你填的东西，关掉就没了。</div>
+                </div>
+              </div>
+              <div class="panel-body">
+                <div class="form-grid">
+
+                  <div class="field">
+                    <label for="ct-name">姓名(Name) <span class="req">*</span></label>
+                    <input id="ct-name" type="text" placeholder="例如：林骏玮" autocomplete="name" />
+                  </div>
+
+                  <div class="field">
+                    <label for="ct-name-en">英文名（可选，写在中文名后面）</label>
+                    <input id="ct-name-en" type="text" placeholder="例如：Thomas Lin" autocomplete="off" />
+                  </div>
+
+                  <div class="field">
+                    <label for="ct-idtype">证件类型（Type of ID）</label>
+                    <select id="ct-idtype">
+                      <option value="居民身份证">居民身份证 Resident ID Card</option>
+                      <option value="护照">护照 Passport</option>
+                      <option value="港澳居民来往内地通行证">港澳居民来往内地通行证</option>
+                      <option value="台湾居民来往大陆通行证">台湾居民来往大陆通行证</option>
+                      <option value="外国永久居留身份证">外国永久居留身份证</option>
+                      <option value="其他证件">其他证件 Other</option>
+                    </select>
+                  </div>
+
+                  <div class="field">
+                    <label for="ct-idno">证件号码(Proof of ID No.)</label>
+                    <input id="ct-idno" type="text" placeholder="照证件原样填写" autocomplete="off" spellcheck="false" />
+                  </div>
+
+                  <div class="field">
+                    <label for="ct-hours">志愿服务时长(Volunteer Service Time) <span class="req">*</span></label>
+                    <div class="ct-hours-row">
+                      <input id="ct-hours" type="number" min="0" step="0.5" placeholder="0" />
+                      <span class="ct-unit">小时</span>
+                      <button type="button" class="link-btn" id="ct-recalc">按勾选重算</button>
+                    </div>
+                    <span class="hint" id="ct-hours-hint"></span>
+                  </div>
+
+                  <div class="field">
+                    <label for="ct-date">出具日期</label>
+                    <input id="ct-date" type="date" />
+                  </div>
+
+                  <div class="field span-2">
+                    <label for="ct-content">志愿服务内容(Volunteer Service Content)</label>
+                    <textarea id="ct-content" rows="5" placeholder="按勾选自动生成，可以自己改"></textarea>
+                    <span class="hint">默认按勾选记录生成「日期 + 活动名 + 时长」；想写得更笼统一点直接改这段字。</span>
+                  </div>
+
+                  <div class="field span-2">
+                    <label for="ct-other">其他需要说明的事项(Other information)</label>
+                    <textarea id="ct-other" rows="2" placeholder="没有就留空"></textarea>
+                  </div>
+
+                  <div class="field">
+                    <label for="ct-handler">经办人(Handled By)</label>
+                    <input id="ct-handler" type="text" placeholder="例如：Thomas Lin 林骏玮" autocomplete="off" />
+                  </div>
+
+                  <div class="field">
+                    <label for="ct-phone">联系电话 (Contact No.)</label>
+                    <input id="ct-phone" type="text" placeholder="例如：020-39090100-16720" autocomplete="off" />
+                  </div>
+
+                </div>
+
+                <div class="form-actions">
+                  <button type="button" class="btn btn-primary" id="ct-go">一键生成 Word 证明</button>
+                  <button type="button" class="btn btn-secondary" id="ct-print">打印 / 另存 PDF</button>
+                </div>
+                <p class="hint" style="margin-top:.85rem;">
+                  证件号码会原样印在证明上 —— 学校里交材料前先核对一遍。
+                  本页不上传、不保存这些内容，所有字只在你这次打开的页面里。
+                </p>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- ---------------- 右：预览 ---------------- -->
+          <div class="ct-col ct-col-preview">
+            <div class="panel ct-preview-panel">
+              <div class="panel-head">
+                <div>
+                  <h2>版式预览</h2>
+                  <div class="sub">按 A4 比例缩放的近似效果，最终以 Word 文件为准。</div>
+                </div>
+              </div>
+              <div class="panel-body">
+                <div class="ct-stage" id="ct-stage">
+                  <div class="cert-sheet" id="cert-sheet">
+                    <div class="cert-crest-wrap">
+                      <img class="cert-crest" src="assets/logo/cert-crest.png" alt="GUIS | ULC" />
+                    </div>
+                    <p class="cert-school">广州优联国际学校ULC学部</p>
+                    <p class="cert-school-en">Guangzhou ULink International School – ULC Division</p>
+                    <p class="cert-title">志愿服务记录证明</p>
+                    <p class="cert-title-en">(Certificate of Voluntary Service)</p>
+                    <table class="cert-table">
+                      <colgroup><col style="width:33%" /><col style="width:34.3%" /><col style="width:32.7%" /></colgroup>
+                      <tbody>
+                        <tr>
+                          <td class="cert-k" rowspan="3">学生信息<br />(Student Information)</td>
+                          <td class="cert-l">姓名(Name)</td>
+                          <td class="cert-v" id="pv-name"></td>
+                        </tr>
+                        <tr>
+                          <td class="cert-l">证件号码(Proof of ID No.)</td>
+                          <td class="cert-v" id="pv-idno"></td>
+                        </tr>
+                        <tr>
+                          <td class="cert-l">证件类型（Type of ID）</td>
+                          <td class="cert-v" id="pv-idtype"></td>
+                        </tr>
+                        <tr>
+                          <td class="cert-l">志愿服务时长<br />(Volunteer Service Time)</td>
+                          <td class="cert-v ct-pv-center" colspan="2" id="pv-hours"></td>
+                        </tr>
+                        <tr>
+                          <td class="cert-l">志愿服务内容<br />(Volunteer Service Content)</td>
+                          <td class="cert-v" colspan="2" id="pv-content"></td>
+                        </tr>
+                        <tr>
+                          <td class="cert-l">其他需要说明的事项<br />(Other information)</td>
+                          <td class="cert-v" colspan="2" id="pv-other"></td>
+                        </tr>
+                        <tr>
+                          <td class="cert-sign" colspan="3" id="pv-sign"></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <p class="cert-handler" id="pv-handler"></p>
+                    <p class="cert-rule">——————————————————————</p>
+                    <p class="cert-labels">经办人(Handled By)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;联系电话 (Contact No.)</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap footer-inner">
+    <div class="footer-brand">
+      <img src="assets/logo/guis-ulc-lockup.png" alt="GUIS | ULC" />
+      <img class="footer-va" src="assets/logo/va-logo.png" alt="GUIS Volunteer Association" />
+      <span>广州优联外籍人员子女学校-ULC英式国际部·义工组织</span>
+    </div>
+    <div class="footer-meta">
+      <a href="index.html">回到主页</a>
+      <a href="me.html">我的义工账户</a>
+      <span>volunteer@guiscn.com</span>
+    </div>
+  </div>
+</footer>
+
+<!-- 打印时只有这一块会输出（由 cert.js 在打印前把证明内容克隆进来） -->
+<div id="cert-print-portal" aria-hidden="true"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
+<script src="assets/cloud-config.js?v=20261002m"></script>
+<script src="assets/cloud.js?v=20261002m"></script>
+<script src="assets/navfit.js?v=20261002m"></script>
+<script src="assets/session.js?v=20261002m"></script>
+<script src="assets/docx.js?v=20261002m"></script>
+<script src="assets/cert.js?v=20261002m"></script>
+</body>
+</html>
