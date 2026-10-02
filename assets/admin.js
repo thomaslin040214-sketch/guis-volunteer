@@ -3212,9 +3212,9 @@ document.addEventListener("DOMContentLoaded", function () {
       '<div class="xt-head">' +
         '<div class="xt-who">' +
           '<div class="xt-title">' + esc(nm.trim() || "（名单里没有姓名）") + "</div>" +
-          '<div class="xt-sub">' + esc(r.student_email) + " · 提交于 " + fmtWhen(r.created_at) + "</div>" +
-          '<div class="xt-sub">' + esc(r.id_type || "证件类型未记") + " · " + esc(r.id_no || "证件号未记") +
+          '<div class="xt-sub">' + esc(r.student_email) + " · 提交于 " + fmtWhen(r.created_at) +
             " · 出具日期 " + esc(String(r.issue_date || "").slice(0, 10)) + "</div>" +
+          /* ⚠️ 这里**不再**显示证件类型/号码：按隐私要求号码不上传，库里那两列恒为空 */
           detail +
           (r.content ? '<div class="xt-sub">服务内容：' + esc(r.content).replace(/\n/g, "；") + "</div>" : "") +
         "</div>" +

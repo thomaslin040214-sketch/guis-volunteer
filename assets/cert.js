@@ -39,6 +39,11 @@
   /* 证明上时长那一栏的单位，跟原件一致 */
   var HOURS_UNIT = "小时 (Hours)";
 
+  /* ⚠️ 证件类型 / 号码**不参与提交**，也不参与任何网络请求。
+     它们只活在 `printIds` 这一个变量里：点打印 → 浮层里填 → 画进预览 → 打印 → 立刻清空。
+     别为了方便又把它塞回表单或缓存 —— 那就等于把号码送上云端了。 */
+  var printIds = { idtype: "", idno: "" };
+
   function $(id) { return document.getElementById(id); }
   function htmlEsc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
@@ -254,10 +259,12 @@
 
   /* ================= 表单 → 预览 / 提交 ================= */
   function liveData() {
+    /* ⚠️ 证件两项直接读浮层里的输入框 —— 这样在浮层里敲字时右边预览跟着变，
+       学生能先核对一遍再按打印。它们只是预览的来源，不参与任何请求。 */
     return {
       name: displayName(),
-      idtype: $("ct-idtype").value || "",
-      idno: ($("ct-idno").value || "").trim(),
+      idtype: ($("ct-idtype") && $("ct-idtype").value) || "",
+      idno: ($("ct-idno") && $("ct-idno").value || "").trim(),
       hours: fmtHours(pickedHours()),
       content: buildContent(),
       /* 出具日期永远是今天，不给选 */
@@ -265,14 +272,15 @@
     };
   }
 
-  /* 申请记录 → 版式数据。⚠️ 打印已通过的 PDF 一定从这里取，不从当前表单取 */
+  /* 申请记录 → 版式数据。⚠️ 打印已通过的 PDF 一定从这里取，不从当前表单取；
+     证件号码同样来自 printIds（库里本来就没有它）。 */
   function reqData(r) {
     var cn = String(r.student_name || "").trim();
     var en = String(r.student_name_en || "").trim();
     return {
       name: (en ? en + " " + cn : cn).trim(),
-      idtype: r.id_type || "",
-      idno: r.id_no || "",
+      idtype: printIds.idtype,
+      idno: printIds.idno,
       hours: fmtHours(r.hours),
       content: r.content || "",
       date: String(r.issue_date || "").slice(0, 10)
@@ -328,12 +336,12 @@
 
   /* ================= 提交 ================= */
   function collect() {
+    /* ⚠️ 这里刻意**没有** id_type / id_no —— 证件号码不上传云端。
+       数据库那两列还在（兼容旧备份的结构），但永远是空串。 */
     return {
       student_email: ME.email,
       student_name: NAME.cn,
       student_name_en: NAME.en,
-      id_type: $("ct-idtype").value || "",
-      id_no: ($("ct-idno").value || "").trim(),
       hours: fmtHours(pickedHours()),
       content: buildContent(),
       issue_date: ymd(),
@@ -342,10 +350,10 @@
   }
 
   function check(d) {
-    /* ⚠️ 姓名要看 d.student_name 本身 —— 证明上没名字不能用 */
+    /* ⚠️ 姓名要看 d.student_name 本身 —— 证明上没名字不能用。
+       证件号码不在这里查：它是打印那一刻的事，跟提交无关。 */
     if (!d.student_name) return "在册名单里还没有你登记的姓名，先请执委会补上再来提交。";
     if (!Number(d.hours)) return "时长是 0 —— 至少在上一步勾一条已核定的记录。";
-    if (!d.id_no) return "证件号码是空的，照证件原样填一遍。";
     return "";
   }
 
@@ -442,7 +450,7 @@
       acts = '<button type="button" class="btn btn-primary ct-dl" data-dl="' + r.id + '">下载 PDF 证明</button>' +
         '<span class="hint">点了会弹打印框 —— 在里面选「另存为 PDF」就是文件。</span>';
     } else if (r.status === "rejected") {
-      acts = '<button type="button" class="btn btn-secondary ct-reuse" data-ru="' + r.id + '">用这份的证件资料重提</button>';
+      acts = '<button type="button" class="btn btn-secondary ct-reuse" data-ru="' + r.id + '">回去改记录再提交</button>';
     }
 
     var note = "";
@@ -462,9 +470,7 @@
         '<div>' +
           '<div class="ct-req-title">' + fmtHours(r.hours) + " 小时 · " +
             (cnDate(String(r.issue_date || "").slice(0, 10)) || "日期未记") + " 出具</div>" +
-          '<div class="ct-req-sub">提交于 ' + fmtWhen(r.created_at) +
-            " · " + htmlEsc(r.id_type || "证件类型未记") +
-            " · " + htmlEsc(r.id_no || "证件号未记") + "</div>" +
+          '<div class="ct-req-sub">提交于 ' + fmtWhen(r.created_at) + "</div>" +
         "</div>" +
         '<span class="ct-st ct-st-' + st.cls + '">' + st.label + "</span>" +
       "</div>" +
@@ -494,15 +500,108 @@
   function reuse(id) {
     var r = findReq(id);
     if (!r) return;
-    $("ct-idtype").value = r.id_type || "";
-    $("ct-idno").value = r.id_no || "";
-    sync();
-    $("ct-idno").focus();
+    /* 那条被驳回的东西里本来就没有证件信息（号码压根没上传过），
+       所以「重提」能做的只是把他带回第一步重新选记录。 */
     alertIn($("ct-alerts"), "warn",
-      "证件资料已经搬下来了。重新核对一遍上面的记录勾选，再点「提交证明申请」。");
+      "这条被驳回了 —— 回到第 1 步改一改勾的记录，再点「提交证明申请」。" +
+      (r.review_note ? "<br />审核意见：" + htmlEsc(r.review_note) : ""));
+    if (window.scrollTo) window.scrollTo(0, 0);
+    var picks = $("ct-picks");
+    if (picks && picks.firstChild) picks.setAttribute("data-flash", "1");
   }
 
-  /* ---------- 下载 PDF：只有「已通过」的那些会计入这里 ---------- */
+  /* ================= 打印：证件号码在这一刻才出现，用完即弃 =================
+     两条路进到这里：
+       · approved —— 「我的申请」里那条已通过的（内容取快照）
+       · draft    —— 应急离线打印（内容取当前勾选，整张纸铺未审核水印）
+     ⚠️ 号码只经过 printIds 这一个内存变量：不进 fetch、不进 storage。 */
+  var pendingPrint = null;       /* {mode:"approved"|"draft", id:reqId|null} */
+
+  function openIdBox(mode, reqId) {
+    pendingPrint = { mode: mode, id: reqId };
+    $("ct-idbox-sub").textContent = mode === "draft"
+      ? "应急打印：这张纸会带上「未审核 · 草稿」水印，学校不一定收。"
+      : "审核已经通过 —— 这一版就是你交给学校的那份。";
+    $("ct-idbox").hidden = false;
+    var box = $("ct-idno");
+    if (box) box.focus();
+  }
+
+  function closeIdBox() {
+    pendingPrint = null;
+    /* 输入框里的东西立刻丢掉 —— 它唯一的用处是刚才那次打印 */
+    $("ct-idtype").value = "";
+    $("ct-idno").value = "";
+    printIds = { idtype: "", idno: "" };
+    $("ct-idbox").hidden = true;
+  }
+
+  /* ⚠️ 打印前必须走这一步：@media print 里 `body > *` 全被藏掉，只有
+     #cert-print-portal 会输出 —— 不把 sheet 克隆进去，按下去就是一张白纸。
+     克隆的是**刚画好的那一版**（含水印状态），所以顺序不能放到 paintSheet 之前。 */
+  function stageSheet() {
+    var portal = $("cert-print-portal"), sheet = $("cert-sheet");
+    if (!portal || !sheet) return;
+    portal.innerHTML = sheet.outerHTML.replace(/ style="transform:[^"]*"/, "");
+  }
+  function unstageSheet() {
+    var portal = $("cert-print-portal");
+    if (portal) portal.innerHTML = "";       /* 免得留下重复 id */
+  }
+
+  function doPrint() {
+    if (!pendingPrint) return;
+    printIds.idtype = $("ct-idtype").value || "";
+    printIds.idno = ($("ct-idno").value || "").trim();
+    if (!printIds.idno) {
+      alertIn($("ct-alerts"), "error", "证件号码是空的 —— 照证件原样填一遍再打印。");
+      return;
+    }
+
+    var mode = pendingPrint.mode;
+    var req = mode === "approved" ? findReq(pendingPrint.id) : null;
+    if (mode === "approved" && (!req || req.status !== "approved")) {
+      alertIn($("ct-alerts"), "error", "这一条已经不是「已通过」了 —— 刷新看看最新结果。");
+      closeIdBox();
+      loadReqs();
+      return;
+    }
+
+    /* ⚠️ 先把「该印的那版」画进预览：approved 用快照、draft 用当前勾选 */
+    var d = req ? reqData(req) : liveData();
+    $("cert-draft").hidden = (mode !== "draft");
+    paintSheet(d);
+
+    var title = "志愿服务证明-" +
+      String(d.name || "同学").replace(/[\\/:*?"<>|\s]/g, "") + "-" + d.date +
+      (mode === "draft" ? "-未审核草稿" : "");
+
+    var old = document.title;
+    document.title = title;        /* Chrome / Safari 拿它当存档时的默认文件名 */
+    stageSheet();                  /* ⚠️ 必须在 print 之前：走的是 #cert-print-portal */
+    window.print();
+
+    /* 对话框关掉之后：标题还原、水印收起、号码从内存抹掉、预览恢复常态 */
+    window.setTimeout(function () {
+      document.title = old;
+      $("cert-draft").hidden = true;
+      unstageSheet();
+      closeIdBox();
+      sync();
+    }, 0);
+
+    clear($("ct-alerts"));
+    if (mode === "draft") {
+      alertIn($("ct-alerts"), "warn",
+        "已经打出去了 —— 这张带「未审核 · 草稿」水印，学校不一定收，" +
+        "事后还是要走正常那条路：提交 → 老师审核 → 下载无水印的正式版。");
+    } else {
+      alertIn($("ct-alerts"), "ok",
+        "已经交给浏览器去打印了 —— 在打印框里把「目标打印机」选成「另存为 PDF」" +
+        "（Safari 是右下角 PDF 菜单里的「存储为 PDF」），存下来就是「" + htmlEsc(title) + ".pdf」。");
+    }
+  }
+
   function download(id) {
     var r = findReq(id);
     if (!r) return;
@@ -510,22 +609,24 @@
       alertIn($("ct-alerts"), "error", "这一条还没通过审核，不能下载。");
       return;
     }
-    var title = "志愿服务证明-" +
-      (String(r.student_name || "同学")).replace(/[\\/:*?"<>|\s]/g, "") + "-" +
-      String(r.issue_date || "").slice(0, 10);
+    openIdBox("approved", id);
+  }
 
-    /* ⚠️ 先把「通过的那份」画进预览（不被当前勾选影响），再打印 */
-    paintSheet(reqData(r));
-
-    var old = document.title;
-    document.title = title;            /* Chrome / Safari 拿它当存档时的默认文件名 */
-    window.print();
-    /* 对话框关掉之后：文件名还原，预览恢复成「当前表单」的样子 */
-    window.setTimeout(function () { document.title = old; sync(); }, 0);
-
-    alertIn($("ct-alerts"), "ok",
-      "已经交给浏览器去打印了 —— 在打印框里把「目标打印机」选成「另存为 PDF」" +
-      "（Safari 是右下角 PDF 菜单里的「存储为 PDF」），存下来就是「" + htmlEsc(title) + ".pdf」。");
+  /* ---------- 应急离线打印： emergencies 用，带水印，不走审核 ---------- */
+  function offlinePrint() {
+    if (!NAME.cn) {
+      alertIn($("ct-alerts"), "error", "在册名单里还没有你登记的姓名，先请执委会补上。");
+      return;
+    }
+    if (!Number(pickedHours())) {
+      alertIn($("ct-alerts"), "error", "还没有勾任何记录 —— 至少要勾一条已核定的，才打得出东西来。");
+      return;
+    }
+    if (!window.confirm(
+      "应急打印出来的纸上会带「未审核 · 草稿」水印，学校不一定承认。\n\n" +
+      "正常流程是：提交 → 老师审核 → 下载无水印的正式版。\n\n" +
+      "确定先打一张带水印的草稿吗？")) return;
+    openIdBox("draft", null);
   }
 
   /* ================= 事件绑定 ================= */
@@ -549,13 +650,21 @@
     sync();
   });
 
-  /* 只有证件两项会触发重画 —— 其余数据（姓名 / 时长 / 日期）都不受制于输入 */
+  /* ⚠️ 这两个 input 现在住在「打印前填证件」那个浮层里 —— 它们只用来实时更新预览，
+     值绝不参与任何请求（见 collect() 的注释）。 */
   ["ct-idtype", "ct-idno"].forEach(function (id) {
     $(id).addEventListener("input", sync);
     $(id).addEventListener("change", sync);
   });
 
   $("ct-go").addEventListener("click", submit);
+  $("ct-offline").addEventListener("click", offlinePrint);
+  $("ct-id-ok").addEventListener("click", doPrint);
+  $("ct-id-no").addEventListener("click", closeIdBox);
+  /* 按 Esc 关浮层：跟「消失就消失」的承诺一致，别留残余状态 */
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && !$("ct-idbox").hidden) closeIdBox();
+  });
 
   $("ct-reqs").addEventListener("click", function (e) {
     var t = e.target;

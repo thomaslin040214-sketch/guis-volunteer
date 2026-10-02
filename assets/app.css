@@ -1394,6 +1394,34 @@ table.data tr.is-done { background: rgba(45, 138, 78, 0.045); }
   white-space: pre-wrap; max-height: 13rem; overflow: auto;
 }
 
+/* 应急离线打印的水印：斜铺整页、够大够浅，但扫描复印都盖不掉。
+   ⚠️ 它在 #cert-sheet 里面 —— 打印版的 HTML 就是这块 DOM，所以一定会印出来。
+      -webkit-print-color-adjust 那条是给 Chrome 的：不然它会自作主张把浅色去掉。 */
+.cert-draft {
+  position: absolute; inset: 0; z-index: 2;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none; text-align: center; line-height: 1.25;
+  color: rgba(0, 0, 0, 0.13); font-size: 58pt; font-weight: 700;
+  letter-spacing: 0.04em; transform: rotate(-28deg);
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
+.cert-draft[hidden] { display: none !important; }
+
+/* 打印前临时填证件的浮层。⚠️ 全站唯一会碰到证件号码的地方 */
+.ct-idbox {
+  position: fixed; inset: 0; z-index: 120;
+  display: flex; align-items: center; justify-content: center; padding: 1rem;
+  background: rgba(15, 23, 42, 0.45);
+}
+.ct-idbox[hidden] { display: none !important; }
+.ct-idbox-card {
+  background: var(--card-bg); border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-md);
+  padding: 1.25rem 1.35rem; width: min(430px, 100%);
+}
+.ct-idbox-card h3 { margin: 0 0 0.35rem; font-size: 1rem; font-weight: 650; }
+.ct-idbox-card .hint { display: block; margin-bottom: 0.9rem; }
+
 /* 我的证明申请：一张卡一条，只有「已通过」那条亮出下载 */
 .ct-req {
   border: 1px solid var(--hairline); border-radius: var(--radius-sm);
@@ -1431,6 +1459,8 @@ table.data tr.is-done { background: rgba(45, 138, 78, 0.045); }
    ============================================================ */
 .ct-stage { overflow: hidden; position: relative; }
 .cert-sheet {
+  /* position:relative 是为了让 .cert-draft 那层水印能铺满整页 */
+  position: relative; overflow: hidden;
   width: 21cm; min-height: 29.7cm;
   /* 原件页边距四边都是 720 twips = 1.27cm（不是 Word 默认的 2.54 / 3.17） */
   padding: 1.27cm;

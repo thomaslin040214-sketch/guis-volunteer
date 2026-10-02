@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-ver="20261002q">
+<html lang="zh-CN" data-ver="20261002r">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,8 +7,8 @@
 <meta name="description" content="提交已核定的义工小时，经义工组织审核通过后，生成学校格式的志愿服务记录证明。" />
 <meta name="theme-color" content="#FFFFFF" />
 <meta name="robots" content="noindex, nofollow" />
-<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261002q" />
-<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261002q" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261002r" />
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261002r" />
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate" />
 <script>
 /* 文档自愈：托管服务器只给 last-modified，没有 Cache-Control / ETag，
@@ -16,7 +16,7 @@
    于是点站内链接（全是裸路径）进去时整页退回旧设计。
    这里比对 <html data-ver>：不是当前版本就带查询串重拉一次（查询串必定回源）。 */
 (function () {
-  var VER = "20261002q";
+  var VER = "20261002r";
   try {
     var el = document.documentElement;
     var healed = /[?&]_v=/.test(location.search);
@@ -63,8 +63,8 @@
   .footer-brand img{max-height:24px}
 }
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20261002q" />
-<link rel="stylesheet" href="assets/app.css?v=20261002q" />
+<link rel="stylesheet" href="assets/site.css?v=20261002r" />
+<link rel="stylesheet" href="assets/app.css?v=20261002r" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
@@ -164,10 +164,10 @@
             <div class="panel">
               <div class="panel-head">
                 <div>
-                  <h2>2 · 补证件信息</h2>
+                  <h2>2 · 核对并提交</h2>
                   <div class="sub">
                     姓名取自在册名单，时长和服务内容按上面勾的记录自动算，出具日期填今天 ——
-                    <b>这四项都不用你填，也不开放修改。</b>这一页只有证件类型、证件号码要动手。
+                    <b>你不用填任何东西</b>：证件号码压根不上传云端，只在最后打印那一刻在本机填一次。
                   </div>
                 </div>
               </div>
@@ -189,40 +189,23 @@
                   </div>
                 </div>
 
-                <div class="form-grid">
-
-                  <div class="field">
-                    <label for="ct-idtype">证件类型（Type of ID） <span class="req">*</span></label>
-                    <select id="ct-idtype">
-                      <option value="居民身份证 Resident ID Card">居民身份证 Resident ID Card</option>
-                      <option value="护照 Passport">护照 Passport</option>
-                      <option value="港澳居民来往内地通行证">港澳居民来往内地通行证</option>
-                      <option value="台湾居民来往大陆通行证">台湾居民来往大陆通行证</option>
-                      <option value="外国永久居留身份证">外国永久居留身份证</option>
-                      <option value="其他证件 Other">其他证件 Other</option>
-                    </select>
-                  </div>
-
-                  <div class="field">
-                    <label for="ct-idno">证件号码(Proof of ID No.) <span class="req">*</span></label>
-                    <input id="ct-idno" type="text" placeholder="照证件原样填写" autocomplete="off" spellcheck="false" />
-                  </div>
-
-                  <div class="field span-2">
-                    <label>志愿服务内容(Volunteer Service Content)</label>
-                    <!-- 自动按勾选生成，不能手改：写得再花，也应该是后台那条记录说了算 -->
-                    <div class="ct-locked" id="ro-content">还没有勾选记录 —— 上去勾几条，这里会自动写出来。</div>
-                  </div>
-
+                <div class="field">
+                  <label>志愿服务内容(Volunteer Service Content)</label>
+                  <!-- 自动按勾选生成，不能手改：写得再花，也应该是后台那条记录说了算 -->
+                  <div class="ct-locked" id="ro-content">还没有勾选记录 —— 上去勾几条，这里会自动写出来。</div>
                 </div>
 
                 <div class="form-actions">
                   <button type="button" class="btn btn-primary" id="ct-go">提交证明申请</button>
+                  <button type="button" class="btn btn-secondary" id="ct-offline">应急打印（未审核）</button>
                 </div>
                 <p class="hint" style="margin-top:.85rem;">
-                  提交后这一份就要交给老师审核了 —— 所以证件号码务必照证件原样填一遍、再核对一遍。
-                  <b>它会存在云端</b>（审核和以后重打要用），只有你本人和指定的审核人看得到；
-                  页面本身不缓存、不留浏览器记录。
+                  <b>提交上去的只有：姓名、小时数、活动明细和你的邮箱。</b>
+                  证件号码一次都不会离开这台电脑 —— 审核通过后点下载时才让你敲一遍，打印完立刻丢掉，
+                  不写云端也不写浏览器缓存（所以重印那份要重新敲，大约 20 秒）。
+                  <br />
+                  右边那个「应急打印」只在赶时间又走不完流程时用：出来的纸会带
+                  <b>未审核水印</b>，学校不一定收，事后仍要走正常流程。
                 </p>
               </div>
             </div>
@@ -256,6 +239,11 @@
               <div class="panel-body">
                 <div class="ct-stage" id="ct-stage">
                   <div class="cert-sheet" id="cert-sheet">
+                    <!-- ⚠️ 应急离线打印时才放出来：整张纸铺一层「未审核 · 草稿」水印，
+                         打印版也会带上（跟证明同一个 DOM），学校才知道这张没走完流程。 -->
+                    <div class="cert-draft" id="cert-draft" hidden>
+                      <span>未审核 · 草稿<br />NOT REVIEWED · DRAFT</span>
+                    </div>
                     <div class="cert-crest-wrap">
                       <img class="cert-crest" src="assets/logo/cert-crest.png" alt="GUIS | ULC" />
                     </div>
@@ -339,15 +327,52 @@
 <!-- 打印时只有这一块会输出（由 cert.js 在打印前把证明内容克隆进来） -->
 <div id="cert-print-portal" aria-hidden="true"></div>
 
+<!-- ------------------------------------------------------------
+     证件信息浮层
+     ⚠️ 这是全站唯一一处会碰到证件号码的地方。刻意**不放在表单里**：
+        一旦放回去，它就会跟着申请一起写进云端。现在只在你按下「打印」之后
+        才出现，填完 → 打印 → 立刻从输入框清空，全程只在这一个页面变量里，
+        不进 network、不进 localStorage / sessionStorage。
+     ------------------------------------------------------------ -->
+<div class="ct-idbox" id="ct-idbox" hidden>
+  <div class="ct-idbox-card" role="dialog" aria-modal="true" aria-labelledby="ct-idbox-title">
+    <h3 id="ct-idbox-title">打印前填一次证件信息</h3>
+    <p class="hint" id="ct-idbox-sub"></p>
+    <div class="field">
+      <label for="ct-idtype">证件类型（Type of ID）</label>
+      <select id="ct-idtype">
+        <option value="居民身份证 Resident ID Card">居民身份证 Resident ID Card</option>
+        <option value="护照 Passport">护照 Passport</option>
+        <option value="港澳居民来往内地通行证">港澳居民来往内地通行证</option>
+        <option value="台湾居民来往大陆通行证">台湾居民来往大陆通行证</option>
+        <option value="外国永久居留身份证">外国永久居留身份证</option>
+        <option value="其他证件 Other">其他证件 Other</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="ct-idno">证件号码(Proof of ID No.)</label>
+      <input id="ct-idno" type="text" placeholder="照证件原样填写" autocomplete="off" spellcheck="false" />
+      <span class="hint">照证件原样填，打印前会现在右边的预览里给你看一遍。</span>
+    </div>
+    <div class="form-actions">
+      <button type="button" class="btn btn-primary" id="ct-id-ok">预览无误，打印</button>
+      <button type="button" class="btn btn-secondary" id="ct-id-no">取消</button>
+    </div>
+    <p class="hint" style="margin-top:.85rem;">
+      这两项<b>只在你这台电脑上过一遍</b>：不上传云端、不写入浏览器。关掉这个框，刚填的东西就消失了。
+    </p>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
-<script src="assets/cloud-config.js?v=20261002q"></script>
-<script src="assets/cloud.js?v=20261002q"></script>
-<script src="assets/navfit.js?v=20261002q"></script>
-<script src="assets/session.js?v=20261002q"></script>
+<script src="assets/cloud-config.js?v=20261002r"></script>
+<script src="assets/cloud.js?v=20261002r"></script>
+<script src="assets/navfit.js?v=20261002r"></script>
+<script src="assets/session.js?v=20261002r"></script>
 <!-- ⚠️ 这里原来引了 assets/docx.js（自己拼 Word 的那套），2026-10-02 起删掉了：
      证明改成「走浏览器打印 → 另存 PDF」，而且要先过审核，不再让学生直接拿 .docx。
      docx.js 文件还留在 assets/ 下没删（万一以后要把 printed version 换回可编辑 Word），
      但目前没有任何页面引用它。 -->
-<script src="assets/cert.js?v=20261002q"></script>
+<script src="assets/cert.js?v=20261002r"></script>
 </body>
 </html>
