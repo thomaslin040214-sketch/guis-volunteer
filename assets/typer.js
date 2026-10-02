@@ -13,8 +13,12 @@
 
   var KEY = "co.typer";
   var FALLBACK = "有问题想问我们？请发邮件到volunteer@guiscn.com";
-  /* 打字 95ms / 退格 40ms：打字比退格慢一点，看起来才像在「想」 */
-  var TYPE_MS = 95, ERASE_MS = 40, HOLD_MS = 1900, GAP_MS = 700;
+  /* 打字 115ms / 退格 40ms：打字比退格慢一点，看起来才像在「想」。
+     HOLD_MS 是「打完之后停多久再开始删」—— 2026-10-02 用户反馈太快，
+     从 1900 提到 2900（+1 秒），打字速度也从 95ms 放慢到 115ms，
+     让人来得及把「有问题想问我们？请发邮件到 volunteer@guiscn.com」这句读完。
+     ⚠️ 再想调就动这三个数：TYPE_MS 打字、HOLD_MS 打完停、ERASE_MS 退格。 */
+  var TYPE_MS = 115, ERASE_MS = 40, HOLD_MS = 2900, GAP_MS = 700;
 
   function lang() {
     return document.documentElement.lang === "en" ? "en" : "zh";

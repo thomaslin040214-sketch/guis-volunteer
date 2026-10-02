@@ -437,8 +437,11 @@ section { position: relative; z-index: 2; padding: clamp(4rem, 9vw, 7rem) 0; scr
 .btn-secondary:hover { border-color: var(--brand); color: var(--brand); transform: scale(1.02); }
 .btn:active { transform: scale(0.98); }
 
+/* ⚠️ 2026-10-02：这里原来是 position:absolute + bottom:2.1rem，钉在首屏底部。
+   首屏改成「按内容撑高」之后，它就被压到「有问题？问我们」那个标签页上了（截图里的重叠）。
+   改成正常流式排布 —— 老老实实跟在标签页下面，首屏多高都不会再压到别人。 */
 .scroll-hint {
-  position: absolute; bottom: 2.1rem; left: 50%; transform: translateX(-50%);
+  margin: 2.1rem auto 0;
   color: var(--text-subtle); font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase;
   display: flex; flex-direction: column; align-items: center; gap: 0.6rem;
 }
@@ -727,6 +730,8 @@ section { position: relative; z-index: 2; padding: clamp(4rem, 9vw, 7rem) 0; scr
    所以按**视口高度**分两档把间距压紧：先动留白，再动字号。 */
 @media (max-height: 900px) {
   .hero { padding-top: calc(var(--nav-h) + 1.6rem); padding-bottom: 2.6rem; }
+  /* ⚠️ 首页首屏的大标志 2026-10-02 已撤（index.html 里没有 .hero-brand 了），
+     这条对首页是空转 —— 留着是因为 join / signup / admin 各自的页头还有 hero-brand。 */
   .hero-brand .hero-logo { width: clamp(200px, 26vw, 285px); }
   .hero-badge { margin-bottom: 1.15rem; }
   .hero-title { margin-bottom: 1rem; }
@@ -740,15 +745,17 @@ section { position: relative; z-index: 2; padding: clamp(4rem, 9vw, 7rem) 0; scr
   .hero-title { font-size: clamp(1.7rem, 4vw, 2.7rem); margin-bottom: 0.7rem; }
   .hero-sub { font-size: clamp(0.9rem, 1.4vw, 1rem); line-height: 1.5; }
   .hero-brand .hero-logo { width: clamp(155px, 17vw, 195px); }
-  /* 徽章那句全称在页尾和导航 logo 里都有，矮屏上先把它让出来给打字机 */
-  .hero-badge { display: none; }
+  /* 2026-10-02：这里原来是 display:none —— 当初为了给打字机腾出首屏空间才藏掉徽章。
+     首屏那组大标志撤掉之后空间够了，改成「留着但小一号」：
+     它现在是首屏唯一的机构全称（导航只有标志，页尾才有全称）。 */
+  .hero-badge { font-size: 0.72rem; padding: 0.34rem 0.85rem; margin-bottom: 0.9rem; }
   .hero-actions { margin-top: 1.1rem; }
   .hero-tab { margin-top: 1rem; }
   .btn { padding: 0.62rem 1.35rem; font-size: 0.86rem; }
 }
-/* ⚠️ hero 是 flex + justify-content:center，内容比视口矮时上下平分余量 ——
-   所以「省下 40px」只等于打字机上移 20px。窗口本来就矮（笔记本 + 工具栏 +
-   国庆横幅叠一起）时，只能真删东西：品牌标志在导航里已经有了，收掉。 */
+/* ⚠️ 首页首屏 2026-10-02 起不再靠 justify-content:center 撑满一屏（改成 flex-start + 按内容撑高），
+   所以「省下 40px」现在是实打实的 40px。矮视口依旧按这两档收：先让徽章，再让品牌标志。
+   品牌标志那一档对首页已经空转（.hero-brand 撤了），留着给 join / signup / admin 的页头。 */
 @media (max-height: 680px) {
   .hero-brand { display: none; }
 }
