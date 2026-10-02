@@ -349,10 +349,18 @@ section { position: relative; z-index: 2; padding: clamp(4rem, 9vw, 7rem) 0; scr
 /* ---------- Hero ---------- */
 .hero {
   position: relative; z-index: 2;
-  min-height: 100vh;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  /* 2026-10-02：标志上移贴顶之后，底部空出一大块（实测 320px）。
+     首屏不再强撑满一屏 —— 高度改由内容决定，下一屏跟着提上来，那片空白就没了。
+     ⚠️ 原来是 min-height:100vh：内容比视口矮时它把整屏占满，留白只能落在底部。 */
+  min-height: 0;
+  display: flex; flex-direction: column; align-items: center;
+  /* 2026-10-02：原来是 justify-content:center + 顶部留 2.5rem ——
+     联合标志上方会空出一大块（实测约 150px），首屏看着「往下掉」。
+     改成贴着导航往上排，口号「同一个世界，同一种爱。」跟着上移到首屏上半部。
+     ⚠️ 内容比容器矮时，多出来的空间落在**底部**（不是平分上下），这正是想要的效果。 */
+  justify-content: flex-start;
   text-align: center;
-  padding: calc(var(--nav-h) + 2.5rem) clamp(1.25rem, 5vw, 2rem) 4.5rem;
+  padding: calc(var(--nav-h) + 1.15rem) clamp(1.25rem, 5vw, 2rem) 3.25rem;
 }
 
 .hero-logo { width: clamp(150px, 17vw, 208px); margin-bottom: 1.9rem; }
