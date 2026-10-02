@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-ver="20261002r">
+<html lang="zh-CN" data-ver="20261002s">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,7 +10,7 @@
    于是点站内链接（全是裸路径）进去时整页退回旧设计。
    这里比对 <html data-ver>：不是当前版本就带查询串重拉一次（查询串必定回源）。 */
 (function () {
-  var VER = "20261002r";
+  var VER = "20261002s";
   try {
     var el = document.documentElement;
     var healed = /[?&]_v=/.test(location.search);
@@ -49,8 +49,8 @@
 <meta name="description" content="GUIS 义工组织后台管理：创建义工活动、查看报名名单、导出 Excel。" />
 <meta name="theme-color" content="#FFFFFF" />
 <meta name="robots" content="noindex, nofollow" />
-<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261002r" />
-<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261002r" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261002s" />
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261002s" />
 <!-- 品牌标志兜底样式（内联，随 HTML 一起下发）。
      即使 assets/site.css 被浏览器缓存成旧版本，标志也不会按图片原始尺寸撑破布局。
      这里只设尺寸上限（max-*），正常加载 site.css 时这些上限都不会生效。 -->
@@ -74,8 +74,8 @@
   .hero-brand .hero-va{max-height:40px}
 }
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20261002r" />
-<link rel="stylesheet" href="assets/app.css?v=20261002r" />
+<link rel="stylesheet" href="assets/site.css?v=20261002s" />
+<link rel="stylesheet" href="assets/app.css?v=20261002s" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
@@ -935,12 +935,17 @@
             <div class="panel-body">
               <div id="hours-alerts"></div>
               <div id="hours-loading" class="empty"><span class="loading"></span> 正在读取…</div>
-            <div id="hours-list" hidden></div>
-            <div id="hours-empty" class="empty" hidden>这一类暂时没有记录。</div>
+              <div id="hours-list" hidden></div>
+              <div id="hours-empty" class="empty" hidden>这一类暂时没有记录。</div>
+            </div>
           </div>
         </div>
 
-        <!-- ---------- 志愿服务记录证明 · 审核（指定的审核人 + 执委会） ---------- -->
+        <!-- ---------- 志愿服务记录证明 · 审核（指定的审核人 + 执委会） ----------
+             ⚠️ 这一块必须跟 #tab-hours 平级。2026-10-02 第一次加的时候少写了一个 </div>，
+                #tab-cert 被套进了 #tab-hours 里面 —— 切到「证明审核」时 showTab 把
+                #tab-hours 一藏，整块内容跟着消失，页面看起来是全白的。
+                所以回归里专门有一条：任何 id 以 tab- 开头的容器都不许嵌在另一个 tab- 里。 -->
         <div id="tab-cert" hidden>
 
           <div class="panel" id="cert-rev-panel">
@@ -1029,17 +1034,17 @@
 <!-- 导出 Excel：ExcelJS 才能往表里插 logo（SheetJS 社区版写不了图片），加载失败时用 SheetJS 降级 -->
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="assets/cloud-config.js?v=20261002r"></script>
-<script src="assets/cloud.js?v=20261002r"></script>
-<script src="assets/navfit.js?v=20261002r"></script>
-<script src="assets/session.js?v=20261002r"></script>
-<script src="assets/qr.js?v=20261002r"></script>
-<script src="assets/board.js?v=20261002r"></script>
-<script src="assets/calendar.js?v=20261002r"></script>
-<script src="assets/export.js?v=20261002r"></script>
-<script src="assets/editor.js?v=20261002r"></script>
-<script src="assets/feed.js?v=20261002r"></script>
-<script src="assets/backup.js?v=20261002r"></script>
-<script src="assets/admin.js?v=20261002r"></script>
+<script src="assets/cloud-config.js?v=20261002s"></script>
+<script src="assets/cloud.js?v=20261002s"></script>
+<script src="assets/navfit.js?v=20261002s"></script>
+<script src="assets/session.js?v=20261002s"></script>
+<script src="assets/qr.js?v=20261002s"></script>
+<script src="assets/board.js?v=20261002s"></script>
+<script src="assets/calendar.js?v=20261002s"></script>
+<script src="assets/export.js?v=20261002s"></script>
+<script src="assets/editor.js?v=20261002s"></script>
+<script src="assets/feed.js?v=20261002s"></script>
+<script src="assets/backup.js?v=20261002s"></script>
+<script src="assets/admin.js?v=20261002s"></script>
 </body>
 </html>
