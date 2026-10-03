@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-ver="20261002v" data-page-title="doc.title">
+<html lang="zh-CN" data-ver="20261002w" data-page-title="doc.title">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,7 +10,7 @@
    于是点站内链接（全是裸路径）进去时整页退回旧设计。
    这里比对 <html data-ver>：不是当前版本就带查询串重拉一次（查询串必定回源）。 */
 (function () {
-  var VER = "20261002v";
+  var VER = "20261002w";
   try {
     var el = document.documentElement;
     var healed = /[?&]_v=/.test(location.search);
@@ -48,8 +48,8 @@
 <title>GUIS 义工组织 | 广州优联国际学校学生志愿服务组织</title>
 <meta name="description" content="广州优联国际学校（GUIS）义工组织 —— 由学生自主运营的志愿服务组织。社区关怀、环保行动、教育支持、公益募捐、赛事会务与文化交流。" />
 <meta name="theme-color" content="#FFFFFF" />
-<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261002v" />
-<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261002v" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261002w" />
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261002w" />
 
 <!-- Open Graph -->
 <meta property="og:type" content="website" />
@@ -80,8 +80,8 @@
   .hero-brand .hero-va{max-height:40px}
 }
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20261002v" />
-<link rel="stylesheet" href="assets/app.css?v=20261002v" />
+<link rel="stylesheet" href="assets/site.css?v=20261002w" />
+<link rel="stylesheet" href="assets/app.css?v=20261002w" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
@@ -167,6 +167,8 @@
        </div>
        ⚠️ join.html / signup.html / admin.html 里各自还有一份 hero-brand，那是它们自己的页头，别一起删。 -->
 
+  <!-- ⚠️ LED 灯牌版型 2026-10-03 试做、**没定论**，所以页面上先不挂：
+       想看就给它加 led 类（清晰版）或 led is-matrix（点阵版），样式在 site.css 的 .hero-badge.led。 -->
   <div class="hero-badge"><span class="dot"></span><span data-i18n="hero.badge">广州优联外籍人员子女学校-ULC英式国际部·<span class="nb">义工组织</span></span></div>
 
   <h1 class="hero-title" data-i18n="hero.title">同一个世界，<span class="grad">同一种爱</span>。</h1>
@@ -209,22 +211,19 @@
   <section id="stats" style="padding-top:0;">
     <div class="wrap">
       <div class="stats reveal">
-        <!-- EDIT: 把下面数字换成义工组织的真实数据 -->
+        <!-- 2026-10-03 用户给定 3 格：500+ / 3,600+ / 40+ —— 原来第 4 格「长期合作社区与机构」删了。
+             ⚠️ 格数变了要一起改 site.css 的 .stats（grid-template-columns）。 -->
         <div class="stat">
-          <div class="num"><span data-count="128" data-suffix="+">0</span></div>
-          <div class="label" data-i18n="stat1.label">在册学生志愿者</div>
+          <div class="num"><span data-count="500" data-suffix="+">0</span></div>
+          <div class="label" data-i18n="stat1.label">在校服务学生义工</div>
         </div>
         <div class="stat">
           <div class="num"><span data-count="3600" data-suffix="+">0</span></div>
           <div class="label" data-i18n="stat2.label">累计服务时长（小时）</div>
         </div>
         <div class="stat">
-          <div class="num"><span data-count="46">0</span></div>
-          <div class="label" data-i18n="stat3.label">本学年公益活动场次</div>
-        </div>
-        <div class="stat">
-          <div class="num"><span data-count="12">0</span></div>
-          <div class="label" data-i18n="stat4.label">长期合作社区与机构</div>
+          <div class="num"><span data-count="40" data-suffix="+">0</span></div>
+          <div class="label" data-i18n="stat3.label">每学年平均义工活动场次</div>
         </div>
       </div>
     </div>
@@ -511,21 +510,21 @@
 </svg>
 
 <script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
-<script src="assets/cloud-config.js?v=20261002v"></script>
-<script src="assets/cloud.js?v=20261002v"></script>
-<script src="assets/i18n.js?v=20261002v"></script>
-<script src="assets/board.js?v=20261002v"></script>
-<script src="assets/editor.js?v=20261002v"></script>
-<script src="assets/feed.js?v=20261002v"></script>
+<script src="assets/cloud-config.js?v=20261002w"></script>
+<script src="assets/cloud.js?v=20261002w"></script>
+<script src="assets/i18n.js?v=20261002w"></script>
+<script src="assets/board.js?v=20261002w"></script>
+<script src="assets/editor.js?v=20261002w"></script>
+<script src="assets/feed.js?v=20261002w"></script>
 <!-- 部门成员已独立成 team.html，team.js / team-render.js 只在那一页加载 -->
-<script src="assets/queue.js?v=20261002v"></script>
-<script src="assets/nav.js?v=20261002v"></script>
-<script src="assets/navfit.js?v=20261002v"></script>
-<script src="assets/session.js?v=20261002v"></script>
-<script src="assets/main.js?v=20261002v"></script>
-<script src="assets/typer.js?v=20261002v"></script>
+<script src="assets/queue.js?v=20261002w"></script>
+<script src="assets/nav.js?v=20261002w"></script>
+<script src="assets/navfit.js?v=20261002w"></script>
+<script src="assets/session.js?v=20261002w"></script>
+<script src="assets/main.js?v=20261002w"></script>
+<script src="assets/typer.js?v=20261002w"></script>
 <!-- 国庆横幅 / 专区：放在 main.js 之后，这样填进去的周年数字不会被 applyLang 覆盖回去 -->
-<script src="assets/national.js?v=20261002v"></script>
+<script src="assets/national.js?v=20261002w"></script>
 <script>
 /* ---------- 首页「活动报名」板块 ----------
    看板的全部逻辑（红绿灯判定、数字、图例、以及「旧结构自愈」）都在 assets/board.js，

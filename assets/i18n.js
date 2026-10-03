@@ -62,10 +62,10 @@ window.SITE_I18N = {
     "hero.cta2": "浏览项目类型",
     "hero.scroll": "向下浏览",
 
-    "stat1.label": "在册学生志愿者",
+    /* ⚠️ 统计条 2026-10-03 起只有 3 格（stat4 已删）—— 文案以 index.html 为准，这里必须同步 */
+    "stat1.label": "在校服务学生义工",
     "stat2.label": "累计服务时长（小时）",
-    "stat3.label": "本学年公益活动场次",
-    "stat4.label": "长期合作社区与机构",
+    "stat3.label": "每学年平均义工活动场次",
 
     "about.eyebrow": "关于我们",
     "about.title": "一所学校，<span class=\"grad\">一群愿意先动手的人</span>。",
@@ -486,10 +486,9 @@ window.SITE_I18N = {
     "hero.cta2": "Explore programme types",
     "hero.scroll": "Scroll",
 
-    "stat1.label": "Registered student volunteers",
+    "stat1.label": "Student volunteers serving on campus",
     "stat2.label": "Service hours logged in total",
-    "stat3.label": "Community activities this school year",
-    "stat4.label": "Long-term community and partner organisations",
+    "stat3.label": "Volunteer activities per school year (average)",
 
     "about.eyebrow": "About us",
     "about.title": "One school, <span class=\"grad\">a group of people who go first</span>.",

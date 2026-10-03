@@ -397,6 +397,61 @@ section { position: relative; z-index: 2; padding: clamp(4rem, 9vw, 7rem) 0; scr
    （<span class="nb"> 写在 assets/i18n.js 的 hero.badge 值里，index.html 里也有一份） */
 .hero-badge .nb { white-space: nowrap; }
 
+/* ---------- LED 灯牌版型（2026-10-03 试做）----------
+   挂在同一个 .hero-badge 上，加一个 .led 类就从「浅蓝药丸」变成「深色 LED 屏」：
+   · 背景 = 4px 点阵网纹 + 深蓝渐变（屏的底色）
+   · 文字 = 青色发光 + 等宽字（像机场/车站的电子信息屏）
+   · 左侧小点变成会闪的绿色指示灯，另加一层扫描线
+   再加 .is-matrix 会叠上「点孔遮罩」，字变成灯珠拼出来的：
+   ⚠️ 点阵必须配**更大的字号**（下面把字号提到 1.05rem、点孔缩到 2px）——
+      13px 的中文配 3px 点孔会糊成一团，实测看不清字（2026-10-03 踩过）。
+   ⚠️ 想整块回退：把 index.html 徽章上的 led / is-matrix 去掉，这里不用动。 */
+.hero-badge.led {
+  position: relative; overflow: hidden;
+  padding: 0.5rem 1.15rem 0.5rem 1rem;
+  border-radius: 10px;
+  background:
+    radial-gradient(rgba(84, 180, 216, 0.18) 1px, transparent 1.2px) 0 0 / 4px 4px,
+    radial-gradient(120% 160% at 50% 0%, #182742 0%, #0A1020 62%, #05080F 100%);
+  border: 1px solid rgba(84, 180, 216, 0.30);
+  box-shadow:
+    inset 0 0 14px rgba(3, 6, 12, 0.92),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03),
+    0 8px 20px rgba(5, 8, 15, 0.32);
+  color: #8FE4FF;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  font-size: 0.85rem; font-weight: 600; letter-spacing: 0.07em;
+  text-shadow: 0 0 6px rgba(84, 180, 216, 0.60), 0 0 16px rgba(84, 180, 216, 0.28);
+}
+/* 点阵档：字号加大 + 2px 点孔，灯珠感明显但仍读得出来 */
+.hero-badge.led.is-matrix {
+  font-size: 1.05rem; letter-spacing: 0.1em;
+  padding: 0.55rem 1.3rem 0.55rem 1.1rem;
+}
+.hero-badge.led.is-matrix > span {
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 46%, transparent 52%);
+          mask-image: radial-gradient(circle at 50% 50%, #000 46%, transparent 52%);
+  -webkit-mask-size: 2px 2px; mask-size: 2px 2px;
+  -webkit-mask-repeat: repeat; mask-repeat: repeat;
+}
+/* 扫描线：让「屏」不是死平的 */
+.hero-badge.led::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: repeating-linear-gradient(to bottom,
+    rgba(255, 255, 255, 0.045) 0 1px, transparent 1px 3px);
+}
+.hero-badge.led .dot {
+  width: 8px; height: 8px;
+  background: #5BE07F;
+  box-shadow: 0 0 6px rgba(91, 224, 127, 0.9), 0 0 14px rgba(91, 224, 127, 0.5);
+  animation: ledBlink 1.6s steps(1, end) infinite;
+}
+@keyframes ledBlink { 0%, 62% { opacity: 1; } 63%, 100% { opacity: 0.28; } }
+/* 系统开了「减少动态效果」就别闪了 */
+@media (prefers-reduced-motion: reduce) {
+  .hero-badge.led .dot { animation: none; }
+}
+
 .hero-title {
   font-size: clamp(2.3rem, 6.2vw, 4.6rem);
   font-weight: 700; letter-spacing: -0.04em; line-height: 1.1;
@@ -452,9 +507,12 @@ section { position: relative; z-index: 2; padding: clamp(4rem, 9vw, 7rem) 0; scr
 }
 @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
 
-/* ---------- Stats strip ---------- */
+/* ---------- Stats strip ----------
+   ⚠️ 列数要跟 index.html 里的 .stat 格数对上：2026-10-03 起是 **3 格**
+   （500+ 在校服务学生义工 / 3,600+ 累计服务时长 / 40+ 每学年平均活动场次）。
+   只删 HTML 不改这里，3 格会挤在 4 列里的前 3 列、右边空一格。 */
 .stats {
-  display: grid; grid-template-columns: repeat(4, 1fr);
+  display: grid; grid-template-columns: repeat(3, 1fr);
   gap: 1px; background: var(--hairline);
   border: 1px solid var(--hairline); border-radius: var(--radius-lg);
   overflow: hidden; box-shadow: var(--shadow-sm);
