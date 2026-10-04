@@ -193,7 +193,10 @@ html[lang^="zh"] .nav-logo .org-script {
 .nav-logo .logo-va { height: 24px; width: auto; }
 
 .nav-links {
-  display: flex; align-items: center; gap: clamp(0.85rem, 1.8vw, 1.75rem);
+  display: flex; align-items: center;
+  /* 2026-10-03 起每一项都是颗胶囊按钮，横向留白由自己的 padding 给，
+     gap 再按原来那套 clamp(0.85rem,1.8vw,1.75rem) 会把整排撑得稀稀拉拉。 */
+  gap: clamp(0.1rem, 0.45vw, 0.4rem);
   /* 把「链接组 + 右侧区」一起推到最右，观感和改版前一致（标志在左，其余靠右） */
   margin-left: auto;
 }
@@ -204,7 +207,63 @@ html[lang^="zh"] .nav-logo .org-script {
   transition: color 0.2s ease;
   white-space: nowrap;
 }
-.nav-links a:hover, .nav-links a.is-active { color: var(--brand); }
+
+/* ==========================================================================
+   导航项 = 胶囊小按钮（2026-10-03 用户要求：每一项都做成按钮）
+   --------------------------------------------------------------------------
+   一排看的出是按钮的小胶囊：静息=淡白底+发丝描边 → hover=纯白底+蓝描边+抬起 1px
+   → 按下回弹一下 → 当前页=浅蓝底+蓝描边（内描边加一圈）。
+   ⚠️ 只认**直接子元素**（.nav-links > a）：下拉菜单那几条也在 .nav-links 里面，
+      写成 .nav-links a 会连菜单项一起变成胶囊（上面那条其实就踩了这个坑，
+      全靠后面的 .nav-drop-menu a 才盖回来）。
+   ⚠️ padding + border 会把导航内容撑高一点点 —— 不用改 --nav-h，
+      那是 assets/navfit.js 量出来的真实高度，它会自己跟上。
+   ========================================================================== */
+.nav-links > a,
+.nav-drop-btn {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  padding: 0.44rem 0.85rem;
+  /* 静息态也带一层很淡的白底 + 发丝描边：一眼能看出这是「一排按钮」，
+     而不是变宽了的文字。想要更含蓄就把 background/box-shadow 两行去掉，
+     只剩透明描边，那样平时是裸文字、hover 才浮出胶囊。 */
+  border: 1px solid rgba(15, 23, 42, 0.075);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.62);
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+  white-space: nowrap; line-height: 1.35;
+  transition: background-color 0.22s ease, color 0.22s ease, border-color 0.22s ease,
+              box-shadow 0.22s ease, transform 0.22s ease;
+}
+.nav-links > a:hover,
+.nav-drop-btn:hover,
+.nav-drop.is-open .nav-drop-btn {
+  background: #fff;
+  color: var(--brand-deep);
+  border-color: rgba(20, 76, 144, 0.26);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(20, 76, 144, 0.14);
+}
+/* 按下去回弹，让它真的像颗按钮 */
+.nav-links > a:active, .nav-drop-btn:active { transform: translateY(0) scale(0.98); }
+/* 当前所在的那一项：浅蓝底 + 品牌色描边 + 一圈内描边。
+   ⚠️ 刻意**不做实心** —— 实心是「登录」那个主按钮的专利，两个都用实心就分不出主次。 */
+.nav-links > a.is-active {
+  background: var(--brand-tint);
+  border-color: rgba(20, 76, 144, 0.32);
+  color: var(--brand);
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px rgba(20, 76, 144, 0.06), 0 2px 8px rgba(20, 76, 144, 0.10);
+}
+.nav-links > a.is-active:hover { transform: translateY(-1px); }
+/* 键盘 Tab 过来要给明确的圈（导航是全站最常被 tab 到的地方） */
+.nav-links > a:focus-visible, .nav-drop-btn:focus-visible {
+  outline: 2px solid var(--brand); outline-offset: 2px;
+}
+/* 窄一点的桌面：胶囊撑不下就收窄 padding，别让整套导航挤出横向滚动条。
+   （实测 1440 / 1280 / 1100 / 1024 四档：不溢出，链接组也没压到右侧区。） */
+@media (max-width: 1180px) {
+  .nav-links > a, .nav-drop-btn { padding: 0.38rem 0.6rem; font-size: 0.79rem; }
+}
 
 /* ---------- 导航右半区：语言开关 + 登录（登录后换成头像） ----------
    单独拆成一个 nav 的直接子元素，是为了手机端能把这一组留在第 1 行 ——
@@ -216,14 +275,14 @@ html[lang^="zh"] .nav-logo .org-script {
 
 /* ---------- 关于我们 · 下拉菜单 ---------- */
 .nav-drop { position: relative; }
+/* ⚠️ 这里**不许**再写 padding / border / background —— 那是上面「胶囊小按钮」那块的活。
+   它排在这条之后，一旦重复声明（哪怕值一样）就会把胶囊的 padding 和描边盖掉，
+   「关于我们」会退回成一坨没有底色的文字。这里只留按钮形态本身需要的：光标 + 继承字体。 */
 .nav-drop-btn {
-  border: 0; background: transparent; padding: 0; cursor: pointer;
+  background: transparent; cursor: pointer;
   font: inherit; font-size: 0.82rem; font-weight: 500; letter-spacing: 0;
   color: var(--text-muted);
-  display: inline-flex; align-items: center; gap: 0.3rem;
-  white-space: nowrap; transition: color 0.2s ease;
 }
-.nav-drop-btn:hover, .nav-drop.is-open .nav-drop-btn { color: var(--brand); }
 .nav-caret {
   width: 0; height: 0; flex: none;
   border-left: 3.5px solid transparent; border-right: 3.5px solid transparent;
@@ -252,30 +311,53 @@ html[lang^="zh"] .nav-logo .org-script {
 }
 .nav-drop-menu a:hover { background: var(--brand-tint); color: var(--brand); }
 
-/* 登录按钮：导航里唯一的实心按钮，放在最右 */
-.nav-links a.nav-login {
+/* 登录按钮：导航里唯一的实心按钮，放在最右。
+   ⚠️ 2026-10-03 发现：把登录拆进 .nav-right 之后，这条选择器（.nav-links a.nav-login）
+      就再也命中不到它了 —— 结果登录一直是颗没有底色的裸链接。两个位置都得写。 */
+.nav-links a.nav-login,
+.nav-right a.nav-login {
   padding: 0.34rem 0.9rem; border-radius: 980px;
   background: var(--brand); color: #fff;
   font-size: 0.78rem; font-weight: 600; letter-spacing: 0.01em;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.2s ease, box-shadow 0.22s ease, transform 0.22s ease;
 }
-.nav-links a.nav-login:hover { color: #fff; opacity: 0.86; }
+.nav-links a.nav-login:hover,
+.nav-right a.nav-login:hover { color: #fff; opacity: 0.86; transform: translateY(-1px); }
 /* ⚠️ 作者样式里的 display 会盖掉 UA 的 [hidden]，必须补一条 */
 .nav-links a.nav-login[hidden], .nav-login[hidden] { display: none; }
 
-/* ---------- 已登录：右上角头像（assets/session.js 渲染） ---------- */
+/* ---------- 已登录：右上角账户按钮（assets/session.js 渲染）----------
+   2026-10-03：这里原来是一枚圆形字母头像（邮箱前缀 initials），用户不要了 ——
+   换成跟导航同一套胶囊语言的「账户」按钮：小人图标 + 角色名 + 小箭头。
+   ⚠️ 中间显示的是**角色**（执委会 / 负责老师 / 义工学生），不是邮箱前缀：
+      学生的邮箱前缀就是学号（2510032 这种），摆出来像一串不明数字。
+   ⚠️ 原来的 .nav-avatar（30px 圆头像）整套已删 —— 头像形态没了，别再往回找它。 */
 .nav-me { position: relative; display: inline-flex; }
 .nav-me[hidden] { display: none; }
-.nav-avatar {
-  width: 30px; height: 30px; padding: 0; border: 0; border-radius: 50%;
-  background: var(--brand); color: #fff; cursor: pointer; overflow: hidden;
-  font: inherit; font-size: 0.76rem; font-weight: 700; letter-spacing: 0.02em;
-  display: inline-flex; align-items: center; justify-content: center;
-  box-shadow: 0 2px 8px rgba(20, 76, 144, 0.18);
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
+.nav-account {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.4rem 0.75rem; border: 1px solid rgba(20, 76, 144, 0.14);
+  border-radius: 999px; cursor: pointer;
+  background: var(--brand-tint); color: var(--brand-deep);
+  font: inherit; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.01em;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(20, 76, 144, 0.10);
+  transition: background-color 0.22s ease, color 0.22s ease, border-color 0.22s ease,
+              box-shadow 0.22s ease, transform 0.22s ease;
 }
-.nav-avatar:hover { transform: translateY(-1px); box-shadow: 0 6px 14px rgba(20, 76, 144, 0.26); }
-.nav-me.is-open .nav-avatar { box-shadow: 0 0 0 3px var(--brand-tint); }
+.nav-account:hover {
+  background: #fff; border-color: rgba(20, 76, 144, 0.28);
+  transform: translateY(-1px); box-shadow: 0 4px 12px rgba(20, 76, 144, 0.14);
+}
+.nav-account:active { transform: translateY(0) scale(0.98); }
+.nav-account:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+/* 菜单展开时：白底 + 一圈浅蓝光环，跟下面的菜单连成一体 */
+.nav-me.is-open .nav-account {
+  background: #fff; border-color: rgba(20, 76, 144, 0.34);
+  box-shadow: 0 0 0 3px var(--brand-tint), 0 4px 12px rgba(20, 76, 144, 0.12);
+}
+.nav-me.is-open .nav-caret { transform: rotate(180deg); }
+.nav-account-ico { width: 14px; height: 14px; flex: 0 0 auto; }
 /* 菜单贴右对齐，别顶出屏幕外 */
 .nav-me .nav-me-menu { left: auto; right: 0; min-width: 200px; }
 .nav-me.is-open .nav-drop-menu { display: block; }
@@ -296,7 +378,7 @@ html[lang^="zh"] .nav-logo .org-script {
 }
 .nav-me-out:hover { background: rgba(179, 38, 30, 0.08); }
 @media (max-width: 720px) {
-  .nav-avatar { width: 27px; height: 27px; font-size: 0.7rem; }
+  .nav-account { padding: 0.34rem 0.6rem; font-size: 0.76rem; }
   .nav-me .nav-me-menu { min-width: 170px; }
 }
 
@@ -942,8 +1024,91 @@ footer {
 .reveal { transition: opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1), transform 0.9s cubic-bezier(0.16, 1, 0.3, 1); }
 html.js .reveal { opacity: 0; transform: translate3d(0, 26px, 0); }
 html.js .reveal.is-in { opacity: 1; transform: none; }
-.d1 { transition-delay: 0.08s; } .d2 { transition-delay: 0.16s; } .d3 { transition-delay: 0.24s; }
-.d4 { transition-delay: 0.32s; } .d5 { transition-delay: 0.40s; } .d6 { transition-delay: 0.48s; }
+/* ⚠️ 卡片 hover 抬升是被上面那条压掉的：html.js .reveal.is-in 有 html.js + .reveal + .is-in
+   三级（0,3,1），比 .card:hover（0,2,0）高，transform:none 永远赢 —— 卡片进场之后再也没抬起过。
+   这里把同位鼠标规则重新抬到 (0,4,1) 才压得住；0.35s 是为了别拖着上面那条 0.9s 的进场曲线走，
+   那会让 hover 慢半拍。（2026-10-03 验证：改之前 index 和 programs 实测都是 none） */
+html.js .card.reveal.is-in:hover,
+html.js .shot.reveal.is-in:hover { transform: translateY(-4px); transition-duration: 0.35s; }
+/* --fx-d 是给下面「浮动闪现」用的错峰量（只有 index.html 的 .page-home 会读它）。
+   ⚠️ 这里刻意**不写** animation-delay：它只对主页生效，其它页面的 d1~d6 仍只需
+   transition-delay —— 写死动画延迟会让别站的同类元素的动画被莫名推后。 */
+.d1 { transition-delay: 0.08s; --fx-d: 0.10s; } .d2 { transition-delay: 0.16s; --fx-d: 0.20s; } .d3 { transition-delay: 0.24s; --fx-d: 0.30s; }
+.d4 { transition-delay: 0.32s; --fx-d: 0.40s; } .d5 { transition-delay: 0.40s; --fx-d: 0.50s; } .d6 { transition-delay: 0.48s; --fx-d: 0.60s; }
+
+/* ==========================================================================
+   浮动闪现进场（2026-10-03 用户要求：主页做成「浮动 + 闪现」出来的效果）
+   --------------------------------------------------------------------------
+   原来的 .reveal 只是「淡入 + 上移 26px」，太温吞。主页（<body class="page-home">，
+   目前只有 index.html）在这之上叠两层：
+     fx-pop —— 糊着浮现 → 亮度过冲「闪」一下（中间那小段透明度抖动就是闪）→
+               微微过冲再回落到原位
+     fx-bob —— 落定之后的长期呼吸浮动（只给少数几个元素，见下）
+
+   ⚠️ 三条硬约束，改之前先读：
+   1. **只认 .page-home**：别把它摊到 .reveal 全局上 —— join/programs 那些页面用的是同一份
+      .reveal，一起动会波及 15 个页面。
+   2. **动画填充方向必须是 backwards，不能 forwards**：
+      forwards 会把 100% 帧的 transform:none 永久留在元素上，动画优先级高于普通声明，
+      于是 .card:hover 的 translateY(-4px) 抬升就再也动不了了（2026-10-03 特意避开）。
+      用 backwards 的话动画一结束就交还给 CSS —— 100% 帧和 .reveal.is-in 的自然值一致，
+      交接处看不出缝。
+   3. **别给 .card 挂 fx-bob**：无限循环的 animation 同样会长期占住 transform，
+      hover 抬升照样失效。.card 只吃 fx-pop。
+   ⚠️ prefers-reduced-motion：文末那条 *{animation:none!important} 会把这些都掐掉。
+      .reveal 有 html.js .reveal{opacity:1} 兜底；首屏那几块刻意**没有** opacity:0 基底
+      （藏起来完全靠 backwards 填充），所以动画一没它们就是正常显示，不会留白屏。
+   ========================================================================== */
+@keyframes fx-pop {
+  0%   { opacity: 0;   transform: translate3d(0, 28px, 0) scale(0.955); filter: blur(10px) brightness(1.45); }
+  14%  { opacity: 0.8; }
+  26%  { opacity: 0.24; }                       /* 闪的那一下 */
+  38%  { opacity: 0.9; }
+  58%  { opacity: 1;   transform: translate3d(0, -6px, 0) scale(1.016); filter: blur(0) brightness(1.14) drop-shadow(0 0 20px rgba(20, 76, 144, 0.26)); }
+  100% { opacity: 1;   transform: none; filter: none; }
+}
+@keyframes fx-bob {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50%      { transform: translate3d(0, -6px, 0); }
+}
+/* 滚动进场的那批：走 .reveal 的 is-in，错峰量从 d1~d6 的 --fx-d 取 */
+html.js .page-home .reveal.is-in {
+  animation-name: fx-pop;
+  animation-duration: 1.05s;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  animation-delay: var(--fx-d, 0s);
+  animation-fill-mode: backwards;
+  animation-iteration-count: 1;
+}
+/* 首屏六块：页面一打开就依次闪出来，**不依赖**观察器（它们刻意不带 .reveal，
+   因为首屏的东西必须一开始就在 —— 详见 index.html 里 hero-tab 上方那段注释）。 */
+.page-home .hero > * {
+  animation-name: fx-pop;
+  animation-duration: 1.05s;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  animation-fill-mode: backwards;
+  animation-iteration-count: 1;
+}
+.page-home .hero-badge  { animation-delay: 0.02s; }
+.page-home .hero-title  { animation-delay: 0.13s; }
+.page-home .hero-sub    { animation-delay: 0.25s; }
+.page-home .hero-actions{ animation-delay: 0.37s; }
+.page-home .hero-tab    { animation-delay: 0.49s; }
+.page-home .scroll-hint { animation-delay: 0.61s; }
+/* 徽章落定后自己轻轻浮 —— 两个动画叠着写时，后面的 fx-bob 一启动就接管 transform，
+   所以它的延迟要正好接在 fx-pop 结束之后（0.02 + 1.05 ≈ 1.1s），不然会把落定动作吃掉。 */
+.page-home .hero-badge {
+  animation-name: fx-pop, fx-bob;
+  animation-duration: 1.05s, 6.8s;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1), ease-in-out;
+  animation-delay: 0.02s, 1.1s;
+  animation-iteration-count: 1, infinite;
+  animation-fill-mode: backwards, none;
+}
+/* 数据看板三格：各自给不同的时长，几秒后就自然错开，看着像各自随波浪起伏 */
+.page-home #stats .stat { animation: fx-bob 7.2s ease-in-out infinite; }
+.page-home #stats .stat:nth-child(2) { animation-duration: 8.1s; }
+.page-home #stats .stat:nth-child(3) { animation-duration: 9.0s; }
 
 /* ---------- 活动状态看板（红绿灯 / 首页大数字） ----------
    绿 = 正在开放报名｜黄 = 已结束报名、等待邮件通知｜红 = 已邮件通知、请查收邮箱
@@ -1036,8 +1201,9 @@ html.js .reveal.is-in { opacity: 1; transform: none; }
     order: 3; width: 100%; margin-left: 0; padding-bottom: 0.15rem;
     justify-content: flex-start; flex-wrap: wrap; gap: 0.4rem 1.5rem;
   }
+  /* 胶囊在窄屏要收一收：只是改字号会留着过大的左右 padding，整排变胖、更容易换行 */
+  .nav-links > a, .nav-drop-btn { font-size: 0.76rem; padding: 0.34rem 0.62rem; }
   .nav-links a { font-size: 0.76rem; }
-  .nav-drop-btn { font-size: 0.76rem; }
   /* 「关于我们」关着的时候就是普通一项，跟别的链接排在同一行；
      展开的菜单回到绝对定位浮在页面之上，不再把导航撑高。
      ⚠️ 这里绝不能再给 .nav-links / nav 加 overflow，否则绝对定位的菜单会被裁掉。

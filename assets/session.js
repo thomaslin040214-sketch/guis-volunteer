@@ -103,15 +103,11 @@
     }, function () { return { state: "transient" }; });
   }
 
-  /* ---------------- 头像 ---------------- */
+  /* ---------------- 右上角账户按钮 ---------------- */
   var el = null, btn = null, outBtn = null, wired = false;
 
-  function initials(email) {
-    var local = String(email || "").split("@")[0].replace(/[._\-+]+/g, " ").trim();
-    var parts = local.split(/\s+/);
-    var s = parts.length > 1 ? parts[0].charAt(0) + parts[1].charAt(0) : local.slice(0, 2);
-    return (s || "?").toUpperCase();
-  }
+  /* 2026-10-03：这里原来是头像用的「邮箱前缀缩写」（initials）—— 头像形态取消之后
+     没人再调它，一并删掉，免得留一段死代码让人以为是头像还在。 */
 
   function roleLabelOf(role) {
     return role === "owner" ? t("navme.owner", "执委会")
@@ -175,10 +171,19 @@
 
     var dest = destOf(info.role);
     var label = roleLabelOf(info.role);
+    /* 2026-10-03：原来这里是一枚圆形字母头像（nav-avatar），换成正式的「账户」按钮 ——
+       小人图标 + 角色名 + 小箭头（nav-caret），外观在 site.css 的 .nav-account。
+       ⚠️ 中间显示**角色名**而不是邮箱前缀：学生的邮箱前缀是学号，显示出来像串乱码数字；
+       ⚠️ 完整邮箱在展开的菜单头部（nav-me-head）里。
+       ⚠️ 拼进 innerHTML 的一律先过 esc() —— 角色名 / 邮箱都不是我能控制的内容。 */
     el.innerHTML =
-      '<button type="button" class="nav-avatar" aria-haspopup="true" aria-expanded="false" ' +
+      '<button type="button" class="nav-account" aria-haspopup="true" aria-expanded="false" ' +
       'title="' + esc(info.email) + ' · ' + esc(label) + '">' +
-      esc(initials(info.email)) +
+      '<svg class="nav-account-ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' +
+      '<path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>' +
+      "</svg>" +
+      '<span class="nav-account-name">' + esc(label) + "</span>" +
+      '<span class="nav-caret" aria-hidden="true"></span>' +
       "</button>" +
       '<div class="nav-drop-menu nav-me-menu">' +
       '<div class="nav-me-head"><b>' + esc(info.email) + "</b><span>" + esc(label) + "</span></div>" +
@@ -188,7 +193,7 @@
       "</div>";
     el.hidden = false;
 
-    btn = el.querySelector(".nav-avatar");
+    btn = el.querySelector(".nav-account");
     outBtn = el.querySelector(".nav-me-out");
     wired = false;
     wire();
