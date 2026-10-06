@@ -471,7 +471,7 @@ document.addEventListener("DOMContentLoaded", function () {
           (r.checked_in ? " checked" : "") + (can ? "" : " disabled") +
           ' title="' + (can ? "打钩 = 已签到" : "只有负责这个活动的老师才能签到") + '" /></td>' +
         '<td class="num">' + (i + 1) + "</td>" +
-        "<td><b>" + esc(r.name) + "</b>" + (r.selected ? '<span class="roster-flag">已录取</span>' : "") + "</td>" +
+        "<td><b>" + esc(r.name) + "</b>" + (r.selected ? '<span class="roster-flag">已录取</span>' : "") + absFlag(r) + "</td>" +
         "<td>" + esc(r.grade) + "</td>" +
         "<td>" + esc(r.programme) + "</td>" +
         "<td>" + esc(r.student_id) + "</td>" +
@@ -492,6 +492,93 @@ document.addEventListener("DOMContentLoaded", function () {
     $("ci-count").textContent = (act ? "活动：" + act.title + " · " : "") +
       "应到 " + baseRows().length + " 人 · 已签到 " + done + " 人 · 义工小时 " + fmtH(hrs);
     updateMetrics();
+  }
+
+  /* ==========================================================================
+     缺席（2026-10-05）
+     --------------------------------------------------------------------------
+     活动一结束，没签到的人就应该记一次缺席。这里做两件事：
+     1) 打开一个「已结束」的活动时静默结算一次 —— 免得有人忘了点按钮，纪律就落空；
+        结算是幂等的（数据库唯一索引挡重复），反复调用不会把一次缺席记成两次。
+     2) 给「结算缺席」按钮一个明确出口，并显示这次结算的结果。
+     ⚠️ 只有这场活动的负责人（i_manage_activity）才结算得动，服务端会再判一次。
+     ========================================================================== */
+  var absRows = [];
+
+  function activityEnded() {
+    var a = currentActivity();
+    if (!a) return false;
+    var end = a.ends_at || a.starts_at;
+    if (!end) return false;
+    return new Date(end).getTime() < Date.now();
+  }
+  /* 这一场活动里这个人的缺席记录（没有就是 null） */
+  function absHere(email) {
+    var k = String(email || "").toLowerCase();
+    var hit = null;
+    (absRows || []).forEach(function (a) {
+      if (String(a.activity_id) === String(curId) && String(a.email || "").toLowerCase() === k) hit = a;
+    });
+    return hit;
+  }
+  function absFlag(r) {
+    var a = absHere(r.email);
+    if (!a) return "";
+    return a.status === "excused"
+      ? '<span class="reg-excused" title="已请假并有说明，不计入缺席次数">已请假</span>'
+      : '<span class="reg-absent is-hot" title="本场已记为缺席">缺席</span>';
+  }
+  function loadAbs() {
+    if (typeof C.listAbsences !== "function") return Promise.resolve(null);
+    return C.listAbsences({ activityId: curId }).then(function (res) {
+      absRows = C.unwrap(res, "读取失败") || [];
+      syncAbsBar();
+      if ($("ci-table-wrap") && !$("ci-table-wrap").hidden) renderRoster();
+    }).catch(function () { absRows = []; syncAbsBar(); });
+  }
+  /* 结算条：只有活动结束 + 自己能管这场活动才出现 */
+  function syncAbsBar() {
+    var bar = $("ci-abs-bar");
+    if (!bar) return;
+    var on = !!curId && canManageCurrent() && activityEnded();
+    bar.hidden = !on;
+    if (!on) return;
+    var done = baseRows().filter(function (r) { return !r.checked_in; }).length;
+    var got = (absRows || []).filter(function (a) { return a.status === "absent"; }).length;
+    $("ci-abs-hint").textContent = "未签到 " + done + " 人 · 本场已记缺席 " + got + " 条" +
+      (got ? "（再点一次不会重复计数）" : "");
+  }
+  function settleAbsences(silent) {
+    if (!curId || !canManageCurrent() || !activityEnded()) return Promise.resolve(null);
+    var btn = $("ci-abs-settle");
+    if (!silent && btn) busyOn(btn, "结算中…");
+    return C.settleAbsences(Number(curId)).then(function (res) {
+      var out = C.unwrap(res, "结算失败");
+      if (!silent && btn) busyOff(btn);
+      if (!out || out.ok === false) {
+        if (!silent) {
+          var why = (out && out.error === "not_manager") ? "只有这场活动的负责人能结算缺席。"
+            : (out && out.error === "not_ended") ? "活动还没结束。"
+            : "结算失败。";
+          alertIn($("ci-alerts"), "error", why);
+        }
+        return null;
+      }
+      return loadAbs().then(function () {
+        if (!silent) {
+          alertIn($("ci-alerts"), (out.inserted ? "ok" : "info"),
+            out.inserted
+              ? "已把 " + out.inserted + " 位未签到的同学记为缺席" +
+                (out.by_selection ? "（按录取名单判定）。" : "（这场没有录取记录，按报名成功的人判定）。")
+              : "这场已经结算过了，没有新增记录。");
+        }
+        return out;
+      });
+    }).catch(function (err) {
+      if (!silent && btn) busyOff(btn);
+      if (!silent) alertIn($("ci-alerts"), "error", failMsg(err, "结算失败"));
+      return null;
+    });
   }
 
   function loadRoster() {
@@ -524,11 +611,22 @@ document.addEventListener("DOMContentLoaded", function () {
           "这个活动还没有保存「报名成功名单」，当前显示的是<b>全部报名</b>同学。要只显示录取的同学，请先到后台「报名名单」页签勾选并保存。");
       }
       renderRoster();
+      /* 缺席：活动已经结束就静默结算一次，再带上这份活动的缺席记录刷新名单。
+         ⚠️ 静默（silent = true）：活动结束后每次打开都会试一次，成功不弹提示，
+            免得老师一进页面就看到一堆「已结算」。 */
+      loadAbs().then(function () {
+        if (canManageCurrent() && activityEnded()) return settleAbsences(true);
+        return null;
+      });
     }).catch(function (err) {
       $("ci-loading").hidden = true;
       $("ci-empty").hidden = false;
       $("ci-empty").textContent = "读取失败：" + (err && err.message ? err.message : "");
     });
+  }
+
+  if ($("ci-abs-settle")) {
+    $("ci-abs-settle").addEventListener("click", function () { settleAbsences(false); });
   }
 
   /* ---------------- 手动打钩 ---------------- */

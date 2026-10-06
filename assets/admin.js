@@ -1322,8 +1322,11 @@ document.addEventListener("DOMContentLoaded", function () {
   function currentFilter() {
     var q = $("reg-search").value.trim().toLowerCase();
     var st = $("reg-status-filter").value;
+    var absOnly = $("reg-abs-filter") ? $("reg-abs-filter").checked : false;
     return regRows.filter(function (r) {
       if (st && r.status !== st) return false;
+      /* 「只看缺席触线」—— 执委会决定这一场录不录取时，先把这几个人捞出来 */
+      if (absOnly && absOf(r.email).absent < absenceLimit()) return false;
       if (!q) return true;
       return [r.name, r.email, r.student_id, r.phone].join(" ").toLowerCase().indexOf(q) >= 0;
     });
@@ -1364,6 +1367,99 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     return '<input type="number" class="hours-in" min="0" step="0.5" value="' +
       (val != null ? val : "") + '" placeholder="' + fmtH(def) + '" title="留空 = 用活动默认时长" data-hours="' + r.id + '" />';
+  }
+
+  /* ==========================================================================
+     缺席（2026-10-05 新增）
+     --------------------------------------------------------------------------
+     口径：一学年（8/1 起算）缺席累计到 3 次就触线；触线的同学**照样能报名**，
+     名单里用红色角标点出来，这一场录不录取由执委会自己勾 —— 用户明确不要「一刀切拦报名」。
+     absRows 是本学年的全部缺席行（跨活动），absMap 按邮箱聚合成次数，名单每行读它。
+     ⚠️ 学年标识只从服务端 current_school_year() 拿，前端不自己按月份算。
+     ========================================================================== */
+  var absYear = "";
+  var absRows = [];
+  var absMap = {};
+
+  function refreshAbsMap() {
+    absMap = (typeof C.summarizeAbsences === "function")
+      ? (C.summarizeAbsences(absRows, absYear) || {}) : {};
+  }
+  function absOf(email) {
+    return absMap[String(email || "").toLowerCase()] || { absent: 0, excused: 0, rows: [] };
+  }
+  /* 这一场活动里，这个人有没有被记过缺席（决定那一行的按钮显示「记缺席」还是「撤销」） */
+  function absHere(email) {
+    var aid = String(($("reg-activity") && $("reg-activity").value) || "");
+    var k = String(email || "").toLowerCase();
+    var hit = null;
+    absRows.forEach(function (a) {
+      if (String(a.activity_id) === aid && String(a.email || "").toLowerCase() === k) hit = a;
+    });
+    return hit;
+  }
+  /* 活动结束了才能判缺席 —— 人还没到点，不能先把人记成缺席。 */
+  function activityEnded() {
+    var a = currentActivity();
+    if (!a) return false;
+    var end = a.ends_at || a.starts_at;
+    if (!end) return false;
+    return new Date(end).getTime() < Date.now();
+  }
+  function absenceLimit() { return (C && C.ABSENCE_LIMIT) || 3; }
+
+  function loadAbsences() {
+    if (typeof C.currentSchoolYear !== "function") {
+      absRows = []; refreshAbsMap(); return Promise.resolve(null);
+    }
+    return C.currentSchoolYear().then(function (res) {
+      absYear = String(C.unwrap(res, "") || "");
+      return C.listAbsences({});
+    }).then(function (res2) {
+      absRows = C.unwrap(res2, "读取失败") || [];
+      refreshAbsMap();
+    }).catch(function () {
+      /* 缺席读不出来不该把名单整块带走 —— 退成「没有缺席记录」继续用 */
+      absRows = []; refreshAbsMap();
+    });
+  }
+
+  /* 姓名后面的缺席角标：常态用中性色，触线转红并写明「已触线」。 */
+  function absenceCell(r) {
+    var s = absOf(r.email);
+    var out = "";
+    if (s.absent > 0) {
+      var hot = s.absent >= absenceLimit();
+      out += '<span class="reg-absent' + (hot ? " is-hot" : "") + '" title="' +
+        (hot
+          ? "本学年已缺席 " + s.absent + " 次，达到 " + absenceLimit() + " 次上限 —— 是否录取由执委会决定"
+          : "本学年已缺席 " + s.absent + " 次") +
+        '">缺席 ' + s.absent + " 次" + (hot ? " · 已触线" : "") + "</span>";
+    }
+    if (s.excused > 0) {
+      out += '<span class="reg-excused" title="已请假并有说明，不计入缺席次数">请假 ' + s.excused + "</span>";
+    }
+    return out;
+  }
+
+  /* 这一行的缺席按钮组。三种状态：
+     没记过 → 「记缺席」
+     已记缺席 → 「标为请假」（豁免，不计次）+「撤销」（真的记错了）
+     已请假  → 「恢复计数」+「撤销」
+     ⚠️ 撤销用的是删除整条；请假用的是改 status —— 请假会留着记录，撤销则什么都不剩。 */
+  function absenceButtons(r) {
+    var here = absHere(r.email);
+    if (!here) {
+      return '<button type="button" class="tbl-btn warn" data-abs="' + r.id + '">记缺席</button>';
+    }
+    var id = here.id;
+    return here.status === "excused"
+      ? '<span class="ci-when">已请假</span>' +
+        '<button type="button" class="tbl-btn" data-reabsent="' + id + '">恢复计数</button>' +
+        '<button type="button" class="tbl-btn danger" data-absundo="' + id + '">撤销</button>'
+      : '<span class="ci-when">缺席</span>' +
+        '<button type="button" class="tbl-btn" data-excuse="' + id + '">标为请假</button>' +
+        '<button type="button" class="tbl-btn danger" data-absundo="' + id + '">撤销</button>';
   }
 
   /* ---------- 勾选录取 ----------
@@ -1412,6 +1508,21 @@ document.addEventListener("DOMContentLoaded", function () {
     return a && a.capacity ? a.capacity : 0;
   }
 
+  /* 结算按钮只在 « 选了活动 + 活动已结束 » 时才可按，文案也跟着变，
+     免得老师点了半天才发现是灰的 —— 灰的时候把原因写进 title。 */
+  function syncAbsBtn() {
+    var b = $("abs-settle-btn");
+    if (!b) return;
+    var id = ($("reg-activity") && $("reg-activity").value) || "";
+    var can = canManageCurrent();
+    var ended = activityEnded();
+    b.disabled = !id || !can || !ended;
+    b.title = !id ? "先在上方选择一个活动"
+      : !can ? "你不是这场活动的负责人，不能结算"
+      : !ended ? "活动还没结束，结束之后才能结算缺席"
+      : "把这场活动里没签到的人一次记为缺席（可以反复点，不会重复计数）";
+  }
+
   function renderRegs() {
     var rows = currentFilter();
     var body = $("reg-body");
@@ -1431,7 +1542,7 @@ document.addEventListener("DOMContentLoaded", function () {
       return '<tr class="' + (on ? "is-picked" : "") + '" data-row="' + r.id + '">' +
         '<td class="pick-cell"><input type="checkbox" data-pick="' + r.id + '"' + (on ? " checked" : "") + " /></td>" +
         '<td class="num">' + (i + 1) + "</td>" +
-        "<td>" + esc(r.name) + (r.selected ? '<span class="roster-flag">已录取</span>' : "") + "</td>" +
+        "<td>" + esc(r.name) + (r.selected ? '<span class="roster-flag">已录取</span>' : "") + absenceCell(r) + "</td>" +
         "<td>" + esc(r.email) + "</td>" +
         "<td>" + esc(r.phone) + "</td>" +
         "<td>" + esc(r.grade) + "</td>" +
@@ -1452,6 +1563,9 @@ document.addEventListener("DOMContentLoaded", function () {
             ? '<button type="button" class="tbl-btn ok" data-approve="' + r.id + '">通过</button>' +
               '<button type="button" class="tbl-btn" data-reject="' + r.id + '">不通过</button>'
             : "") +
+          /* 缺席按钮只在活动结束后出现 —— 人还没到点就记缺席太武断。
+             ⚠️ 录不录取人是另一回事：角标会提示，但勾选框不作任何自动改动。 */
+          (canManageCurrent() && activityEnded() ? absenceButtons(r) : "") +
           '<button type="button" class="tbl-btn" data-qr="' + r.id + '">签到码</button>' +
           (isOwner()
             ? '<button type="button" class="tbl-btn danger" data-delreg="' + r.id + '">删除</button>'
@@ -1466,9 +1580,19 @@ document.addEventListener("DOMContentLoaded", function () {
       n[r.status] = (n[r.status] || 0) + 1;
       if (r.selected) sel += 1;
     });
+    /* 本学年缺席触线的人数直接写在统计行里 —— 名单再长也不用一条条找红角标 */
+    var hot = 0, any = 0;
+    regRows.forEach(function (r) {
+      var s = absOf(r.email);
+      if (s.absent > 0) any += 1;
+      if (s.absent >= absenceLimit()) hot += 1;
+    });
     $("reg-count").textContent = "共 " + regRows.length + " 条记录 · 待确认 " + n.pending +
-      " · 已通过 " + n.approved + " · 未通过 " + n.rejected + (sel ? " · 已录取 " + sel : "");
+      " · 已通过 " + n.approved + " · 未通过 " + n.rejected + (sel ? " · 已录取 " + sel : "") +
+      (any ? " · 本学年有缺席记录 " + any + " 人" : "") +
+      (hot ? " · 其中已达 " + absenceLimit() + " 次上限 " + hot + " 人" : "");
     syncPickBar();
+    syncAbsBtn();
   }
 
   function loadRegs() {
@@ -1494,6 +1618,8 @@ document.addEventListener("DOMContentLoaded", function () {
       regRows.forEach(function (r) { if (r.selected) picked[r.id] = true; });
       $("reg-loading").hidden = true;
       renderRegs();
+      /* 缺席角标晚一步补 —— 名单先出来，别让两趟请求把首屏拖慢 */
+      loadAbsences().then(renderRegs);
     }).catch(function (err) {
       $("reg-loading").hidden = true;
       $("reg-empty").hidden = false;
@@ -1504,6 +1630,45 @@ document.addEventListener("DOMContentLoaded", function () {
   $("reg-activity").addEventListener("change", loadRegs);
   $("reg-search").addEventListener("input", renderRegs);
   $("reg-status-filter").addEventListener("change", renderRegs);
+  if ($("reg-abs-filter")) $("reg-abs-filter").addEventListener("change", renderRegs);
+
+  /* 一键结算缺席：把这场活动里没签到的人一次记进去。
+     服务端幂等（唯一索引挡重复），所以「忘了点 → 后来补点」不会把同一次记成两次。 */
+  if ($("abs-settle-btn")) {
+    $("abs-settle-btn").addEventListener("click", function () {
+      var btn = $("abs-settle-btn");
+      var id = Number($("reg-activity").value || 0);
+      if (!id) { alertIn($("reg-alerts"), "error", "先在上方选择一个活动。"); return; }
+      if (!activityEnded()) { alertIn($("reg-alerts"), "error", "活动还没结束，结束之后才能结算缺席。"); return; }
+      clear($("reg-alerts"));
+      busyOn(btn, "结算中…");
+      C.settleAbsences(id).then(function (res) {
+        var out = C.unwrap(res, "结算失败");
+        busyOff(btn);
+        if (!out || out.ok === false) {
+          var why = (out && out.error === "not_manager") ? "你不是这场活动的负责人，结算不了。"
+            : (out && out.error === "not_ended") ? "活动还没结束。"
+            : (out && out.error === "no_time") ? "这场活动没有时间，没法判断结没结束。"
+            : "结算失败。";
+          alertIn($("reg-alerts"), "error", why);
+          return;
+        }
+        var n = out.inserted || 0;
+        var how = out.by_selection
+          ? "按录取名单判定（只有被录取又没签到的人算缺席）"
+          : "这场活动没有录取记录，所以按报名成功的人判定";
+        loadAbsences().then(function () {
+          renderRegs();
+          alertIn($("reg-alerts"), n ? "ok" : "info",
+            n ? "结算完成：新增 " + n + " 条缺席记录 —— " + how + "。再点一次不会重复计数。"
+              : "这场已经结算过了，没有新增记录 —— " + how + "。");
+        });
+      }).catch(function (err) {
+        busyOff(btn);
+        alertIn($("reg-alerts"), "error", failMsg(err, "结算失败"));
+      });
+    });
+  }
 
   $("reg-body").addEventListener("click", function (e) {
     var t = e.target;
@@ -1529,6 +1694,76 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (approve) setStatus(approve, "approved");
     if (reject) setStatus(reject, "rejected");
+
+    /* ---------- 缺席的三个按钮 ---------- */
+    var absAdd = t.getAttribute("data-abs");
+    var excuse = t.getAttribute("data-excuse");
+    var reabsent = t.getAttribute("data-reabsent");
+    var absUndo = t.getAttribute("data-absundo");
+
+    function afterAbsence(msg) {
+      busyOff(t);
+      loadAbsences().then(function () {
+        renderRegs();
+        alertIn($("reg-alerts"), "ok", msg);
+      });
+    }
+
+    if (absAdd) {
+      var arow = regRows.filter(function (r) { return String(r.id) === String(absAdd); })[0];
+      if (!arow) return;
+      var aid = Number(($("reg-activity") || {}).value);
+      clear($("reg-alerts"));
+      busyOn(t, "记录中…");
+      C.addAbsence({
+        activity_id: aid,
+        registration_id: Number(arow.id),
+        email: String(arow.email || "").toLowerCase(),
+        name: arow.name || "",
+        note: "后台手工登记"
+      }).then(function (res) {
+        var out = C.unwrap(res, "记录失败") || [];
+        if (!out.length) { busyOff(t); alertIn($("reg-alerts"), "error", "没写进去 —— 服务端没有新增任何一行，请确认你是这场活动的负责人。"); return; }
+        afterAbsence("已记一次缺席（同一场活动重复点不会重复计数）。");
+      }).catch(function (err) {
+        busyOff(t);
+        alertIn($("reg-alerts"), "error", failMsg(err, "记录失败"));
+      });
+      return;
+    }
+
+    if (excuse || reabsent) {
+      var eid = excuse || reabsent;
+      clear($("reg-alerts"));
+      busyOn(t, "处理中…");
+      C.updateAbsence(Number(eid), {
+        status: excuse ? "excused" : "absent",
+        note: excuse ? "已请假，不计入次数" : ""
+      }).then(function (res) {
+        var out = C.unwrap(res, "更新失败") || [];
+        if (!out.length) { busyOff(t); alertIn($("reg-alerts"), "error", "没改动 —— 服务端没有更新任何一行，请确认你是这场活动的负责人。"); return; }
+        afterAbsence(excuse ? "已标为请假 —— 这次不再计入缺席次数，记录仍保留。" : "已恢复计数。");
+      }).catch(function (err) {
+        busyOff(t);
+        alertIn($("reg-alerts"), "error", failMsg(err, "更新失败"));
+      });
+      return;
+    }
+
+    if (absUndo) {
+      if (!window.confirm("撤销这条缺席记录？撤销后这条记录彻底删除（想保留痕迹请用「标为请假」）。")) return;
+      clear($("reg-alerts"));
+      busyOn(t, "撤销中…");
+      C.removeAbsence(Number(absUndo)).then(function (res) {
+        var out = C.unwrap(res, "撤销失败") || [];
+        if (!out.length) { busyOff(t); alertIn($("reg-alerts"), "error", "没删掉 —— 服务端没有删除任何一行，请确认你是这场活动的负责人。"); return; }
+        afterAbsence("已撤销这条缺席记录。");
+      }).catch(function (err) {
+        busyOff(t);
+        alertIn($("reg-alerts"), "error", failMsg(err, "撤销失败"));
+      });
+      return;
+    }
 
     /* 看这个人的签到码。老数据可能还没生成过码，这里顺手补一个。 */
     var qr = t.getAttribute("data-qr");

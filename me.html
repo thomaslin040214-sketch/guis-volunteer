@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-ver="20261002x">
+<html lang="zh-CN" data-ver="20261002y">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,8 +7,8 @@
 <meta name="description" content="GUIS 义工组织学生账户：查看自己报名参加的义工活动、签到二维码与累计义工小时。" />
 <meta name="theme-color" content="#FFFFFF" />
 <meta name="robots" content="noindex, nofollow" />
-<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261002x" />
-<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261002x" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261002y" />
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261002y" />
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate" />
 <script>
 /* 文档自愈：托管服务器只给 last-modified，没有 Cache-Control / ETag，
@@ -16,7 +16,7 @@
    于是点站内链接（全是裸路径）进去时整页退回旧设计。
    这里比对 <html data-ver>：不是当前版本就带查询串重拉一次（查询串必定回源）。 */
 (function () {
-  var VER = "20261002x";
+  var VER = "20261002y";
   try {
     var el = document.documentElement;
     var healed = /[?&]_v=/.test(location.search);
@@ -65,8 +65,8 @@
   .footer-brand img{max-height:24px}
 }
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20261002x" />
-<link rel="stylesheet" href="assets/app.css?v=20261002x" />
+<link rel="stylesheet" href="assets/site.css?v=20261002y" />
+<link rel="stylesheet" href="assets/app.css?v=20261002y" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
@@ -198,6 +198,19 @@
             </div>
           </div>
 
+          <!-- 面试安排（2026-10-06 加）：只有真被排进时间表的同学才看得到 ——
+               服务端 my_interview() 按邮箱或学生名单里的姓名去对，
+               对不上就整块不出现。刻意不显示分数和结论，那由执委会另行通知。 -->
+          <div class="panel" id="me-iv" hidden>
+            <div class="panel-head">
+              <div>
+                <h2>我的面试安排</h2>
+                <div class="sub">招新面试按时段进行，请提前 5 分钟到面试地点。</div>
+              </div>
+            </div>
+            <div class="panel-body" id="me-iv-body"></div>
+          </div>
+
           <!-- 证明是自己按需生成的，不走后台审批 —— 所以入口放在账户页，不占后台页签 -->
           <div class="panel me-cert">
             <div class="panel-body me-cert-body">
@@ -262,11 +275,11 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
-<script src="assets/cloud-config.js?v=20261002x"></script>
-<script src="assets/cloud.js?v=20261002x"></script>
-<script src="assets/navfit.js?v=20261002x"></script>
-<script src="assets/session.js?v=20261002x"></script>
-<script src="assets/qr.js?v=20261002x"></script>
-<script src="assets/me.js?v=20261002x"></script>
+<script src="assets/cloud-config.js?v=20261002y"></script>
+<script src="assets/cloud.js?v=20261002y"></script>
+<script src="assets/navfit.js?v=20261002y"></script>
+<script src="assets/session.js?v=20261002y"></script>
+<script src="assets/qr.js?v=20261002y"></script>
+<script src="assets/me.js?v=20261002y"></script>
 </body>
 </html>

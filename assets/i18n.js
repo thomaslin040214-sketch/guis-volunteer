@@ -46,6 +46,7 @@ window.SITE_I18N = {
     "navme.teacher": "负责老师",
     "navme.student": "义工学生",
     "navme.out": "退出登录",
+    "navme.interview": "面试工作台",
 
     "ui.cv": "查看履历",
     "ui.when": "时间",
@@ -470,6 +471,7 @@ window.SITE_I18N = {
     "navme.teacher": "Supervising teacher",
     "navme.student": "Student volunteer",
     "navme.out": "Sign out",
+    "navme.interview": "Interview desk",
 
     "ui.cv": "View background",
     "ui.when": "When",

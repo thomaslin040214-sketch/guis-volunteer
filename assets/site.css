@@ -272,6 +272,14 @@ html[lang^="zh"] .nav-logo .org-script {
   display: flex; align-items: center;
   gap: clamp(0.85rem, 1.8vw, 1.75rem);
 }
+/* 2026-10-05 用户要求把「账户按钮」和「语言开关」换个位置：账户在前、语言开关在后（贴右边）。
+   用 order 调，不改 HTML 也不动 session.js（账户块是它运行时插进来的）。
+   ⚠️ 三个 order 是有意为之，别只改一个：
+      登录按钮固定 order:3 —— 登录状态下它是 hidden，所以**未登录时排布仍是「语言 | 登录」**，
+      跟改版前一模一样；只有登录之后账户按钮(order:1)才冒到语言开关左边。 */
+.nav-right .lang-switch { order: 2; }
+.nav-right .nav-me { order: 1; }
+.nav-right .nav-login { order: 3; }
 
 /* ---------- 关于我们 · 下拉菜单 ---------- */
 .nav-drop { position: relative; }
@@ -392,8 +400,10 @@ html[lang^="zh"] .nav-logo .org-script {
 .lang-btn {
   border: 0; cursor: pointer;
   background: transparent; color: var(--text-muted);
-  font: inherit; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.02em;
-  padding: 0.28rem 0.7rem; border-radius: 980px;
+  /* 2026-10-05 用户要求收小一档（原来 0.72rem / 0.28rem×0.7rem）：
+     它跟右上角账户按钮并排时显得比按钮还壮，压一压更服帖。 */
+  font: inherit; font-size: 0.69rem; font-weight: 600; letter-spacing: 0.02em;
+  padding: 0.22rem 0.56rem; border-radius: 980px;
   transition: background-color 0.22s ease, color 0.22s ease;
 }
 .lang-btn:hover { color: var(--text-main); }
@@ -1295,7 +1305,7 @@ html.js .page-home .reveal.is-in {
   .nav-logo .logo-div { height: 14px; }
   .nav-logo .logo-va { height: 16px; }
   .nav-right { gap: 0.35rem; }
-  .lang-btn { padding: 0.24rem 0.5rem; font-size: 0.68rem; }
+  .lang-btn { padding: 0.2rem 0.46rem; font-size: 0.66rem; }
   .nav-login { padding: 0.26rem 0.6rem; font-size: 0.7rem; }
 }
 @media (max-width: 560px) {

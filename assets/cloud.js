@@ -297,6 +297,97 @@
       return db.from("registrations").delete().eq("id", id).select();
     },
 
+    /* ==========================================================================
+       缺席（一次记一条，见 public.absences）
+       --------------------------------------------------------------------------
+       规则口径（2026-10-05 跟用户定的）：
+       1. 学年 = 8 月 1 日 ~ 次年 7 月 31 日，用起始年份标记（2026 学年 = 2026-08 起）。
+          ⚠️ 学年由数据库触发器 absences_fill_year 按活动结束时间自动填，
+             前端**永远不要**自己拼学年标识 —— 拼错会造成跨学年计数串台。
+       2. 一学年累计到 3 次就触线。
+          ⚠️ 这里和数据库 my_absence_summary() 里的 blocked_at 是同一件事的两处写法，
+             改一个必须改另一个。
+       3. 触线的同学**照样能报名**（用户明确不要一刀切拦报名），
+          由执委会在后台看到红色角标后决定这一场录不录取。
+       4. 真有事可以标成 excused（已请假）：不计次数，但记录留着 —— 对学生透明，也留证据。
+       5. 同一人同一场活动只可能有一条记录（唯一索引 activity_id + lower(email)），
+          所以「自动结算 + 手工补点」不会把一次缺席记成两次。
+       ========================================================================== */
+    ABSENCE_LIMIT: 3,
+    ABSENCE_COLS: "id, activity_id, registration_id, email, name, school_year, status, note, created_at, created_by, updated_at, updated_by",
+
+    /* 当前学年标识（如 2026 = 2026-08-01 起这一年）。
+       ⚠️ 一定要问服务端 —— 前后端各自按月份算，跨年那几天很容易差一年。 */
+    currentSchoolYear: function () {
+      return db.rpc("current_school_year", {});
+    },
+
+    /* 缺席记录。三个过滤条件可以叠加：
+       activityId —— 看这一场都有谁缺席（名单页用）
+       email      —— 看这一个人的历史（学生版本人 / 后台点某位同学）
+       schoolYear —— 限定学年（不传 = 所有学年）
+       ⚠️ 读策略是「本人 或 allowed_admins」，所以学生调这个只会拿回自己的。 */
+    listAbsences: function (opt) {
+      opt = opt || {};
+      var q = db.from("absences").select(api.ABSENCE_COLS).order("created_at", { ascending: false });
+      if (opt.activityId) q = q.eq("activity_id", opt.activityId);
+      if (opt.email) q = q.eq("email", String(opt.email).toLowerCase());
+      if (opt.schoolYear) q = q.eq("school_year", String(opt.schoolYear));
+      return q;
+    },
+
+    /* 手工补一条缺席（后台名单页用）。
+       school_year 不用传 —— 触发器会按活动结束时间补。
+       ⚠️ 写策略是 i_manage_activity()，负责老师只能给自己带的活动记。 */
+    addAbsence: function (payload) {
+      return db.from("absences").insert(payload);
+    },
+
+    /* 改一条：status 传 'excused' = 标为已请假豁免，'absent' = 取消豁免恢复计数；
+       note 可以顺便写原因（病假条之类）。 */
+    updateAbsence: function (id, patch) {
+      patch = patch || {};
+      patch.updated_at = new Date().toISOString();
+      return db.from("absences").update(patch).eq("id", id).select(api.ABSENCE_COLS);
+    },
+
+    /* 整条删掉 —— 「手滑点错了」用这个，不是常见的用法。
+       ⚠️ 请假应该是 update 成 excused 而不是删，删了就没有「为什么没算」的记录了。 */
+    removeAbsence: function (id) {
+      return db.from("absences").delete().eq("id", id).select();
+    },
+
+    /* 一键结算：把这场活动里「到点了还没签到」的人一次性记为缺席。
+       ⚠️ 幂等：同一场反复调用不会重复计数（撞唯一索引就被 DO NOTHING 掉）。
+       ⚠️ 活动还没结束会被服务端挡回来（error = 'not_ended'）；不是自己负责的活动 = 'not_manager'。 */
+    settleAbsences: function (activityId) {
+      return db.rpc("settle_activity_absences", { p_activity_id: activityId });
+    },
+
+    /* 学生自查：my_absence_summary() 直接回打包好的 JSON
+       { year, count, excused, blocked_at, rows:[{id,activity_id,title,starts_at,status,note}] }
+       —— 一次调用拿到「本学年几次 + 明细」，不必再自己聚合。 */
+    myAbsenceSummary: function () {
+      return db.rpc("my_absence_summary", {});
+    },
+
+    /* 把一堆缺席记录按邮箱聚成 { email: { absent, excused, rows } }，
+       名单页要在一行里显示「这位同学本学年缺席几次」，用它最省事。
+       ⚠️ years 不传 = 所有学年；传进来就只认这个学年（跨学年清零要的就是这个行为）。 */
+    summarizeAbsences: function (rows, year) {
+      var map = {};
+      (rows || []).forEach(function (a) {
+        if (year && String(a.school_year) !== String(year)) return;
+        var k = String(a.email || "").toLowerCase();
+        if (!k) return;
+        if (!map[k]) map[k] = { absent: 0, excused: 0, rows: [] };
+        if (a.status === "excused") map[k].excused += 1;
+        else map[k].absent += 1;
+        map[k].rows.push(a);
+      });
+      return map;
+    },
+
     /* ---------- 录取（报名成功）----------
        「选了谁」是一次整体决定，不是一条条改：
        先把这个活动下所有人清成未录取，再把勾选的人标成已录取。
@@ -653,6 +744,90 @@
     /* 签名链接默认 15 分钟：够审核人看完，也不至于被人转发出去长期有效 */
     proofUrl: function (p, ttl) {
       return cloud.storage.createSignedUrl(p, ttl || 900);
+    },
+
+    /* ================= 招新面试 · 安排与记录（2026-10-06 加） =================
+       两张表，各管一件事：
+         · interview_slots   —— 面试时间表。一行 = 一位候选人的一个 15 分钟场次。
+                                只有执委会（is_owner）能增删改；负责老师可读。
+         · interview_records —— 面试记录。一个时段最多一条，保存走 upsert。
+                                执委会与负责老师都能写。
+       ⚠️ 学生读不到这两张表 —— 学生端只拿 my_interview() 那一条安排
+          （刻意不含分数、不含结论，那些由执委会单独通知）。 */
+
+    INTERVIEW_SLOT_COLS:
+      "id, day, slot_start, slot_end, name, name_en, class_name, dept, email, note, created_at",
+    INTERVIEW_RECORD_COLS:
+      "id, slot_id, result, scores, avg_score, offer_dept, note, " +
+      "interviewer_email, interviewer_name, created_at, updated_at, updated_by",
+
+    /* 打分维度。⚠️ 维度名会**原样当 scores 的 jsonb key** 存进库 ——
+       所以改这里的措辞，老记录还是按老 key 读得出来（不会丢），
+       但会在统计里多出一列。要真正换口径，得连库里已有记录一起改。 */
+    IV_CRITERIA: ["表达沟通", "责任态度", "团队协作", "岗位匹配"],
+
+    /* 面试结论只有这四种，和库里的 interview_result_chk 一致。 */
+    IV_RESULTS: ["pending", "pass", "hold", "fail"],
+
+    /* 时间表。不传 day = 取全部（前台一次拉完再按天分组，省得来回请求）。 */
+    listInterviewSlots: function (day) {
+      var q = db
+        .from("interview_slots")
+        .select(api.INTERVIEW_SLOT_COLS)
+        .order("day", { ascending: true })
+        .order("slot_start", { ascending: true });
+      if (day) q = q.eq("day", day);
+      return q.limit(500);
+    },
+
+    /* 批量导入时间表。onConflict 认唯一约束 uq_interview_slot_person(day, slot_start, name)，
+       所以同一份表重复导入只会刷新英文名 / 班级 / 部门，不会变成两行。
+       ⚠️ onConflict 只能写「列名」，用不了表达式索引 —— 这也是那个约束
+          没用 lower(name) 的原因。 */
+    importInterviewSlots: function (rows) {
+      if (!rows || !rows.length) return Promise.resolve({ data: [], error: null });
+      return db.from("interview_slots").upsert(rows, { onConflict: "day,slot_start,name" });
+    },
+
+    updateInterviewSlot: function (id, patch) {
+      return db.from("interview_slots").update(patch).eq("id", id);
+    },
+
+    /* 删一个场次会把挂在它下面的面试记录一起带走（外键 ON DELETE CASCADE）——
+       这是故意的：时段都没了，那条记录就是无主数据。 */
+    removeInterviewSlot: function (id) {
+      return db.from("interview_slots").delete().eq("id", id);
+    },
+
+    /* 一次把全部记录读回来。表很小（一个招新季几十条），
+       前台要一边点一边算「这场还剩几个人没面」，读一次比逐个查省事。 */
+    listInterviewRecords: function () {
+      return db
+        .from("interview_records")
+        .select(api.INTERVIEW_RECORD_COLS)
+        .order("updated_at", { ascending: false })
+        .limit(500);
+    },
+
+    /* 保存一条记录。
+       ⚠️ 一个时段最多一条（唯一索引 uq_interview_record_slot）→ 走 upsert，
+          重复点「保存」是覆盖，不是新增两条。
+       ⚠️ 不链 .select()：回读要再过一道 SELECT 策略，这里不需要读回，
+          保存完前端会重新拉列表。 */
+    saveInterviewRecord: function (payload) {
+      payload = payload || {};
+      payload.updated_at = new Date().toISOString();
+      return db.from("interview_records").upsert(payload, { onConflict: "slot_id" });
+    },
+
+    removeInterviewRecord: function (id) {
+      return db.from("interview_records").delete().eq("id", id);
+    },
+
+    /* 学生自查自己的面试安排：
+       { found, day, slot_start, slot_end, dept, done } —— 没有安排时 found=false。 */
+    myInterview: function () {
+      return db.rpc("my_interview", {});
     },
 
     /* ---------- 大模型（读图识别证明上的信息） ---------- */

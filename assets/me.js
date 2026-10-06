@@ -281,6 +281,8 @@ document.addEventListener("DOMContentLoaded", function () {
       me.mustChange = !!a.must_change_password;
       paintHero();
       if (me.mustChange) paintForceChange();
+      /* 面试安排不挡着主流程：它自己吞异常，读不到就整块不显示 */
+      loadInterview();
       return loadService();
     }).catch(function (err) {
       alertIn($("me-alerts2"), "error", "读取失败：" + (err && err.message ? err.message : ""));
@@ -336,6 +338,42 @@ document.addEventListener("DOMContentLoaded", function () {
         alertIn($("me-alerts2"), "ok", "密码已改好，下次用新密码登录。");
       }).catch(function () { busyOff($("me-fc-go")); });
     });
+  }
+
+  /* ---------------- 面试安排（2026-10-06 加） ----------------
+     只有被排进招新面试时间表的同学这里才有内容 —— 服务端 my_interview()
+     先按邮箱直配，配不上再用学生名单里的中文姓名去对，对不上返回 found:false。
+     ⚠️ 它刻意不回分数、不回结论、不回评语：那些由执委会单独通知。
+        这里只负责告诉他「哪天几点、面哪个部门、面完了没有」。
+     ⚠️ 这个函数自己吞掉异常：没有面试安排是常态，不该让整页报错。 */
+  function loadInterview() {
+    var box = $("me-iv");
+    if (!box || !C.myInterview) return;
+    return C.myInterview().then(function (res) {
+      var d = C.unwrap(res, "读取失败") || {};
+      if (!d.found) { box.hidden = true; return; }
+
+      var hm = function (t) { return String(t || "").slice(0, 5); };
+      var dt = new Date(String(d.day) + "T" + hm(d.slot_start));
+      var when = isNaN(dt.getTime()) ? String(d.day)
+        : (dt.getFullYear() + " 年 " + (dt.getMonth() + 1) + " 月 " + dt.getDate() + " 日 周" +
+           ["日", "一", "二", "三", "四", "五", "六"][dt.getDay()]);
+
+      box.hidden = false;
+      $("me-iv-body").innerHTML =
+        '<div class="me-iv">' +
+          "<div>" +
+            '<div class="me-iv-when">' + esc(when) + " " + esc(hm(d.slot_start)) +
+              "–" + esc(hm(d.slot_end)) + "</div>" +
+            '<div class="me-iv-line">面试部门：<b>' + esc(d.dept || "待定") + "</b></div>" +
+            '<div class="me-iv-line">' +
+              (d.done
+                ? "这场已经面完了 —— 结果会由执委会另行通知。"
+                : "还没开始，提前 5 分钟到面试地点就行。") +
+            "</div>" +
+          "</div>" +
+        "</div>";
+    }).catch(function () { box.hidden = true; });
   }
 
   /* ---------------- 义工记录 ---------------- */

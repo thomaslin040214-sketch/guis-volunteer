@@ -120,6 +120,12 @@
       : { href: "me.html", label: t("lg.footStudent", "我的义工账户") };
   }
 
+  /* 账户菜单里的「面试工作台」入口。学生不给（见 paint() 里的说明）。 */
+  function interviewLink(role) {
+    if (role !== "owner" && role !== "teacher") return "";
+    return '<a href="interview.html">' + esc(t("navme.interview", "面试工作台")) + "</a>";
+  }
+
   /* 头像插在哪儿：优先 .nav-right（右半区，跟语言开关 / 登录按钮同一组），
      老结构（没有 .nav-right 的页面）退回 .nav-links。
      两种情况都插在「登录」按钮前面，登录成功后那个按钮会隐藏，位置就顶上了。 */
@@ -188,6 +194,11 @@
       '<div class="nav-drop-menu nav-me-menu">' +
       '<div class="nav-me-head"><b>' + esc(info.email) + "</b><span>" + esc(label) + "</span></div>" +
       '<a href="' + dest.href + '">' + esc(dest.label) + "</a>" +
+      /* 面试工作台（2026-10-06 加）：招新季才用得上的一个独立页面，
+         不占主导航 —— 挂在账户菜单里，执委会和老师从任何一页都点得到。
+         ⚠️ 学生不显示这一条：那张表读不出来（RLS 只放行 allowed_admins），
+            点进去只会看到「读取失败」，不如不给。 */
+      interviewLink(info.role) +
       '<a href="index.html">' + esc(t("nav.home", "回到主页")) + "</a>" +
       '<button type="button" class="nav-me-out">' + esc(t("navme.out", "退出登录")) + "</button>" +
       "</div>";
