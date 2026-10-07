@@ -42,13 +42,33 @@
   }
   function pad(n) { return n < 10 ? "0" + n : "" + n; }
 
-  /* 统一用本地时间的 yyyy-mm-dd 做键，别用 toISOString（那是 UTC，会差一天） */
-  function dayKey(d) {
-    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  /* 全部时间读取走 assets/time.js（固定 UTC+8）。
+     ⚠️ 日历是最吃时区的一页：「现在」那条红线、今天打标、跨天活动怎么展开，
+        全都依赖「墙上时间」。用浏览器时区的话，悉尼看到的红线会差 2~3 小时。 */
+  var T = window.GUISTime;
+
+  /* yyyy-mm-dd 做键，恒按北京时间的日子算。 */
+  function dayKey(d) { return T.ymdOf(d); }
+
+  /* "2026-10-31" → "2026-11-01"。纯日期算术，不经过 Date，所以与时区无关。 */
+  function nextYmd(ymd) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(ymd || ""));
+    if (!m) return "";
+    var d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
+    d.setUTCDate(d.getUTCDate() + 1);      /* UTC 纯算术：只当「第几天」用 */
+    return d.getUTCFullYear() + "-" + T.pad2(d.getUTCMonth() + 1) + "-" + T.pad2(d.getUTCDate());
   }
-  /* 星期一 = 0 …… 星期日 = 6 */
-  function mondayFirst(d) {
-    var w = d.getDay();
+
+  /* 今年的月份（北京时间口径的年 / 月），供「今天」按钮与默认视图用。 */
+  function nowYm() {
+    var w = T.nowCst();
+    return { y: w.y, m: w.m - 1 };
+  }
+  /* 星期一 = 0 …… 星期日 = 6。
+     ⚠️ 入参必须是「用 Date.UTC 构造的」月初日期（renderGrid 里就是这么给的）——
+        那样 getUTCDay 才是这个月的正确星期几；换成浏览器本地时区会差。 */
+  function mondayFirst(utcDate) {
+    var w = utcDate.getUTCDay();
     return w === 0 ? 6 : w - 1;
   }
   function lightOf(a) {
@@ -68,23 +88,22 @@
     return dot(lightOf(a));
   }
 
-  /* 时间显示：同一天内只写一次日期 */
+  /* 时间显示：同一天内只写一次日期。恒按北京时间渲染。 */
   function fmtDT(iso) {
     if (!iso) return "";
     var d = new Date(iso);
     if (isNaN(d.getTime())) return String(iso);
+    var w = T.wall(d);
     if (lang() === "en") {
-      return MON_EN[d.getMonth()] + " " + d.getDate() + " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
+      return T.MON_EN[w.m - 1] + " " + w.d + " " + T.pad2(w.h) + ":" + T.pad2(w.min);
     }
-    return (d.getMonth() + 1) + "月" + d.getDate() + "日 " + pad(d.getHours()) + ":" + pad(d.getMinutes());
+    return w.m + "月" + w.d + "日 " + T.pad2(w.h) + ":" + T.pad2(w.min);
   }
   function fmtRange(a) {
     var s = a.starts_at ? fmtDT(a.starts_at) : t("cal.tbd", "待定");
     if (!a.ends_at) return s;
-    var d1 = new Date(a.starts_at), d2 = new Date(a.ends_at);
-    var sameDay = a.starts_at && d1.getFullYear() === d2.getFullYear() &&
-                  d1.getMonth() === d2.getMonth() && d1.getDate() === d2.getDate();
-    var e = sameDay ? pad(d2.getHours()) + ":" + pad(d2.getMinutes()) : fmtDT(a.ends_at);
+    var sameDay = a.starts_at && T.ymdOf(a.starts_at) === T.ymdOf(a.ends_at);
+    var e = sameDay ? T.hmOf(a.ends_at) : fmtDT(a.ends_at);
     return s + " → " + e;
   }
   /* 只要月日，不要时刻 —— 全天的日程用它印日期区间 */
@@ -92,15 +111,16 @@
     if (!iso) return "";
     var d = new Date(iso);
     if (isNaN(d.getTime())) return "";
+    var w = T.wall(d);
     return lang() === "en"
-      ? MON_EN[d.getMonth()] + " " + d.getDate()
-      : (d.getMonth() + 1) + "月" + d.getDate() + "日";
+      ? T.MON_EN[w.m - 1] + " " + w.d
+      : w.m + "月" + w.d + "日";
   }
   function fmtHM(iso) {
     if (!iso) return "";
     var d = new Date(iso);
     if (isNaN(d.getTime())) return "";
-    return pad(d.getHours()) + ":" + pad(d.getMinutes());
+    return T.hmOf(d);
   }
 
   function phaseText(phase) {
@@ -116,10 +136,10 @@
   var SLOT_HOURS = 2;
   var DAY_FROM = 0, DAY_TO = 24;
 
-  function nowMinutes() {
-    var d = new Date();
-    return d.getHours() * 60 + d.getMinutes();
-  }
+  /* 「现在」的分钟数 —— 按北京时间的钟点算。
+     ⚠️ 原来用 d.getHours()，那是浏览器时区：悉尼用户看到 19:40 的活动，
+        红线会画在下午 7 点那一档上，而实际北京时间才 16:40。 */
+  function nowMinutes() { return T.minutesNow(); }
   function slotOf(min) { return Math.floor(min / 60 / SLOT_HOURS) * SLOT_HOURS; }
 
   function chipsFor(runs, h) {
@@ -129,8 +149,10 @@
       var e = it.a.ends_at ? new Date(it.a.ends_at) : s;
       if (isNaN(s.getTime())) return false;
       if (isNaN(e.getTime())) e = s;
-      var a0 = s.getHours() * 60 + s.getMinutes();
-      var a1 = e.getHours() * 60 + e.getMinutes();
+      /* 落进哪一档，按北京时间的钟点算（与 nowMinutes 同一口径） */
+      var ws = T.wall(s), we = T.wall(e);
+      var a0 = ws.h * 60 + ws.min;
+      var a1 = we.h * 60 + we.min;
       if (a1 <= a0) a1 = a0 + 30;                    /* 没填结束时间就画一小段 */
       return a0 < e0 && a1 > s0;                     /* 与该档有交集 */
     }).map(function (it) {
@@ -209,8 +231,12 @@
     opts = opts || {};
     if (!root) throw new Error("GUISCalendar.create 需要一个容器元素");
 
-    var now = new Date();
-    var state = { y: now.getFullYear(), m: now.getMonth(), sel: dayKey(now), data: [] };
+    /* 打开时的默认月份与选中日期 —— 北京时间的「现在」。
+       原来用 new Date().getFullYear()/getMonth()，悉尼用户早上打开可能落在前一天。 */
+    var state = (function () {
+      var w = T.nowCst();
+      return { y: w.y, m: w.m - 1, sel: T.todayYmd(), data: [] };
+    })();
     var byDay = {};
 
     root.classList.add("cal");
@@ -252,19 +278,20 @@
     function index() {
       byDay = {};
       (state.data || []).forEach(function (a) {
-        /* ① 活动进行的每一天 */
+        /* ① 活动进行的每一天
+           ⚠️ 这里刻意用「日期字符串 + UTC 算术」推进，不用 new Date(y,m,d+1)：
+              那种写法按浏览器时区解析，悉尼会算出一串澳洲的日期，
+              跨天活动就会在日历上摊错位置。UTC 算术只做纯日期递增，不涉时区。 */
         if (a.starts_at) {
           var ds = new Date(a.starts_at);
           if (!isNaN(ds.getTime())) {
             var de = a.ends_at ? new Date(a.ends_at) : null;
-            var cur = new Date(ds.getFullYear(), ds.getMonth(), ds.getDate());
-            var last = de && !isNaN(de.getTime())
-              ? new Date(de.getFullYear(), de.getMonth(), de.getDate())
-              : cur;
+            var curKey = T.ymdOf(ds);
+            var lastKey = de && !isNaN(de.getTime()) ? T.ymdOf(de) : curKey;
             var guard = 0;
-            while (cur <= last && guard++ < 400) {
-              addDay(dayKey(cur), a, "run");
-              cur = new Date(cur.getFullYear(), cur.getMonth(), cur.getDate() + 1);
+            while (curKey <= lastKey && guard++ < 400) {
+              addDay(curKey, a, "run");
+              curKey = nextYmd(curKey);
             }
           }
         }
@@ -287,14 +314,17 @@
     }
 
     function renderGrid() {
-      var first = new Date(state.y, state.m, 1);
+      /* ⚠️ 这里原来用 new Date(y, m, 1) —— 那是按浏览器时区构造的，
+         悉尼会算出不同的月初与星期几。改用 UTC 算术（只当「第几个月第几天」用，
+         纯日历运算，与时区无关）。 */
+      var first = new Date(Date.UTC(state.y, state.m, 1));
       var lead = mondayFirst(first);               // 前面要补几格
-      var days = new Date(state.y, state.m + 1, 0).getDate();
-      var today = dayKey(new Date());
+      var days = new Date(Date.UTC(state.y, state.m + 1, 0)).getUTCDate();
+      var today = T.todayYmd();
       var html = "";
 
       /* 上个月尾巴（灰掉，不可点） */
-      var prevDays = new Date(state.y, state.m, 0).getDate();
+      var prevDays = new Date(Date.UTC(state.y, state.m, 0)).getUTCDate();
       for (var i = lead - 1; i >= 0; i--) {
         html += '<div class="cal-cell is-out"><span class="cal-num">' + (prevDays - i) + "</span></div>";
       }
@@ -421,8 +451,8 @@
       if (act === "prev") { state.m -= 1; if (state.m < 0) { state.m = 11; state.y -= 1; } render(); }
       if (act === "next") { state.m += 1; if (state.m > 11) { state.m = 0; state.y += 1; } render(); }
       if (act === "today") {
-        var n = new Date();
-        state.y = n.getFullYear(); state.m = n.getMonth(); state.sel = dayKey(n);
+        var w = nowYm();
+        state.y = w.y; state.m = w.m; state.sel = T.todayYmd();
         render();
       }
     });
@@ -439,8 +469,8 @@
       },
       goTo: function (y, m) { state.y = y; state.m = m; render(); return api; },
       goToday: function () {
-        var n = new Date();
-        state.y = n.getFullYear(); state.m = n.getMonth(); state.sel = dayKey(n);
+        var w = nowYm();
+        state.y = w.y; state.m = w.m; state.sel = T.todayYmd();
         render();
         return api;
       },

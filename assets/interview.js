@@ -18,8 +18,9 @@
      · interview_records —— 记录，一个时段一条，组织成员与负责老师都能写
    学生读不到这两张表；学生只看得到 my_interview() 给的那一条安排。
 
-   ⚠️ 页面里所有时间一律按**本地时间**算（new Date("2026-10-07T16:40")）——
-      绝不用 toISOString()，那是 UTC，会在晚上 8 点后把日期算到第二天去。
+   ⚠️ 页面里所有时间一律按**北京时间（固定 UTC+8）**算，见 assets/time.js。
+      绝不用浏览器时区（维护者在悉尼、用户在广州，按本地时区会差 2~3 小时），
+      写库仍用瞬时值（toISOString），语义正确。
    ============================================================ */
 document.addEventListener("DOMContentLoaded", function () {
   "use strict";
@@ -84,21 +85,23 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   /* ---------------- 时间 ----------------
-     ⚠️ 日期一律本地时间拼。slot_start / slot_end 从 PostgREST 回来是 "16:40:00"，
-        显示取前 5 位；比较用 new Date(day + "T" + 时间) 走本地时区。 */
-  function todayStr() {
-    var d = new Date();
-    return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
-  }
+     ⚠️ 全站固定 UTC+8（见 assets/time.js）。面试时段是给广州的学生安排的，
+        所以「这场现在进行到哪了」必须按北京时间判断 ——
+        维护者在悉尼，用浏览器时区算会差 2~3 小时，整张面试台会失灵。 */
+  var T = window.GUISTime;
+  function todayStr() { return T.todayYmd(); }
   function hm(t) { return String(t || "").slice(0, 5); }
   function dayLabel(ymd) {
-    var d = new Date(String(ymd) + "T00:00");
-    if (isNaN(d.getTime())) return String(ymd);
-    return (d.getMonth() + 1) + "." + d.getDate() + " 周" +
-      ["日", "一", "二", "三", "四", "五", "六"][d.getDay()];
+    var w = T.wall(new Date(String(ymd) + "T12:00:00+08:00"));
+    if (!w || isNaN(w.y)) return String(ymd);
+    return w.m + "." + w.d + " 周" + T.DOW_CN[w.dow];
   }
+  /* 场次时刻 = 绝对瞬时值。
+     ⚠️ 必须显式带 +08:00：直接 new Date("2026-10-07T16:40") 会按浏览器时区解析，
+        悉尼就变成「悉尼 16:40」，与 Date.now() 一比就判错了。 */
   function at(s, which) {
-    return new Date(s.day + "T" + (which === "end" ? s.slot_end : s.slot_start)).getTime();
+    var hh = which === "end" ? s.slot_end : s.slot_start;
+    return new Date(s.day + "T" + hm(hh) + ":00+08:00").getTime();
   }
   function stateOf(s) {
     var n = Date.now();
@@ -819,9 +822,12 @@ document.addEventListener("DOMContentLoaded", function () {
     if (m) return m[1] + "-" + pad2(m[2]) + "-" + pad2(m[3]);
     m = String(txt).match(/(?:^|\D)(\d{1,2})[.\/月](\d{1,2})(?:\D|$)/);
     if (!m) return "";
-    var now = new Date();
-    var year = now.getFullYear();
-    if (Number(m[1]) < 8 && now.getMonth() + 1 >= 8) year += 1;
+    /* 学年边界按北京时间判断：8 月是开学月。
+       用浏览器时区的话，悉尼已进入 8 月而广州还在 7 月底，
+       粘贴「1.5」会被误判成明年 1 月。 */
+    var w = T.nowCst();
+    var year = w.y;
+    if (Number(m[1]) < 8 && w.m >= 8) year += 1;
     return year + "-" + pad2(m[1]) + "-" + pad2(m[2]);
   }
 
@@ -919,8 +925,10 @@ document.addEventListener("DOMContentLoaded", function () {
       var row = [s.day, hm(s.slot_start), hm(s.slot_end), s.name, s.name_en, s.class_name, s.dept,
         RESULT_LABEL[r.result] || "", r.avg_score == null ? "" : num1(r.avg_score)];
       CRIT.forEach(function (k) { row.push(sc[k] == null ? "" : sc[k]); });
+      /* ⚠️ 别再 String(updated_at).slice(0,16) —— 那是 UTC 原文，
+         导出的 Excel 里「最后更新」会比北京时间少 8 小时（广州用户看到的是错的）。 */
       row.push(r.offer_dept || "", r.note || "", r.interviewer_email || "",
-        r.updated_at ? String(r.updated_at).slice(0, 16).replace("T", " ") : "");
+        r.updated_at ? T.fmtDT(r.updated_at) : "");
       lines.push(row.map(csvCell).join(","));
     });
 

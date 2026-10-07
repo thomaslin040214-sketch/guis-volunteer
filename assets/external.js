@@ -305,6 +305,16 @@
     if (!title) { stop("请填写你做了什么服务。"); return; }
     if (isNaN(hours) || hours <= 0) { stop("服务小时数要填一个大于 0 的数字。"); return; }
 
+    /* 服务日期：2026-10-07 起这个框从原生 <input type="date"> 改成了文本框
+       （原生控件按各人电脑的区域设置显示格式，悉尼和广州看到的不一样），
+       所以格式校验得自己做。存进去的仍是 "YYYY-MM-DD" 纯日期，不涉时区。 */
+    var svcDate = String($("ext-date").value || "").trim();
+    if (!svcDate) { stop("请填写服务日期。"); return; }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(svcDate)) {
+      stop("服务日期格式不对，要写成「2026-10-07」这样（年-月-日）。");
+      return;
+    }
+
     /* 云存储的路径要拿 uid 拼，uid 空了会抛一句谁也看不懂的
        CloudStoragePathError —— 这里提前拦住，让他重新登录。 */
     if (!ME.id) {
@@ -321,7 +331,7 @@
       student_name: ($("ext-name").value || "").trim() || null,
       org_name: org,
       activity_name: title,
-      service_date: $("ext-date").value || null,
+      service_date: svcDate,
       hours: hours,
       note: ($("ext-note").value || "").trim() || null,
       status: "pending"

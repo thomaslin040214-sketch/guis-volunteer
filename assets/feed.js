@@ -28,15 +28,11 @@
   }
 
   function pad(n) { return n < 10 ? "0" + n : "" + n; }
-  function fmtDate(iso) {
-    if (!iso) return "";
-    var d = new Date(iso);
-    if (isNaN(d.getTime())) return "";
-    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
-  }
+  function fmtDate(iso) { return window.GUISTime.ymdOf(iso); }
+
   function fmtDT(iso) {
     if (!iso) return "";
-    return fmtDate(iso) + " " + pad(new Date(iso).getHours()) + ":" + pad(new Date(iso).getMinutes());
+    return fmtDate(iso) + " " + window.GUISTime.hmOf(iso);
   }
 
   function clean(html) {

@@ -78,13 +78,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
   function clear(el) { if (el) el.innerHTML = ""; }
   function pad(n) { return n < 10 ? "0" + n : "" + n; }
-  function fmtDT(iso) {
-    if (!iso) return "";
-    var d = new Date(iso);
-    if (isNaN(d.getTime())) return iso;
-    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) + " " +
-      pad(d.getHours()) + ":" + pad(d.getMinutes());
-  }
+  function fmtDT(iso) { return window.GUISTime.fmtDT(iso); }   /* 北京时间，见 time.js */
   function failMsg(err, fallback) {
     var m = (err && err.message) ? err.message : "";
     var code = err && (err.code || (err.raw && err.raw.code));

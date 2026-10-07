@@ -48,11 +48,7 @@
   function colLetter(i) { return String.fromCharCode(65 + i); }
 
   function pad(n) { return n < 10 ? "0" + n : "" + n; }
-  function fmtNow(d) {
-    d = d || new Date();
-    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) +
-      " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
-  }
+  function fmtNow(d) { return window.GUISTime.fmtDT(d || new Date()); }   /* 北京时间 */
 
   function thinBorder(argb) {
     var b = { style: "thin", color: { argb: argb } };

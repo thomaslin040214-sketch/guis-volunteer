@@ -30,9 +30,9 @@
 
   function pad(n) { return n < 10 ? "0" + n : "" + n; }
   function stamp(d) {
-    d = d || new Date();
-    return d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) +
-      "-" + pad(d.getHours()) + pad(d.getMinutes());
+    var w = window.GUISTime.wall(d || new Date());
+    return w.y + window.GUISTime.pad2(w.m) + window.GUISTime.pad2(w.d) +
+      "-" + window.GUISTime.pad2(w.h) + window.GUISTime.pad2(w.min);
   }
 
   function saveText(text, filename, mime) {

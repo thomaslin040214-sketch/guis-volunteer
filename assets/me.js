@@ -25,19 +25,15 @@ document.addEventListener("DOMContentLoaded", function () {
   function alertIn(el, kind, msg) { if (el) el.innerHTML = '<div class="alert alert-' + kind + '">' + msg + "</div>"; }
   function clear(el) { if (el) el.innerHTML = ""; }
   function pad(n) { return n < 10 ? "0" + n : "" + n; }
-  function fmtDT(iso) {
-    if (!iso) return "";
-    var d = new Date(iso);
-    if (isNaN(d.getTime())) return iso;
-    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) + " " +
-      pad(d.getHours()) + ":" + pad(d.getMinutes());
-  }
+  function fmtDT(iso) { return window.GUISTime.fmtDT(iso); }
   function fmtDay(iso) {
     if (!iso) return "时间待定";
-    var d = new Date(iso);
-    if (isNaN(d.getTime())) return "时间待定";
-    return d.getFullYear() + "年" + (d.getMonth() + 1) + "月" + d.getDate() + "日 " +
-      pad(d.getHours()) + ":" + pad(d.getMinutes());
+    var s = window.GUISTime.fmtDT(iso);
+    if (!s) return "时间待定";
+    /* 「2026 年 10 月 7 日 16:40」—— 从标准格式里切出来，
+       不重新取 Date 字段（那样又会回到浏览器时区）。 */
+    return s.slice(0, 4) + "年" + Number(s.slice(5, 7)) + "月" + Number(s.slice(8, 10)) +
+      "日 " + s.slice(11);
   }
   function busyOn(btn, label) {
     if (!btn) return;
@@ -354,10 +350,13 @@ document.addEventListener("DOMContentLoaded", function () {
       if (!d.found) { box.hidden = true; return; }
 
       var hm = function (t) { return String(t || "").slice(0, 5); };
-      var dt = new Date(String(d.day) + "T" + hm(d.slot_start));
-      var when = isNaN(dt.getTime()) ? String(d.day)
-        : (dt.getFullYear() + " 年 " + (dt.getMonth() + 1) + " 月 " + dt.getDate() + " 日 周" +
-           ["日", "一", "二", "三", "四", "五", "六"][dt.getDay()]);
+      /* ⚠️ 必须带 +08:00：面试时段是北京时间，不带偏移会被按浏览器时区解析 */
+      var dt = new Date(String(d.day) + "T" + hm(d.slot_start) + ":00+08:00");
+      var when = String(d.day);
+      if (!isNaN(dt.getTime())) {
+        var wt = window.GUISTime.wall(dt);
+        when = wt.y + " 年 " + wt.m + " 月 " + wt.d + " 日 周" + window.GUISTime.DOW_CN[wt.dow];
+      }
 
       box.hidden = false;
       $("me-iv-body").innerHTML =

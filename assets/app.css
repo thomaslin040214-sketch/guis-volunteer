@@ -1932,3 +1932,28 @@ table.data tr.is-done { background: rgba(45, 138, 78, 0.045); }
   .side-btn { width: auto; white-space: nowrap; }
   .side-btn:hover { transform: none; }
 }
+
+/* ============================================================
+   日期时间输入框（2026-10-07）
+   后台的活动时间 / 报名开始 / 校内日程、以及校外时长的服务日期，
+   都从原生 datetime-local / date 改成了文本框。
+   原因：原生控件按各人电脑的区域设置显示格式 —— 维护者在悉尼看到 dd/mm/yyyy，
+        用户在广州可能看到 mm/dd/yyyy，同一份数据两人理解不同、容易填错。
+   格式统一成 2026-10-07 16:40，提交时校验（admin.js 的 readDtInput）。
+   ============================================================ */
+.dt-in {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.9rem;
+  letter-spacing: 0.01em;
+  min-width: 12.5rem;
+}
+.dt-in::placeholder { color: var(--text-subtle); letter-spacing: 0; }
+.dt-in:focus { outline-color: var(--brand); }
+.field .hint code,
+#a-time-hint code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.92em;
+  background: var(--bg-soft);
+  padding: 0.05em 0.32em;
+  border-radius: 4px;
+}

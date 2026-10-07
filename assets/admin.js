@@ -10,6 +10,7 @@ document.addEventListener("DOMContentLoaded", function () {
   "use strict";
 
   var C = window.GUISCloud;
+  var T = window.GUISTime;          /* 固定 UTC+8 的时间工具，见 assets/time.js */
   var $ = function (id) { return document.getElementById(id); };
 
   /* ---------------- 域名提示 ---------------- */
@@ -59,31 +60,51 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function pad(n) { return n < 10 ? "0" + n : "" + n; }
-  function fmtDT(iso) {
-    if (!iso) return "";
-    var d = new Date(iso);
-    if (isNaN(d.getTime())) return iso;
-    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
-  }
+
+  /* 下面这几个时间函数全部委托给 assets/time.js（固定 UTC+8）。
+     ⚠️ 为什么不能直接用 getHours()/getMonth()：那是「浏览器所在时区」的墙上时间。
+        维护者在悉尼（UTC+10/+11）、用户在广州（UTC+8）——
+        同一瞬时值，两边会差 2~3 小时，录进去的时间也会跟着错。
+        详见 time.js 顶部的说明。 */
+  function fmtDT(iso) { return T.fmtDT(iso); }
   /* 只要月日 —— 全天的活动在列表里用它配「全天」两个字 */
-  function fmtDay(iso) {
-    if (!iso) return "";
-    var d = new Date(iso);
-    if (isNaN(d.getTime())) return "";
-    return (d.getMonth() + 1) + "月" + d.getDate() + "日";
+  function fmtDay(iso) { return T.fmtMD(iso); }
+  /* 输入框里显示的「北京时间墙上时间」。
+     ⚠️ 用空格分隔（2026-10-07 16:40）而不是原生控件的 "T"（2026-10-07T16:40）——
+        T 是 ISO 内部写法，普通人看着别扭；改成文本框后格式由我们说了算，
+        提示文案与 placeholder 也都是这个写法。 */
+  function toLocalInput(iso) { return T.dtLocalValue(iso).replace("T", " "); }
+  /* ⚠️ 必须显式带 +08:00 —— 直接 new Date("2026-10-07T16:40") 会按浏览器
+     本地时区解析，悉尼就变成「悉尼 16:40」存进库了。 */
+  function fromLocalInput(v) { return T.dtLocalToIso(v); }
+
+  /* 读一个时间输入框，顺带把「格式不对」变成人话。
+     2026-10-07 起这些框都改成了文本框（原生 datetime-local 会按各人电脑的
+     区域设置显示格式，悉尼和广州不一样），所以格式校验得自己做。
+     返回 { iso, err }：err 非空时 iso 为 null，别拿它去写库。 */
+  function readDtInput(inputId, opts) {
+    opts = opts || {};
+    var el = $(inputId);
+    var raw = String((el && el.value) || "").trim().replace("T", " ");
+    if (!raw) return { iso: null, err: null };          /* 留空 = 不填，不是错 */
+    var wantTime = opts.wantTime !== false;
+    var re = wantTime
+      ? /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/
+      : /^\d{4}-\d{2}-\d{2}$/;
+    if (!re.test(raw)) {
+      return {
+        iso: null,
+        err: (opts.label || "这个时间") + "格式不对，要写成 " +
+             (wantTime ? "「2026-10-07 16:40」" : "「2026-10-07」") + "（按北京时间）"
+      };
+    }
+    var iso = T.dtLocalToIso(raw);
+    if (!iso) {
+      return { iso: null, err: (opts.label || "这个时间") + "不是一个有效的时间，请检查年月日与时分。" };
+    }
+    return { iso: iso, err: null };
   }
-  function toLocalInput(iso) {
-    if (!iso) return "";
-    var d = new Date(iso);
-    if (isNaN(d.getTime())) return "";
-    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) + "T" + pad(d.getHours()) + ":" + pad(d.getMinutes());
-  }
-  function fromLocalInput(v) {
-    if (!v) return null;
-    var d = new Date(v);
-    return isNaN(d.getTime()) ? null : d.toISOString();
-  }
-  /* 给 input 的值：全天只要 YYYY-MM-DD，否则连时刻一起要（datetime-local 的格式） */
+  /* 输入框的值：全天只要 YYYY-MM-DD，否则连时刻一起（空格分隔）。 */
   function dayInputValue(iso, allDay) {
     var v = toLocalInput(iso);
     return allDay ? v.slice(0, 10) : v;
@@ -414,27 +435,23 @@ document.addEventListener("DOMContentLoaded", function () {
   }
   function pad3(n) { var s = String(n); while (s.length < 3) s = "0" + s; return s; }
 
-  /* 此刻 → datetime-local 要的字符串（本地时间）。
-     ⚠️ 别用 toISOString().slice(0,16)：那是 UTC，会比实际早 8 个小时。 */
+  /* 此刻（北京时间）→ 输入框里的值，格式 "2026-10-07 16:40"（空格分隔，与提示文案一致）。
+     ⚠️ 必须是北京时间的墙上时间：新建活动时填的是「广州那边几点」，
+        拿悉尼的几点去填，学生那边看到的报名开始时间就偏了 2~3 小时。 */
   function nowLocalInput() {
-    var d = new Date();
-    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) +
-      "T" + pad(d.getHours()) + ":" + pad(d.getMinutes());
+    var w = T.nowCst();
+    return w.y + "-" + T.pad2(w.m) + "-" + T.pad2(w.d) + " " + T.pad2(w.h) + ":" + T.pad2(w.min);
   }
 
-  /* 今天 → "YYYY-MM-DD"。
-     ⚠️ 必须本地时间拼：toISOString().slice(0,10) 走的是 UTC，
-        东八区在 00:00–08:00 之间会算成昨天，新建日程就会默认落在前一天。 */
-  function todayYmd() {
-    var d = new Date();
-    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
-  }
+  /* 今天（北京时间）→ "YYYY-MM-DD"。 */
+  function todayYmd() { return T.todayYmd(); }
 
   /* 下一个流水号：两位年份 + 三位序号（26001、26002…）。
      拿本地已加载的同前缀活动算最大值 +1，纯粹是省手 ——
-     真重号也炸不了：数据库上有 partial unique index，重复会报 23505，届时改一下就行。 */
+     真重号也炸不了：数据库上有 partial unique index，重复会报 23505，届时改一下就行。
+     年份取北京时间的：悉尼 12 月底已经跨年而广州还没跨，编号会乱。 */
   function nextCodeSeq(prefix, rows) {
-    var yy = String(new Date().getFullYear()).slice(-2);
+    var yy = String(T.nowCst().y).slice(-2);
     var max = 0;
     (rows || []).forEach(function (a) {
       if (!prefix) return;
@@ -459,19 +476,18 @@ document.addEventListener("DOMContentLoaded", function () {
   function setAllDay(on) {
     var s = $("a-starts"), e = $("a-ends");
     if (!s || !e) return;
-    var vs = s.value, ve = e.value;
-    if (on) {
-      s.type = "date"; e.type = "date";
-      s.value = dtToDate(vs); e.value = dtToDate(ve);
-    } else {
-      s.type = "datetime-local"; e.type = "datetime-local";
-      s.value = dateToDt(dtToDate(vs), "T09:00"); e.value = dateToDt(dtToDate(ve), "T17:00");
-    }
+    /* 2026-10-07 起改成文本框（不用原生 datetime-local / date）：
+       原生控件按各人电脑的区域设置显示，悉尼与广州格式不同，同一份数据两人理解不一致。
+       代价是要自己校验格式，好处是格式全站统一成 2026-10-07 16:40。
+       所以这里不再切 type，只改 placeholder 与提示文案。 */
+    s.placeholder = on ? "2026-10-07" : "2026-10-07 16:40";
+    e.placeholder = on ? "2026-10-07" : "2026-10-07 18:00";
     var hint = $("a-time-hint");
     if (hint) {
-      hint.textContent = on
-        ? "整天都不标具体时刻；跨天的话，日历里每一天都会画出来。"
-        : "同一个活动跨天的话，日历里每一天都会画出来。";
+      hint.innerHTML = on
+        ? "整天都不标具体时刻；日期按<b>北京时间</b>填 <code>" + (s.placeholder) + "</code>。跨天的话，日历里每一天都会画出来。"
+        : "按<b>北京时间</b>填，格式 <code>2026-10-07 16:40</code>（或只写 <code>2026-10-07</code>）。" +
+          "⚠️ 不用原生日历控件：那个会按各人电脑的区域设置显示，悉尼和广州看到的格式不一样，容易填错。";
     }
     var cs = $("a-time-cap-start"), ce = $("a-time-cap-end");
     if (cs) cs.textContent = on ? "开始日期" : "活动开始时间";
@@ -480,15 +496,25 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function allDayOn() { var c = $("a-all-day"); return !!(c && c.checked); }
 
-  /* 全天时把日期补成整天：开始 00:00，结束 23:59 */
+  /* 全天时把日期补成整天：开始 00:00，结束 23:59
+     ⚠️ 这里原来直接拼 `"2026-10-07T00:00"` 送库（没经过 fromLocalInput）——
+        字符串里没有时区标记，PostgreSQL 会按会话时区（UTC）解释，
+        于是「全天」实际变成了「北京 08:00 开始」，在日历上会挤到上午而不是整天占着。
+        现在统一走 dtLocalToIso()，它会显式补 +08:00。 */
   function startEndPayload() {
     var allDay = allDayOn();
-    var sv = $("a-starts").value, ev = $("a-ends").value;
+    var r = readDtInput("a-starts", { label: "活动开始时间", wantTime: !allDay });
+    var e = readDtInput("a-ends", { label: "活动结束时间", wantTime: !allDay });
+    var err = r.err || e.err;
+    if (err) return { err: err };
     if (allDay) {
-      var sd = dtToDate(sv), ed = dtToDate(ev) || dtToDate(sv);
-      return { starts_at: sd ? sd + "T00:00" : null, ends_at: ed ? ed + "T23:59" : null };
+      var sd = r.iso ? T.ymdOf(r.iso) : "", ed = e.iso ? T.ymdOf(e.iso) : sd;
+      return {
+        starts_at: sd ? T.dtLocalToIso(sd + "T00:00") : null,
+        ends_at: ed ? T.dtLocalToIso(ed + "T23:59") : null
+      };
     }
-    return { starts_at: fromLocalInput(sv), ends_at: fromLocalInput(ev) };
+    return { starts_at: r.iso, ends_at: e.iso };
   }
 
   var allDayBox = $("a-all-day");
@@ -898,6 +924,16 @@ document.addEventListener("DOMContentLoaded", function () {
     /* ⚠️ a-contact（负责人联系方式）2026-10-02 起整段删掉了：表单里没有这个输入框了，
        所以 payload 里也别再写 contact —— 写了会把旧数据覆盖成空。 */
     var span = startEndPayload();
+    /* 时间框改成了文本框，格式得自己校验 —— 错了就在这儿报，别写进库。 */
+    if (span.err) { alertIn($("act-alerts"), "error", span.err); return; }
+    if (!span.starts_at) { alertIn($("act-alerts"), "error", "请填活动开始时间。"); return; }
+    var openErr = null;
+    var openIso = null;
+    if (String($("a-opens").value || "").trim()) {
+      var ro = readDtInput("a-opens", { label: "报名开始时间", wantTime: true });
+      if (ro.err) openErr = ro.err; else openIso = ro.iso;
+    }
+    if (openErr) { alertIn($("act-alerts"), "error", openErr); return; }
     var payload = {
       title: title,
       summary: $("a-summary").value.trim() || null,
@@ -913,7 +949,7 @@ document.addEventListener("DOMContentLoaded", function () {
       /* 这张表只出义工活动；校内日程走 saveEvent()，那边固定写 kind:"event" */
       kind: "signup",
       show_positions: $("a-show-pos").checked,
-      signup_opens_at: fromLocalInput($("a-opens").value),
+      signup_opens_at: openIso,
       capacity: parseInt($("a-capacity").value, 10) || null,
       /* 名额满了还能收多少人进 waiting list；0 = 满了直接停 */
       waitlist_capacity: Math.max(0, parseInt($("a-waitlist").value, 10) || 0),
@@ -1020,11 +1056,13 @@ document.addEventListener("DOMContentLoaded", function () {
           "</div>" +
           '<div class="cal-edit-grid">' +
             '<label class="cal-allday"><input type="checkbox" data-f="all_day"' + (a.all_day ? " checked" : "") + " /> 全天</label>" +
-            "<label>活动开始<input type=\"" + (a.all_day ? "date" : "datetime-local") + "\" data-f=\"starts_at\" value=\"" + esc(dayInputValue(a.starts_at, a.all_day)) + "\" /></label>" +
-            "<label>活动结束<input type=\"" + (a.all_day ? "date" : "datetime-local") + "\" data-f=\"ends_at\" value=\"" + esc(dayInputValue(a.ends_at, a.all_day)) + "\" /></label>" +
+            /* 同样用文本框 + .dt-in：原生 date/datetime-local 会按各人电脑的
+               区域设置显示格式，悉尼与广州看到的不一样。 */
+            "<label>活动开始<input type=\"text\" class=\"dt-in\" spellcheck=\"false\" placeholder=\"2026-10-07 16:40\" data-f=\"starts_at\" value=\"" + esc(dayInputValue(a.starts_at, a.all_day)) + "\" /></label>" +
+            "<label>活动结束<input type=\"text\" class=\"dt-in\" spellcheck=\"false\" placeholder=\"2026-10-07 18:00\" data-f=\"ends_at\" value=\"" + esc(dayInputValue(a.ends_at, a.all_day)) + "\" /></label>" +
             /* 校内日程没有报名，这三个字段留着只会让人以为填了会生效 */
             (ev ? "" :
-            "<label>报名开始<input type=\"datetime-local\" data-f=\"signup_opens_at\" value=\"" + esc(toLocalInput(a.signup_opens_at)) + "\" /></label>" +
+            "<label>报名开始<input type=\"text\" class=\"dt-in\" spellcheck=\"false\" placeholder=\"2026-10-07 08:00\" data-f=\"signup_opens_at\" value=\"" + esc(toLocalInput(a.signup_opens_at)) + "\" /></label>" +
             "<label>名额<input type=\"number\" min=\"1\" data-f=\"capacity\" value=\"" + esc(String(a.capacity || 30)) + "\" /></label>" +
             "<label>备选名额<input type=\"number\" min=\"0\" data-f=\"waitlist_capacity\" value=\"" + esc(String(a.waitlist_capacity == null ? 5 : a.waitlist_capacity)) + "\" /></label>") +
           "</div>" +
@@ -1078,18 +1116,28 @@ document.addEventListener("DOMContentLoaded", function () {
     var allBox = item.querySelector('[data-f="all_day"]');
     var allDay = !!(allBox && allBox.checked);
     var patch = { all_day: allDay };
+    /* ⚠️ 全天分支原来直接拼 `"2026-10-07T00:00"` 送库 ——
+       字符串不带时区标记，PostgreSQL 按会话时区（UTC）解释，
+       「全天」实际变成北京 08:00 开始，在日历上会挤到上午。
+       现在统一走 T.dtLocalToIso()（显式 +08:00），并顺手校验格式。 */
+    var badTime = null;
     ["starts_at", "ends_at", "signup_opens_at"].forEach(function (f) {
       var input = item.querySelector('[data-f="' + f + '"]');
       if (!input) return;                       /* 校内日程没有「报名开始」这一格 */
-      var v = input.value;
-      /* 全天：把日期补成整天，开始 00:00 / 结束 23:59 */
+      var v = String(input.value || "").trim().replace("T", " ");
+      if (!v) { patch[f] = null; return; }        /* 清空 = 不设 */
       if (allDay && (f === "starts_at" || f === "ends_at")) {
-        var d = String(v || "").slice(0, 10);
-        patch[f] = d ? d + (f === "starts_at" ? "T00:00" : "T23:59") : null;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) { badTime = badTime || (f === "starts_at" ? "开始" : "结束") + "日期格式不对，要写成「2026-10-07」"; return; }
+        patch[f] = T.dtLocalToIso(v + (f === "starts_at" ? "T00:00" : "T23:59"));
         return;
       }
-      patch[f] = fromLocalInput(v);
+      if (!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(v)) {
+        badTime = badTime || "时间格式不对，要写成「2026-10-07 16:40」";
+        return;
+      }
+      patch[f] = T.dtLocalToIso(v);
     });
+    if (badTime) { alertIn($("cal-admin-alerts"), "error", badTime + "（按北京时间）。"); return; }
     /* 名额与备选名额是数字，不走时间转换 */
     ["capacity", "waitlist_capacity"].forEach(function (f) {
       var input = item.querySelector('[data-f="' + f + '"]');
@@ -1127,9 +1175,9 @@ document.addEventListener("DOMContentLoaded", function () {
     showTab("acts");
     var starts = $("a-starts");
     if (starts) {
-      starts.value = ymd ? ymd + "T09:00" : "";
+      starts.value = ymd ? ymd + " 09:00" : "";
       var ends = $("a-ends");
-      if (ends) ends.value = ymd ? ymd + "T12:00" : "";
+      if (ends) ends.value = ymd ? ymd + " 12:00" : "";
       var formPanel = $("act-form-panel");
       if (formPanel) formPanel.scrollIntoView({ behavior: "smooth", block: "start" });
       starts.focus();
@@ -1148,14 +1196,9 @@ document.addEventListener("DOMContentLoaded", function () {
   function setAllDayCev(on) {
     var s = $("cev-starts"), e = $("cev-ends");
     if (!s || !e) return;
-    var vs = s.value, ve = e.value;
-    if (on) {
-      s.type = "date"; e.type = "date";
-      s.value = dtToDate(vs); e.value = dtToDate(ve);
-    } else {
-      s.type = "datetime-local"; e.type = "datetime-local";
-      s.value = dateToDt(dtToDate(vs), "T09:00"); e.value = dateToDt(dtToDate(ve), "T11:00");
-    }
+    /* 同 setAllDay()：控件已是文本框，这里只改 placeholder，不切 type。 */
+    s.placeholder = on ? "2026-10-07" : "2026-10-07 09:00";
+    e.placeholder = on ? "2026-10-07" : "2026-10-07 11:00";
     var cs = $("cev-cap-start"), ce = $("cev-cap-end");
     if (cs) cs.textContent = on ? "开始日期" : "开始时间";
     if (ce) ce.textContent = on ? "结束日期" : "结束时间";
@@ -1178,16 +1221,18 @@ document.addEventListener("DOMContentLoaded", function () {
     $("cev-location").value = ev ? (ev.location || "") : "";
     $("cev-notes").value = ev ? (ev.notes || "") : "";
 
-    /* 全天要先设勾选再换框类型：setAllDayCev 会把值截成日期 */
+    /* 全天只改 placeholder（控件已是文本框），不再截断已填的值 */
     var allDay = ev ? !!ev.all_day : false;
     $("cev-all-day").checked = allDay;
     var s = $("cev-starts"), e = $("cev-ends");
     if (ev) {
       s.value = toLocalInput(ev.starts_at);
       e.value = toLocalInput(ev.ends_at);
+      /* 全天活动回填时只给日期（原来靠切 type 截断，现在自己做） */
+      if (allDay) { s.value = s.value.slice(0, 10); e.value = e.value.slice(0, 10); }
     } else {
-      s.value = ymd ? ymd + "T09:00" : "";
-      e.value = ymd ? ymd + "T11:00" : "";
+      s.value = ymd ? ymd + " 09:00" : "";
+      e.value = ymd ? ymd + " 11:00" : "";
     }
     setAllDayCev(allDay);
 
@@ -1209,15 +1254,22 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!name) { alertIn($("cev-alerts"), "error", "日程名称是必填的。"); return; }
 
     var allDay = allDayOnCev();
-    var sv = $("cev-starts").value, ev2 = $("cev-ends").value;
+    var r = readDtInput("cev-starts", { label: "开始时间", wantTime: !allDay });
+    var e = readDtInput("cev-ends", { label: "结束时间", wantTime: !allDay });
+    if (r.err) { alertIn($("cev-alerts"), "error", r.err); return; }
+    if (e.err) { alertIn($("cev-alerts"), "error", e.err); return; }
     var starts, ends;
+    /* ⚠️ 全天分支必须走 dtLocalToIso()（显式 +08:00）。
+       直接拼 "2026-10-07T00:00" 送库的话，字符串没有时区标记，
+       PostgreSQL 按会话时区（UTC）解释 → 实际是北京 08:00 开始，
+       日历上「全天」会挤到上午而不是整天占着。 */
     if (allDay) {
-      var sd = dtToDate(sv), ed = dtToDate(ev2) || dtToDate(sv);
-      starts = sd ? sd + "T00:00" : null;
-      ends = ed ? ed + "T23:59" : null;
+      var sd = r.iso ? T.ymdOf(r.iso) : "", ed = e.iso ? T.ymdOf(e.iso) : sd;
+      starts = sd ? T.dtLocalToIso(sd + "T00:00") : null;
+      ends = ed ? T.dtLocalToIso(ed + "T23:59") : null;
     } else {
-      starts = fromLocalInput(sv);
-      ends = fromLocalInput(ev2);
+      starts = r.iso;
+      ends = e.iso;
     }
     if (!starts) { alertIn($("cev-alerts"), "error", "请填开始时间。"); return; }
 
@@ -3161,14 +3213,7 @@ document.addEventListener("DOMContentLoaded", function () {
      ============================================================ */
   var hoursFilter = "pending";
 
-  function fmtWhen(iso) {
-    if (!iso) return "";
-    var d = new Date(iso);
-    if (isNaN(d.getTime())) return "";
-    var p = function (n) { return n < 10 ? "0" + n : String(n); };
-    return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) +
-      " " + p(d.getHours()) + ":" + p(d.getMinutes());
-  }
+  function fmtWhen(iso) { return T.fmtDT(iso); }   /* 固定 UTC+8，见 time.js */
 
   function refreshInboxBadge() {
     var badge = $("hours-badge");

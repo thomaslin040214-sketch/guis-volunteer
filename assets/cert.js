@@ -56,12 +56,11 @@
   function clear(el) { if (el) el.innerHTML = ""; }
   function pad(n) { return n < 10 ? "0" + n : "" + n; }
 
-  /* 本地时间拼日期 —— ⚠️ 别用 toISOString().slice(0,10)：那是 UTC，
-     东八区在 00:00–08:00 之间会算成昨天，证明上的日期就错了。 */
-  function ymd(d) {
-    d = d || new Date();
-    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
-  }
+  /* 证明上的出具日期 —— 北京时间。
+     ⚠️ 别用 getFullYear()/getMonth()/getDate()：那是浏览器时区，
+        维护者在悉尼会把日期算成悉尼的「今天」；也别用 toISOString().slice(0,10)，
+        那是 UTC，广州早上 8 点前会算成昨天。见 assets/time.js。 */
+  function ymd(d) { return window.GUISTime.ymdOf(d || new Date()); }
   function ymdOf(iso) {
     if (!iso) return "";
     var d = new Date(iso);
@@ -73,12 +72,8 @@
     if (!m) return "";
     return m[1] + " 年 " + Number(m[2]) + " 月 " + Number(m[3]) + " 日";
   }
-  function fmtWhen(iso) {
-    if (!iso) return "";
-    var d = new Date(iso);
-    if (isNaN(d.getTime())) return "";
-    return ymd(d) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
-  }
+  function fmtWhen(iso) { return window.GUISTime.fmtDT(iso); }
+
   /* 3.50 → 3.5 ；12.00 → 12 */
   function fmtHours(n) {
     var v = Math.round(Number(n || 0) * 100) / 100;

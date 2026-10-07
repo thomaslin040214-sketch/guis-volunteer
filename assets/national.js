@@ -17,10 +17,10 @@
   var BAR_OFF_KEY = "guis-nd-bar-off";
 
   function inWindow() {
-    var today = new Date();
-    var y = today.getFullYear();
-    var m = today.getMonth() + 1;
-    var d = today.getDate();
+    var w = window.GUISTime.nowCst();
+    var y = w.y;
+    var m = w.m;
+    var d = w.d;
     var stamp = y + "-" + (m < 10 ? "0" + m : m) + "-" + (d < 10 ? "0" + d : d);
     return stamp >= WINDOW.from && stamp < WINDOW.until;
   }
@@ -51,7 +51,7 @@
     }
 
     /* 周年数按当前年份算，明年不用改文案 */
-    var years = new Date().getFullYear() - FOUNDING_YEAR;
+    var years = window.GUISTime.nowCst().y - FOUNDING_YEAR;
     var set = function (id, text) {
       var el = document.getElementById(id);
       if (el) el.textContent = text;
@@ -59,7 +59,7 @@
     /* 周年数在横幅和专区里各出现一次，两处一起填 */
     ["", "-2"].forEach(function (suffix) {
       set("nd-year-start" + suffix, String(FOUNDING_YEAR));
-      set("nd-year-now" + suffix, String(new Date().getFullYear()));
+      set("nd-year-now" + suffix, String(window.GUISTime.nowCst().y));
       set("nd-anniv" + suffix, String(years));
     });
 
