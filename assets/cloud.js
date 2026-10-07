@@ -130,7 +130,7 @@
     /* ---------- 我是谁 ----------
        角色只有服务端说了算：allowed_admins 的读策略是 is_owner()，
        普通老师读不到自己那一行，所以走 my_access()（SECURITY DEFINER）。
-       返回 role = owner（执委会）/ teacher（负责老师）/ student（学生）。 */
+       返回 role = owner（组织成员）/ teacher（负责老师）/ student（学生）。 */
     myAccess: function () {
       return db.rpc("my_access");
     },
@@ -228,7 +228,7 @@
     /* 改整个活动的默认义工时长（activities.hours）。
        为什么要走 SECURITY DEFINER：activities 的 UPDATE 策略只认 is_owner()，
        但带队的负责老师也要能在签到页临时改（用户明确要求），
-       于是把判断收敛到函数里 —— i_manage_activity() 已包含执委会。 */
+       于是把判断收敛到函数里 —— i_manage_activity() 已包含组织成员。 */
     setActivityHours: function (id, hours) {
       return db.rpc("set_activity_hours", {
         p_activity_id: id,
@@ -240,7 +240,7 @@
        一个活动可以有多个职位（如家长会的「指引义工」「翻译义工」），
        每个职位各自有名额与备选名额；一旦这个活动有职位，
        register_signup 就按职位算名额，activities.capacity 不再参与。
-       ⚠️ 写操作只有执委会能通过 RLS（is_owner()），读则跟着活动状态走
+       ⚠️ 写操作只有组织成员能通过 RLS（is_owner()），读则跟着活动状态走
           （开放报名或已归档的活动，匿名也能读到它的职位）。 */
     listPositions: function (activityId) {
       var q = db
@@ -308,7 +308,7 @@
           ⚠️ 这里和数据库 my_absence_summary() 里的 blocked_at 是同一件事的两处写法，
              改一个必须改另一个。
        3. 触线的同学**照样能报名**（用户明确不要一刀切拦报名），
-          由执委会在后台看到红色角标后决定这一场录不录取。
+          由组织成员在后台看到红色角标后决定这一场录不录取。
        4. 真有事可以标成 excused（已请假）：不计次数，但记录留着 —— 对学生透明，也留证据。
        5. 同一人同一场活动只可能有一条记录（唯一索引 activity_id + lower(email)），
           所以「自动结算 + 手工补点」不会把一次缺席记成两次。
@@ -533,7 +533,7 @@
       return db.rpc("is_owner");
     },
 
-    /* ---------- 人员管理（只有执委会能读能写）---------- */
+    /* ---------- 人员管理（只有组织成员能读能写）---------- */
     listMembers: function () {
       return db
         .from("allowed_admins")
@@ -547,7 +547,7 @@
 
     /* 批量加人（从 CSV / Excel 导入）。走 upsert：邮箱是主键，
        同一份名单导两次只会刷新姓名角色备注，不会报「已存在」炸掉整批。
-       ⚠️ 不链 .select()：这张表的读策略是 is_owner()，回读对非执委会一律被拒。 */
+       ⚠️ 不链 .select()：这张表的读策略是 is_owner()，回读对非组织成员一律被拒。 */
     importMembers: function (rows) {
       if (!rows || !rows.length) return Promise.resolve({ data: [], error: null });
       return db.from("allowed_admins").upsert(rows, { onConflict: "email" });
@@ -582,18 +582,18 @@
     },
 
     /* ================= 校外义工时长认定（2026-10-02 加） =================
-       学生拿着校外机构的义工证明来申请，执委会审核通过后并入他本人的义工小时
+       学生拿着校外机构的义工证明来申请，组织成员审核通过后并入他本人的义工小时
        —— 合并发生在服务端：my_service() 里 UNION 了 status='approved' 的申请，
          所以「我的义工账户」的累计小时自然就带上了，前端不用另外加一遍。
 
        两张表，权限分工是刻意的：
          · external_hour_requests —— 申请本体。学生只能插自己的、看自己的，
            而且只能带着 status='pending' 插（不能自己给自己通过）；
-           改状态只有执委会可以（RLS 里 is_owner()）。
-         · admin_inbox —— 执委会收件箱。⚠️ 学生**没有**这张表的 INSERT 权限，
+           改状态只有组织成员可以（RLS 里 is_owner()）。
+         · admin_inbox —— 组织成员收件箱。⚠️ 学生**没有**这张表的 INSERT 权限，
            收件那一行的写入者是数据库触发器 —— 免得有人伪造一条消息误导审核人。
        证明图片走云存储的 shared 路径（为什么不是 users/：users 只有本人能读，
-       执委会就看不到图、没法核；shared 的代价是任何登录的人都能读，但文件名是
+       组织成员就看不到图、没法核；shared 的代价是任何登录的人都能读，但文件名是
        随机串，只有先拿到申请记录才知道去读哪一个）。 */
     submitExternal: function (payload) {
       /* ⚠️ 不链 .select()：匿名/学生写入后的回读受 SELECT 策略约束会报 42501。 */
@@ -607,7 +607,7 @@
         .order("created_at", { ascending: false });
     },
 
-    /* 执委会看全部（RLS 里 is_owner() 放行）。传 status 就是只看某一类。 */
+    /* 组织成员看全部（RLS 里 is_owner() 放行）。传 status 就是只看某一类。 */
     listExternalAll: function (status) {
       var q = db
         .from("external_hour_requests")
@@ -641,7 +641,7 @@
            status='pending' 插；**通过 / 驳回没有 UPDATE 策略**，只能走
            review_certificate_request()（SECURITY DEFINER），它认 cert_reviewers 名单。
            学生唯一能改的是「把自己那条 pending 撤成 withdrawn」（策略里卡了方向）。
-         · cert_reviewers —— 指定的审核人名单，只有执委会（owner）能增删。
+         · cert_reviewers —— 指定的审核人名单，只有组织成员（owner）能增删。
            ⚠️ owner 不自动等于审核人 —— 想审就得把自己也加进这张表。
        ⚠️ 证件号码现在会存在库里（审核和日后重打都要看）。这跟「页面不留痕」不冲突：
           浏览器本地一个字都不写，只是云端这行记录里有，且只有本人和审核人读得到。 */
@@ -757,11 +757,11 @@
     /* ================= 招新面试 · 安排与记录（2026-10-06 加） =================
        两张表，各管一件事：
          · interview_slots   —— 面试时间表。一行 = 一位候选人的一个 15 分钟场次。
-                                只有执委会（is_owner）能增删改；负责老师可读。
+                                只有组织成员（is_owner）能增删改；负责老师可读。
          · interview_records —— 面试记录。一个时段最多一条，保存走 upsert。
-                                执委会与负责老师都能写。
+                                组织成员与负责老师都能写。
        ⚠️ 学生读不到这两张表 —— 学生端只拿 my_interview() 那一条安排
-          （刻意不含分数、不含结论，那些由执委会单独通知）。 */
+          （刻意不含分数、不含结论，那些由组织成员单独通知）。 */
 
     INTERVIEW_SLOT_COLS:
       "id, day, slot_start, slot_end, name, name_en, class_name, dept, email, note, created_at",

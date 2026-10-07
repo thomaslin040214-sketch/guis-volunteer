@@ -5,7 +5,7 @@
    导出来的 JSON 是全部表的原始内容，哪天要迁移 / 要查旧账 /
    要换托管方式，拿着这个文件就能重建，不用重新录入一遍。
 
-   谁能用：只有执委会（owner）。allowed_admins 与 student_directory
+   谁能用：只有组织成员（owner）。allowed_admins 与 student_directory
    的读策略是 is_owner()，负责老师本来就读不全，给了也导不出完整备份。
 
    导出完全在浏览器里完成（Blob + <a download>），不占云端一点空间 ——

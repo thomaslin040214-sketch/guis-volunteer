@@ -328,7 +328,10 @@
     if (window.GUISBoard) { boot(); return; }
 
     var s = document.createElement("script");
-    s.src = "assets/board.js?v=20260930f";
+    /* ⚠️ 版本号从 <html data-ver> 现取，别再手写一个常量 ——
+       之前这里写死了 20260930f，有一次改了 board.js 忘了同步，
+       浏览器就一直用缓存里的旧文件，改了等于没改。 */
+    s.src = "assets/board.js?v=" + ((document.documentElement.getAttribute("data-ver") || "").trim() || "1");
     s.onload = boot;
     s.onerror = function () { if (legacyList) legacyList.style.removeProperty("display"); };
     document.head.appendChild(s);

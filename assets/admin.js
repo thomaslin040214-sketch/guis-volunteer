@@ -105,34 +105,70 @@ document.addEventListener("DOMContentLoaded", function () {
 
   /* ---------------- 角色 ----------------
      两套权限，服务端才是边界（activities / articles / announcements / allowed_admins
-     的写入策略全部只认 is_owner()）。前端这里只是把不该点的入口藏掉，
-     免得老师点了之后收到一句看不懂的报错。 */
-  var ME = { email: "", role: "teacher", isStudent: false, mustChange: false };
-  function isOwner() { return ME.role === "owner"; }
+     的写入策略全部只认 is_owner()；interview_records 与 registrations 的写入收在
+     is_backoffice_staff()，也就是 owner + teacher，普通成员进不来）。
+     前端这里只是把不该点的入口藏掉，免得点了之后收到一句看不懂的报错。
 
-  /* 只有执委会能进的页签；负责老师一律看不到。
-     「活动日历」也在里面 —— 它能改活动的开始 / 结束 / 报名截止，属于写操作。 */
-  var OWNER_ONLY_TABS = ["acts", "calendar", "journal", "announce", "people", "students", "hours"];
+     角色等级与判定统一走 assets/roles.js —— 别处不要再写 role === "owner" 这种二选一，
+     那样加一档角色时会静默掉进 else 支（新角色反而拿到高权限）。 */
+  var R = window.GUISRoles;
+  var ME = { email: "", role: "teacher", isStudent: false, mustChange: false };
+  function isOwner() { return R.isOwner(ME.role); }
+  /* 每个页签要的最低档位。owner 全要；teacher 除了「管理类」都能看；member 只读三样。
+     「活动日历」要 owner —— 它能改活动的开始 / 结束 / 报名截止，属于写操作。 */
+  var TAB_MIN = {
+    acts: "owner",        /* 活动管理：建活动 / 改活动 */
+    calendar: "owner",    /* 活动日历：排期、截止时间 */
+    regs: "member",       /* 报名名单：普通成员可只读 */
+    live: "teacher",      /* 实时报名：轮询刷新，老师在用 */
+    archive: "member",    /* 过往活动：只读记录 */
+    journal: "member",    /* 刊物：普通成员可读 */
+    announce: "owner",    /* 公告：发布要 owner */
+    people: "owner",      /* 人员管理：改角色、开通账号 */
+    students: "owner",    /* 学生名单：开通白名单 */
+    hours: "owner",       /* 校外时长审核 */
+    cert: "owner"         /* 证明审核（另需审核人名单，见 applyCertUI） */
+  };
+
+  function canSeeTab(tab) {
+    var min = TAB_MIN[tab];
+    return min ? R.atLeast(ME.role, min) : true;
+  }
 
   function applyRoleUI() {
     var owner = isOwner();
-    Array.prototype.forEach.call(document.querySelectorAll(".tab-btn"), function (b) {
-      var t = b.getAttribute("data-tab");
-      if (OWNER_ONLY_TABS.indexOf(t) >= 0) b.hidden = !owner;
+    var staff = R.isTeacher(ME.role);
+
+    Array.prototype.forEach.call(document.querySelectorAll("[data-tab]"), function (b) {
+      b.hidden = !canSeeTab(b.getAttribute("data-tab"));
+    });
+
+    /* 侧边栏的分组标题：组里如果一个可看的项都没有，整组藏掉，
+       否则普通成员会看到一排点不开的灰字。 */
+    Array.prototype.forEach.call(document.querySelectorAll("[data-navgroup]"), function (g) {
+      var any = Array.prototype.some.call(g.querySelectorAll("[data-tab]"), function (b) {
+        return !b.hidden;
+      });
+      g.hidden = !any;
     });
 
     var note = $("role-note");
     if (note) {
       note.hidden = owner;
       if (!owner) {
-        note.innerHTML = '<div class="alert alert-info">' +
-          "你是<b>负责老师</b>：可以看全校活动的报名名单、给分配给自己的活动签到并录入义工小时；" +
-          "活动、刊物、公告的编辑只有执委会能操作。要开通更多权限，请让执委会在「人员管理」里把你的角色改成执委会。" +
-          "</div>";
+        note.innerHTML = R.isTeacher(ME.role)
+          ? '<div class="alert alert-info">' +
+            "你是<b>负责老师</b>：可以看全校活动的报名名单、给分配给自己的活动签到并录入义工小时；" +
+            "活动、刊物、公告的编辑只有组织成员能操作。要开通更多权限，请让组织成员在「人员管理」里改你的角色。" +
+            "</div>"
+          : '<div class="alert alert-info">' +
+            "你是<b>普通成员</b>：可以查看活动报名名单、过往活动和刊物，其余内容不对你开放。" +
+            "需要签到、改义工小时或审核材料，请让组织成员在「人员管理」里改你的角色。" +
+            "</div>";
       }
     }
 
-    /* 活动表单里只有执委会能改的东西：新建/编辑活动整块表单对老师隐藏 */
+    /* 活动表单里只有组织成员能改的东西：新建/编辑活动整块表单对其他角色隐藏 */
     var formPanel = $("act-form-panel");
     if (formPanel) formPanel.hidden = !owner;
     var managerSel = $("a-manager");
@@ -145,9 +181,10 @@ document.addEventListener("DOMContentLoaded", function () {
     var peoForm = $("peo-form");
     if (peoForm) peoForm.hidden = !owner;
 
-    /* 全站备份只有执委会能导完整（allowed_admins / student_directory 老师读不到） */
+    /* 全站备份只有组织成员能导完整（allowed_admins / student_directory 其他人读不到） */
     var bk = $("backup-btn");
     if (bk) bk.hidden = !owner;
+    void staff;
   }
 
   /* ---------------- 一键备份 ----------------
@@ -175,26 +212,35 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function showSignedIn(email) {
     ME.email = email || "";
-    $("who-email").textContent = ME.email + (isOwner() ? " · 执委会" : " · 负责老师");
+    /* 身份后缀跟着角色走 —— 以前是 isOwner() ? " · 组织成员" : " · 负责老师"，
+       那样普通成员会顶着「负责老师」的字样，点下去又什么都点不动。 */
+    $("who-email").textContent = ME.email + " · " + R.labelOf(ME.role);
     loginView.hidden = true;
     appView.hidden = false;
     applyRoleUI();
+    /* 落到这个角色第一个能看的页签（普通成员看不到「活动管理」） */
+    showTab(firstVisibleTab());
     C.touchLogin();
     loadActivities();
     loadActivityOptions();
     loadManagerOptions();
     /* 校外时长认定的未读角标：不看那个页签也要能看到「有几条待审」 */
     if (isOwner()) refreshInboxBadge();
-    /* 证明审核要不要显示、我会不会拿到审核权 —— 服务端说了算（is_cert_reviewer()） */
+    /* 证明审核要不要显示、我会不会拿到审核权 —— 服务端说了算（is_cert_reviewer()）。
+       放在 applyRoleUI() 之后：它会把按钮按审核人身份放出来，
+       但角色那一层的判断必须已经生效（否则普通成员可能被放进来）。 */
     checkCertReviewer();
   }
 
+  /* 统一登录之后，这里只负责「把门打开」或「把话说清楚」。
+     真正的表单在 login.html —— 这一页不再有任何输入框。 */
   function showLogin() {
     appView.hidden = true;
     loginView.hidden = false;
+    gotoLogin();
   }
 
-  /* 白名单校验：邮箱不在 allowed_admins 里就立刻退出登录。
+  /* 白名单校验：邮箱不在 allowed_admins 里就退出登录并把人送去统一登录页。
      这是服务端判断（is_allowed_admin() 是 SECURITY DEFINER 函数），
      前端拦只是为了让用户马上看到原因，真正的权限在数据库策略里。 */
   function enterOrReject(email) {
@@ -203,16 +249,19 @@ document.addEventListener("DOMContentLoaded", function () {
       if (!ok) {
         C.auth.signOut();
         showLogin();
-        alertIn($("auth-alerts"), "error",
-          "该邮箱（" + esc(email) + "）还没有加入后台人员名单，请联系义工组织执委会先把邮箱加进来。");
+        alertIn($("auth-alerts"), "warn",
+          "这个邮箱（" + esc(email) + "）还不在后台人员名单里，所以进不来。" +
+          "请让组织成员先在「人员管理」里把邮箱加进来并开通账号。");
         return false;
       }
       /* 拿到角色再决定界面。my_access() 是 SECURITY DEFINER，
-         普通老师也能读到自己的角色（allowed_admins 表的读策略只有执委会）。 */
+         所有在名单里的人都能读到自己的角色（allowed_admins 表的读策略只有组织成员）。
+         ⚠️ 归一化必须走 roles.js：原来这行是 role === "owner" ? "owner" : "teacher"，
+            那样写的话「普通成员」会被当成老师，直接拿到改义工小时的权限。 */
       return C.myAccess().then(function (ar) {
         var row = (ar && ar.data && ar.data[0]) || {};
         ME.email = row.email || email || "";
-        ME.role = row.role === "owner" ? "owner" : "teacher";
+        ME.role = R.norm(row.role);
         ME.isStudent = !!row.is_student;
         ME.mustChange = !!row.must_change_password;
         showSignedIn(ME.email);
@@ -233,156 +282,54 @@ document.addEventListener("DOMContentLoaded", function () {
     else showLogin();
   }).catch(showLogin);
 
+  /* 退出登录：登完直接把人送到统一登录页。
+     （showLogin() 会调 gotoLogin()，但这里显式跳一次更干脆 ——
+       登出的意图就是「我要重新选一个身份」，停在门上等一下没意义。） */
   $("logout-btn").addEventListener("click", function () {
-    C.auth.signOut().then(showLogin).catch(showLogin);
-  });
-
-  /* ---------------- 登录表单切换 ---------------- */
-  /* ?setup=1 才会露出「开通账号」—— 白名单邮箱首次开通用，平时入口不存在 */
-  var SETUP = new URLSearchParams(window.location.search).get("setup") === "1";
-  if (SETUP) $("seg-setup").hidden = false;
-
-  var forms = {
-    password: $("form-password"),
-    otp: $("form-otp"),
-    setup: $("form-signup"),
-    reset: $("form-reset")
-  };
-  function showForm(name) {
-    Object.keys(forms).forEach(function (k) { forms[k].hidden = k !== name; });
-    Array.prototype.forEach.call($("auth-seg").children, function (b) {
-      b.classList.toggle("is-on", b.getAttribute("data-mode") === name);
-    });
-    clear($("auth-alerts"));
-  }
-  Array.prototype.forEach.call($("auth-seg").children, function (b) {
-    b.addEventListener("click", function () { showForm(b.getAttribute("data-mode")); });
-  });
-  $("goto-reset").addEventListener("click", function () { showForm("reset"); });
-  $("back-login").addEventListener("click", function () { showForm("password"); });
-
-  /* ---------------- 密码登录 ---------------- */
-  $("form-password").addEventListener("submit", function (e) {
-    e.preventDefault();
-    var btn = $("pw-submit"), email = $("pw-email").value.trim(), pass = $("pw-pass").value;
-    if (!email || !pass) { alertIn($("auth-alerts"), "error", "请填写邮箱和密码。"); return; }
-    btn.disabled = true; btn.textContent = "登录中…";
-    C.auth.signInWithPassword({ email: email, password: pass }).then(function (r) {
-      if (r.error) { btn.disabled = false; btn.textContent = "登录"; alertIn($("auth-alerts"), "error", "邮箱或密码不正确。"); return; }
-      enterOrReject(email);
+    var btn = this;
+    btn.disabled = true;
+    C.auth.signOut().then(function () {
+      location.href = loginURL();
     }).catch(function () {
-      btn.disabled = false; btn.textContent = "登录";
-      alertIn($("auth-alerts"), "error", "登录失败，请稍后重试。");
+      btn.disabled = false;
+      showLogin();
     });
   });
 
-  /* ---------------- OTP 登录 ---------------- */
-  var pendingOtp = null;
+  /* ---------------- 统一登录（2026-10-07）----------------
+     原来这一页自带一整套登录表单（密码 / 验证码 / 开通 / 重置），
+     和 login.html 那套几乎逐行重复 —— 同一个站两处登录逻辑，迟早会改漏一处。
+     现在统一到 login.html：这一页只剩一扇门，没登录就跳过去，登完再 ?next= 回来。
 
-  function sendCode(email, onDone) {
-    if (!email) { alertIn($("auth-alerts"), "error", "请先填写邮箱。"); return; }
-    C.auth.sendOtp({ email: email }).then(function (r) {
-      if (r.error) { alertIn($("auth-alerts"), "error", "验证码发送失败：" + (r.error.message || "请稍后重试")); return; }
-      pendingOtp = { email: email, verificationId: r.data.verificationId, isExistingUser: r.data.isExistingUser };
-      onDone();
-    }).catch(function () {
-      alertIn($("auth-alerts"), "error", "验证码发送失败，请稍后重试。");
-    });
+     ⚠️ 为什么不「已经登录就直接放行」：
+        真正的白名单判断在 is_allowed_admin()（服务端），前端只是提前给个说法。
+        所以流程是：先问服务端在不在名单里 → 在就放行并读角色，不在才把人送去登录页。
+        反过来（先跳登录页）会出问题：已经在名单里的人每次刷新都得多跳一次。 */
+
+  function loginURL() {
+    /* ?next= 带上当前页，登完自动回来（login.js 只认同站 .html 相对路径） */
+    return "login.html?next=" + encodeURIComponent("admin.html");
   }
 
-  $("otp-send").addEventListener("click", function () {
-    sendCode($("otp-email").value.trim(), function () {
-      alertIn($("auth-alerts"), "ok", "验证码已发送，请查收邮箱（含垃圾邮件）。");
-    });
-  });
-
-  $("form-otp").addEventListener("submit", function (e) {
-    e.preventDefault();
-    var email = $("otp-email").value.trim(), code = $("otp-code").value.trim();
-    if (!pendingOtp || pendingOtp.email !== email) {
-      alertIn($("auth-alerts"), "error", "请先为当前邮箱获取验证码。");
-      return;
+  var gateTimer = null;
+  function gotoLogin() {
+    var go = $("auth-gate-go");
+    if (go) go.href = loginURL();
+    var box = $("auth-gate");
+    if (box) {
+      box.innerHTML =
+        "<b>请先登录</b><br />这个页面需要组织成员或负责老师身份。<br />" +
+        "<span class=\"hint\">登录后会带你回到这一页。" +
+        (ME.email ? "（当前登录的邮箱不在后台名单里：" + esc(ME.email) + "）" : "") +
+        "</span>";
     }
-    if (!code) { alertIn($("auth-alerts"), "error", "请填写验证码。"); return; }
-    $("otp-submit").disabled = true; $("otp-submit").textContent = "验证中…";
-    C.auth.verifyOtp({
-      email: pendingOtp.email,
-      verificationId: pendingOtp.verificationId,
-      isExistingUser: pendingOtp.isExistingUser,
-      token: code
-    }).then(function (r) {
-      $("otp-submit").disabled = false; $("otp-submit").textContent = "登录";
-      if (r.error) { alertIn($("auth-alerts"), "error", "验证码不正确或已过期。"); return; }
-      pendingOtp = null;
-      enterOrReject(email);
-    }).catch(function () {
-      $("otp-submit").disabled = false; $("otp-submit").textContent = "登录";
-      alertIn($("auth-alerts"), "error", "验证失败，请重试。");
-    });
-  });
+    /* 只是文案提示，真正跳转交给 login.html 自己的判断（那边会先看有没有会话）
+       —— 避免「刚退出登录，页面又自动把人弹去登录页」这种来回弹。 */
+    void gateTimer;
+  }
 
-  /* ---------------- 注册 ---------------- */
-  $("su-send").addEventListener("click", function () {
-    sendCode($("su-email").value.trim(), function () {
-      alertIn($("auth-alerts"), "ok", "验证码已发送，请查收邮箱后再设置密码。");
-    });
-  });
-
-  $("form-signup").addEventListener("submit", function (e) {
-    e.preventDefault();
-    var email = $("su-email").value.trim(), pass = $("su-pass").value, code = $("su-code").value.trim();
-    if (!pendingOtp || pendingOtp.email !== email) {
-      alertIn($("auth-alerts"), "error", "请先为当前邮箱获取验证码。"); return;
-    }
-    if (!pass) { alertIn($("auth-alerts"), "error", "请设置密码。"); return; }
-    if (!code) { alertIn($("auth-alerts"), "error", "请填写验证码。"); return; }
-
-    $("su-submit").disabled = true; $("su-submit").textContent = "注册中…";
-    C.auth.verifyOtp({
-      email: pendingOtp.email,
-      verificationId: pendingOtp.verificationId,
-      isExistingUser: pendingOtp.isExistingUser,
-      token: code,
-      password: pendingOtp.isExistingUser ? undefined : pass
-    }).then(function (r) {
-      $("su-submit").disabled = false; $("su-submit").textContent = "开通账号并登录";
-      if (r.error) { alertIn($("auth-alerts"), "error", "开通失败：" + (r.error.message || "请重试")); return; }
-      pendingOtp = null;
-      enterOrReject(email);
-    }).catch(function () {
-      $("su-submit").disabled = false; $("su-submit").textContent = "开通账号并登录";
-      alertIn($("auth-alerts"), "error", "注册失败，请重试。");
-    });
-  });
-
-  /* ---------------- 忘记密码 ---------------- */
-  var pendingReset = null;
-  $("rs-send").addEventListener("click", function () {
-    var email = $("rs-email").value.trim();
-    if (!email) { alertIn($("auth-alerts"), "error", "请先填写邮箱。"); return; }
-    C.auth.resetPasswordForEmail(email).then(function (r) {
-      if (r.error) { alertIn($("auth-alerts"), "error", "发送失败：" + (r.error.message || "请稍后重试")); return; }
-      pendingReset = { email: email, handle: r.data };
-      alertIn($("auth-alerts"), "ok", "验证码已发送，请查收邮箱。");
-    }).catch(function () {
-      alertIn($("auth-alerts"), "error", "发送失败，请稍后重试。");
-    });
-  });
-
-  $("form-reset").addEventListener("submit", function (e) {
-    e.preventDefault();
-    if (!pendingReset) { alertIn($("auth-alerts"), "error", "请先获取验证码。"); return; }
-    var code = $("rs-code").value.trim(), pass = $("rs-pass").value;
-    if (!code || !pass) { alertIn($("auth-alerts"), "error", "请填写验证码和新密码。"); return; }
-    pendingReset.handle.updateUser({ nonce: code, password: pass }).then(function (r) {
-      if (r.error) { alertIn($("auth-alerts"), "error", "重置失败：" + (r.error.message || "请重试")); return; }
-      alertIn($("auth-alerts"), "ok", "密码已重置，正在为你登录…");
-      setTimeout(function () { enterOrReject($("rs-email").value.trim()); }, 600);
-    }).catch(function () {
-      alertIn($("auth-alerts"), "error", "重置失败，请重试。");
-    });
-  });
-
+  var retryBtn = $("auth-retry");
+  if (retryBtn) retryBtn.addEventListener("click", function () { enterOrReject(ME.email || ""); });
   /* ---------------- Tab 切换 ----------------
      每个页签进场时要做的第一件事写在 onEnter 里（拉数据、启动轮询等），
      离开实时报名时要停掉定时器，否则它会一直在后台刷新。 */
@@ -406,14 +353,34 @@ document.addEventListener("DOMContentLoaded", function () {
   };
   var currentTab = "acts";
 
+  /* 默认落在哪儿：按角色挑第一个看得见的页签。
+     ⚠️ 以前是写死 "acts"，那是因为只有两档角色、owner 和 teacher 都能看活动管理。
+        有了「普通成员」之后，acts 对他不可见 —— 页面会停在一块空白上，
+        用户以为系统坏了。 */
+  function firstVisibleTab() {
+    var order = ["acts", "regs", "archive", "journal", "calendar", "live", "announce", "people", "students", "hours", "cert"];
+    for (var i = 0; i < order.length; i++) {
+      if (canSeeTab(order[i])) return order[i];
+    }
+    return "acts";
+  }
+
   function showTab(which) {
     if (!which) return;
+    /* ⚠️ 权限闸门。之前只靠「把按钮藏起来」拦人，但 showTab() 还有别的调用路径
+       （日历里点「新建活动」、列表里点日程的「编辑」都会切页签），
+       那些路径不经过按钮，也就绕过了隐藏。真正的边界在数据库策略里，
+       这里再挡一道是为了别让人切进一个空白的页签、以为系统坏了。 */
+    if (!canSeeTab(which)) {
+      alertIn($("act-alerts"), "warn", "你的角色看不到这一页。");
+      return;
+    }
     if (TAB_LEAVE[currentTab]) TAB_LEAVE[currentTab]();
     currentTab = which;
     /* 高亮也在这里同步：除了点按钮，还有别的地方会切页签
        （日历某天点「新建活动」、列表里点日程的「编辑」），
        只靠 click 监听的话那些路径会把按钮留在旧页签上。 */
-    Array.prototype.forEach.call(document.querySelectorAll(".tab-btn"), function (b) {
+    Array.prototype.forEach.call(document.querySelectorAll("[data-tab]"), function (b) {
       b.classList.toggle("is-on", b.getAttribute("data-tab") === which);
     });
     TAB_IDS.forEach(function (id) {
@@ -423,7 +390,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (TAB_ENTER[which]) TAB_ENTER[which]();
   }
 
-  Array.prototype.forEach.call(document.querySelectorAll(".tab-btn"), function (b) {
+  Array.prototype.forEach.call(document.querySelectorAll("[data-tab]"), function (b) {
     b.addEventListener("click", function () { showTab(b.getAttribute("data-tab")); });
   });
 
@@ -966,7 +933,7 @@ document.addEventListener("DOMContentLoaded", function () {
       var out = C.unwrap(res, "保存失败") || [];
       if (!out.length) {
         btn.disabled = false; btn.textContent = label;
-        alertIn($("act-alerts"), "error", "没有改动 —— 服务端没有写入任何一行。只有执委会能新建或修改活动，请到「人员管理」确认你的角色。");
+        alertIn($("act-alerts"), "error", "没有改动 —— 服务端没有写入任何一行。只有组织成员能新建或修改活动，请到「人员管理」确认你的角色。");
         return null;
       }
       var savedId = editingId || out[0].id;
@@ -987,7 +954,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  /* ================= 活动日历（只有执委会能改） =================
+  /* ================= 活动日历（只有组织成员能改） =================
      日历本身由 assets/calendar.js 画；这里只负责「选中某天后把那一天的活动
      列出来，让你改开始 / 结束 / 报名截止」，以及「在这一天新建活动」。
      写操作仍然走 C.updateActivity()，服务端用 is_owner() 兜底，前端藏按钮只是 UX。 */
@@ -1278,7 +1245,7 @@ document.addEventListener("DOMContentLoaded", function () {
       busyOff(btn);
       if (!out.length) {
         alertIn($("cev-alerts"), "error",
-          "没有改动 —— 服务端没有写入任何一行。只有执委会能新建或修改日程。");
+          "没有改动 —— 服务端没有写入任何一行。只有组织成员能新建或修改日程。");
         return;
       }
       var wasEdit = !!editingEventId;
@@ -1325,7 +1292,7 @@ document.addEventListener("DOMContentLoaded", function () {
     var absOnly = $("reg-abs-filter") ? $("reg-abs-filter").checked : false;
     return regRows.filter(function (r) {
       if (st && r.status !== st) return false;
-      /* 「只看缺席触线」—— 执委会决定这一场录不录取时，先把这几个人捞出来 */
+      /* 「只看缺席触线」—— 组织成员决定这一场录不录取时，先把这几个人捞出来 */
       if (absOnly && absOf(r.email).absent < absenceLimit()) return false;
       if (!q) return true;
       return [r.name, r.email, r.student_id, r.phone].join(" ").toLowerCase().indexOf(q) >= 0;
@@ -1336,7 +1303,7 @@ document.addEventListener("DOMContentLoaded", function () {
      2026-09-30 起取消「板块默认负责人」，改成**每个活动单独指定一位负责老师**：
      唯一口径就是 activities.manager_email，没有第二来源。
      （这个概念在 checkin.js 里有一份同名实现，改规则两边都要改。）
-     执委会管所有活动；负责老师只能动 manager_email 等于自己邮箱的活动。 */
+     组织成员管所有活动；负责老师只能动 manager_email 等于自己邮箱的活动。 */
   function effectiveManager(a) {
     return (a && a.manager_email) ? String(a.manager_email) : "";
   }
@@ -1373,7 +1340,7 @@ document.addEventListener("DOMContentLoaded", function () {
      缺席（2026-10-05 新增）
      --------------------------------------------------------------------------
      口径：一学年（8/1 起算）缺席累计到 3 次就触线；触线的同学**照样能报名**，
-     名单里用红色角标点出来，这一场录不录取由执委会自己勾 —— 用户明确不要「一刀切拦报名」。
+     名单里用红色角标点出来，这一场录不录取由组织成员自己勾 —— 用户明确不要「一刀切拦报名」。
      absRows 是本学年的全部缺席行（跨活动），absMap 按邮箱聚合成次数，名单每行读它。
      ⚠️ 学年标识只从服务端 current_school_year() 拿，前端不自己按月份算。
      ========================================================================== */
@@ -1432,7 +1399,7 @@ document.addEventListener("DOMContentLoaded", function () {
       var hot = s.absent >= absenceLimit();
       out += '<span class="reg-absent' + (hot ? " is-hot" : "") + '" title="' +
         (hot
-          ? "本学年已缺席 " + s.absent + " 次，达到 " + absenceLimit() + " 次上限 —— 是否录取由执委会决定"
+          ? "本学年已缺席 " + s.absent + " 次，达到 " + absenceLimit() + " 次上限 —— 是否录取由组织成员决定"
           : "本学年已缺席 " + s.absent + " 次") +
         '">缺席 ' + s.absent + " 次" + (hot ? " · 已触线" : "") + "</span>";
     }
@@ -1558,7 +1525,7 @@ document.addEventListener("DOMContentLoaded", function () {
         "<td>" + hoursCell(r) + "</td>" +
         "<td>" + fmtDT(r.created_at) + "</td>" +
         '<td><div class="row-actions">' +
-          /* 录取与删除只有执委会能操作；老师一律只读。 */
+          /* 录取与删除只有组织成员能操作；老师一律只读。 */
           (isOwner()
             ? '<button type="button" class="tbl-btn ok" data-approve="' + r.id + '">通过</button>' +
               '<button type="button" class="tbl-btn" data-reject="' + r.id + '">不通过</button>'
@@ -1811,11 +1778,14 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   /* ================= 人员管理 =================
-     role：owner = 执委会（能改活动 / 刊物 / 公告 / 人员）
+     role：owner   = 组织成员（能改活动 / 刊物 / 公告 / 人员）
            teacher = 负责老师（能看名单、给分配给自己的活动签到、录小时）
-     is_student：这个人同时也是义工组织学生成员（既是后台所有者又是学生）。 */
-  function roleLabel(r) { return r === "owner" ? "执委会" : "负责老师"; }
-  function roleClass(r) { return r === "owner" ? "st-approved" : "st-pending"; }
+           member  = 普通成员（后台只读：报名名单 / 过往活动 / 刊物）
+     is_student：这个人同时也是义工组织学生成员。
+     ⚠️ 这里必须三档都写出来 —— 以前是两档，写成 r === "owner" ? A : B，
+        那样「普通成员」会被显示成「负责老师」，看名单的人根本分不出两者权限不同。 */
+  function roleLabel(r) { return R.labelOf(r); }
+  function roleClass(r) { return R.isOwner(r) ? "st-approved" : R.isTeacher(r) ? "st-pending" : "badge-draft"; }
 
   function loadPeople() {
     var body = $("peo-body");
@@ -1831,17 +1801,21 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
       }
       var me = String(ME.email || "").toLowerCase();
-      var nOwner = rows.filter(function (r) { return r.role === "owner"; }).length;
-      var nTeacher = rows.filter(function (r) { return r.role !== "owner"; }).length;
+      /* ⚠️ 按档位精确数，不能用 role !== "owner" 当「其余都算老师」——
+         那样普通成员会被并进老师那一栏，统计就错了。 */
+      var nOwner = rows.filter(function (r) { return R.norm(r.role) === "owner"; }).length;
+      var nTeacher = rows.filter(function (r) { return R.norm(r.role) === "teacher"; }).length;
+      var nMember = rows.filter(function (r) { return R.norm(r.role) === "member"; }).length;
       var nStudent = rows.filter(function (r) { return r.is_student; }).length;
-      var nBoth = rows.filter(function (r) { return r.is_student && r.role === "owner"; }).length;
+      var nBoth = rows.filter(function (r) { return r.is_student && R.norm(r.role) === "owner"; }).length;
 
       $("peo-stats").innerHTML =
         stat("共 " + rows.length + " 人", "", "is-plain") +
-        stat(nOwner, "执委会（可编辑）") +
+        stat(nOwner, "组织成员（可编辑）") +
         stat(nTeacher, "负责老师（只读 + 签到）") +
+        stat(nMember, "普通成员（只读）") +
         stat(nStudent, "同时是学生") +
-        stat(nBoth, "既是学生又是执委会");
+        stat(nBoth, "既是学生又是组织成员");
 
       body.innerHTML = rows.map(function (r) {
         var isMe = String(r.email).toLowerCase() === me;
@@ -1856,17 +1830,24 @@ document.addEventListener("DOMContentLoaded", function () {
           "<td>" + esc(r.note) + "</td>" +
           "<td>" + fmtDT(r.last_login_at) + "</td>" +
           '<td><div class="row-actions">' +
-            '<button type="button" class="tbl-btn" data-role-toggle="' + esc(r.email) + '" data-now="' + esc(r.role) + '">' +
-              (r.role === "owner" ? "改为老师" : "提为执委会") + "</button>" +
+            /* 角色切换从一个「互斥二选」变成三档，所以换成下拉 ——
+               以前只有 owner/teacher 两档，一个按钮切过去就行。 */
+            '<select class="tbl-role" data-role-set="' + esc(r.email) + '"' +
+              (isMe ? ' title="不能改自己的角色"' : "") + ">" +
+              R.backofficeOptions().map(function (k) {
+                return '<option value="' + k + '"' +
+                  (R.norm(r.role) === k ? " selected" : "") + ">" + esc(roleLabel(k)) + "</option>";
+              }).join("") +
+            "</select>" +
             '<button type="button" class="tbl-btn" data-open-acct="' + esc(r.email) + '">开通账号</button>' +
             (isMe ? "" : '<button type="button" class="tbl-btn danger" data-delmember="' + esc(r.email) + '">移除</button>') +
           "</div></td>" +
         "</tr>";
       }).join("");
 
-      $("peo-count").textContent = "共 " + rows.length + " 人 · 执委会 " + nOwner +
+      $("peo-count").textContent = "共 " + rows.length + " 人 · 组织成员 " + nOwner +
         " · 负责老师 " + nTeacher + " · 同时是学生 " + nStudent +
-        (nBoth ? "（其中 " + nBoth + " 人既是学生又是执委会）" : "");
+        (nBoth ? "（其中 " + nBoth + " 人既是学生又是组织成员）" : "");
     }).catch(function (err) {
       body.innerHTML = "";
       alertIn($("peo-alerts"), "error", "读取失败：" + failMsg(err));
@@ -1988,7 +1969,9 @@ document.addEventListener("DOMContentLoaded", function () {
       email: email,
       name: $("peo-name").value.trim() || null,
       note: $("peo-note").value.trim() || null,
-      role: $("peo-role").value === "owner" ? "owner" : "teacher",
+      /* 归一化：下拉里只有三档合法值，这里再兜一层，
+         万一以后有人手改 HTML 塞了个非法值，也不会写坏库里的 role。 */
+      role: R.norm($("peo-role").value) === "student" ? "member" : R.norm($("peo-role").value),
       is_student: $("peo-is-student").checked,
       must_change_password: !!initial
     }).then(function (res) {
@@ -2012,7 +1995,7 @@ document.addEventListener("DOMContentLoaded", function () {
   /* ---------------- 开通账号 / 设初始密码 ----------------
      云服务没有「后台建号」的接口，只能：发验证码到对方邮箱 → 验码 → signUp(密码)。
      所以填了初始密码就得让对方把收到的 6 位验证码告诉我们（当面或电话都行）。
-     ⚠️ signUp() 会把当前会话切到新账号上，所以开通完必须退出、让执委会重新登录。 */
+     ⚠️ signUp() 会把当前会话切到新账号上，所以开通完必须退出、让组织成员重新登录。 */
   var openAcct = { email: "", verificationId: "", isExistingUser: false };
 
   function paintOpenBox(html) { $("peo-alerts").innerHTML = html; }
@@ -2072,28 +2055,37 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
+  /* 角色下拉：三档之间任意切换（change 触发，不用点按钮）。
+     ⚠️ 不给自己降权：把自己降下去会立刻失去这个页面的权限，
+     界面上会瞬间塌掉一半，用户还以为坏了。 */
+  $("peo-body").addEventListener("change", function (e) {
+    var t = e.target;
+    if (!t || t.tagName !== "SELECT") return;
+    var mail = t.getAttribute("data-role-set");
+    if (!mail) return;
+    var next = R.norm(t.value);
+    if (String(mail).toLowerCase() === String(ME.email || "").toLowerCase() && next !== "owner") {
+      t.value = ME.role;
+      alertIn($("peo-alerts"), "warn", "不能把自己的角色降下去 —— 否则你会立刻失去这个页面的权限。");
+      return;
+    }
+    busyOn(t, "…");
+    C.updateMember(mail, { role: next }).then(function (res) {
+      busyOff(t);
+      var out = C.unwrap(res, "修改失败") || [];
+      if (!out.length) { t.value = ME.role; alertIn($("peo-alerts"), "error", "没有改动 —— 只有组织成员能改角色。"); return; }
+      loadPeople();
+      alertIn($("peo-alerts"), "ok", esc(mail) + " 已改为" + roleLabel(next) + "。");
+    }).catch(function (err) {
+      busyOff(t);
+      t.value = ME.role;
+      alertIn($("peo-alerts"), "error", "修改失败：" + failMsg(err));
+    });
+  });
+
   $("peo-body").addEventListener("click", function (e) {
     var t = e.target;
     if (t.tagName !== "BUTTON") return;
-
-    var toggle = t.getAttribute("data-role-toggle");
-    if (toggle) {
-      var now = t.getAttribute("data-now");
-      var next = now === "owner" ? "teacher" : "owner";
-      if (String(toggle).toLowerCase() === String(ME.email || "").toLowerCase() && next === "teacher") {
-        alertIn($("peo-alerts"), "warn", "不能把自己的角色降成负责老师 —— 否则你会立刻失去这个页面的权限。");
-        return;
-      }
-      busyOn(t, "…");
-      C.updateMember(toggle, { role: next }).then(function (res) {
-        busyOff(t);
-        var out = C.unwrap(res, "修改失败") || [];
-        if (!out.length) { alertIn($("peo-alerts"), "error", "没有改动 —— 只有执委会能改角色。"); return; }
-        loadPeople();
-        alertIn($("peo-alerts"), "ok", esc(toggle) + " 已改为" + roleLabel(next) + "。");
-      }).catch(function (err) { busyOff(t); alertIn($("peo-alerts"), "error", "修改失败：" + failMsg(err)); });
-      return;
-    }
 
     var openMail = t.getAttribute("data-open-acct");
     if (openMail) { startOpenAcct(openMail, t); return; }
@@ -2111,7 +2103,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   /* ---------------- 活动表单里的「负责老师」下拉 ----------------
-     候选人来自「人员管理」的名单（执委会 + 负责老师都列出来，自由选一个人）。
+     候选人来自「人员管理」的名单（组织成员 + 负责老师都列出来，自由选一个人）。
      ⚠️ 曾经这里还有一个「板块默认负责人」面板（category_managers），
         2026-09-30 由用户决定删掉 —— 现在负责老师只按活动指定，不再按板块兜底。 */
   function loadManagerOptions() {
@@ -2408,7 +2400,7 @@ document.addEventListener("DOMContentLoaded", function () {
     var t = e.target;
     if (!t || t.tagName !== "INPUT") return;
 
-    /* 义工小时：留空 = 用活动默认时长。只有负责这个活动的人（或执委会）能改。 */
+    /* 义工小时：留空 = 用活动默认时长。只有负责这个活动的人（或组织成员）能改。 */
     var hid = t.getAttribute("data-hours");
     if (hid != null) {
       setHours(hid, t.value, t);
@@ -2481,7 +2473,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   /* ================= 实时报名（只读） =================
      每 30 秒拉一次所有报名，按活动分组显示。
-     这一页刻意不放导出按钮 —— 它是给执委会随时瞄一眼「现在报了多少人」用的。 */
+     这一页刻意不放导出按钮 —— 它是给组织成员随时瞄一眼「现在报了多少人」用的。 */
   var liveTimer = 0;
   var liveSeen = {};      /* 已经见过的人，用来给新报名的行做一次高亮 */
   var liveFirst = true;   /* 第一次进来不要整屏闪，只有之后新增的才闪 */
@@ -3158,7 +3150,7 @@ document.addEventListener("DOMContentLoaded", function () {
      校外时长认定 · 审核端（2026-10-02 加）
 
      流程：学生提交 → 数据库触发器往 admin_inbox 写一条 → 这里的角标 +1
-           → 执委会看图核定 → 通过 / 驳回。
+           → 组织成员看图核定 → 通过 / 驳回。
 
      ⚠️ 两个边界，改之前先看：
        1) 「通过」不是在这里把小时加进某个字段 —— 状态改成 approved 就够了，
@@ -3379,8 +3371,8 @@ document.addEventListener("DOMContentLoaded", function () {
           certificate_requests **没有** UPDATE 策略，学生改不了自己的状态，
           审核人也只有这扇门能进。函数里再认一次 cert_reviewers 名单
           （用户要求「不是所有人都能审核」，所以前台哪都能藏、后台这只认名单）。
-       2) cert_reviewers（指定审核人名单）只有执委会能读能写。
-          ⚠️ **owner ≠ 审核人**：执委会也得把自己加进名单才审得动。
+       2) cert_reviewers（指定审核人名单）只有组织成员能读能写。
+          ⚠️ **owner ≠ 审核人**：组织成员也得把自己加进名单才审得动。
        3) 学生能不能下载取决于那一行的 status —— 我们不给他任何别的入口，
           certificate.html 里也只有 approved 才会把下载按钮画出来。
        顺带一句：每条申请里含学生证件号码，**只对审核人可见**，别往外传。
@@ -3412,12 +3404,14 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  /* 页签能不能见人：指定的审核人 + 执委会（管理名单）。页面里按钮默认 hidden，
+  /* 页签能不能见人：指定的审核人 + 组织成员（管理名单）。页面里按钮默认 hidden，
      这里按服务端结论放出来 —— 但真正的权限仍在数据库策略里。 */
   function applyCertUI() {
-    var btn = document.querySelector('.tab-btn[data-tab="cert"]');
-    if (btn) btn.hidden = !(certReviewer || isOwner());
-    /* 名单只有执委会能读写：审核人不是 owner 的话整块藏掉，免得他看到 42501 报错 */
+    var btn = document.querySelector('[data-tab="cert"]');
+    /* ⚠️ 两个条件都要：既要在审核人名单里（或组织成员），又不能低于 owner 档 ——
+       普通成员哪怕被误加进审核人名单，showTab() 也会挡住他。 */
+    if (btn) btn.hidden = !(canSeeTab("cert") && (certReviewer || isOwner()));
+    /* 名单只有组织成员能读写：审核人不是 owner 的话整块藏掉，免得他看到 42501 报错 */
     var revPanel = $("cert-rev-panel");
     if (revPanel) revPanel.hidden = !isOwner();
     var selfBox = $("cert-rev-self");
@@ -3502,7 +3496,7 @@ document.addEventListener("DOMContentLoaded", function () {
     certRevAddMe.addEventListener("click", function () {
       if (!ME.email) return;
       clear($("cert-rev-alerts"));
-      addReviewer(ME.email, "执委会");
+      addReviewer(ME.email, "组织成员");
     });
   }
 
@@ -3605,7 +3599,7 @@ document.addEventListener("DOMContentLoaded", function () {
       if (!ap && !rj) return;
       if (!certReviewer) {
         alertIn($("cert-alerts"), "error",
-          "你不在审核人名单里，改不了这条申请。请让执委会到本页上方的名单里把你加进去。");
+          "你不在审核人名单里，改不了这条申请。请让组织成员到本页上方的名单里把你加进去。");
         return;
       }
       var id = (ap || rj).getAttribute("data-id");

@@ -10,7 +10,7 @@
    要把某位老师加进来，先去后台「人员管理」页签加他的邮箱并开通账号。
 
    权限分两档（和后台一致，服务端才是边界）：
-     · owner   执委会：所有活动都能签到、都能改义工小时
+     · owner   组织成员：所有活动都能签到、都能改义工小时
      · teacher 负责老师：全部活动的名单都能看（只读），
                        只有「分配给自己的活动」才能扫码 / 打钩 / 改小时
    活动归属 = 每个活动单独指定的 manager_email（activities 表上的一列）。
@@ -34,10 +34,10 @@ document.addEventListener("DOMContentLoaded", function () {
   var rows = [];               /* 当前活动的全部报名 */
   var curId = "";
 
-  /* 我是谁：owner = 执委会（什么都能改），teacher = 负责老师（只改自己负责的）。
+  /* 我是谁：owner = 组织成员（什么都能改），teacher = 负责老师（只改自己负责的）。
      和后台同一个 my_access()（SECURITY DEFINER），角色只有服务端说了算。 */
   var ME = { email: "", role: "teacher" };
-  function isOwner() { return ME.role === "owner"; }
+  function isOwner() { return window.GUISRoles.isOwner(ME.role); }
 
   /* 2026-09-30 起取消「板块默认负责人」，改成单一口径：
      一个活动归谁管，只看它自己身上写的 activities.manager_email。
@@ -120,126 +120,90 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   })();
 
-  /* ---------------- 登录 ---------------- */
-  var loginView = $("login-view"), appView = $("app-view");
+  /* ---------------- 登录（统一到 login.html，2026-10-07）----------------
+     原来这一页自带一套登录表单，和 login.html 那套几乎逐行重复。
+     现在这里只留一扇门：没登录 / 不在名单里 → 送去统一登录页，登完 ?next= 回来。
+     白名单判断仍以服务端 is_allowed_admin() 为准，前端只是提前给个说法。 */
 
-  function showSignedIn(email) {
-    me = email || "";
-    $("who-email").textContent = me + (isOwner() ? " · 执委会" : " · 负责老师");
+  function loginURL() {
+    return "login.html?next=" + encodeURIComponent("checkin.html");
+  }
+
+  function gotoLogin(msg) {
+    var go = $("auth-gate-go");
+    if (go) go.href = loginURL();
+    var box = $("auth-gate");
+    if (box) {
+      box.innerHTML = "<b>请先登录</b><br />" +
+        "这个页面需要组织成员或负责老师身份。<br />" +
+        "<span class=\"hint\">登录后会带你回到这一页。" +
+        (msg ? "（" + esc(msg) + "）" : "") + "</span>";
+    }
+  }
+
+  function showLogin(msg) {
+    loginView.hidden = false;
+    appView.hidden = true;
+    gotoLogin(msg);
+  }
+
+  var loginView = $("login-view");
+  var appView = $("app-view");
+
+  function showSignedIn() {
+    /* 身份后缀跟着角色走 —— 普通成员不该顶着「负责老师」的字样。 */
+    $("who-email").textContent = me + " · " + window.GUISRoles.labelOf(ME.role);
     loginView.hidden = true;
     appView.hidden = false;
     C.touchLogin();
     loadActivities();
   }
-  function showLogin() {
-    appView.hidden = true;
-    loginView.hidden = false;
-  }
 
-  /* 白名单校验放服务端（is_allowed_admin 是 SECURITY DEFINER），
-     前端这一下只是为了不在名单里的人立刻看到原因。 */
+  var retryBtn = $("auth-retry");
+  if (retryBtn) retryBtn.addEventListener("click", function () { boot(); });
+
+  /* 准入：先问服务端这个邮箱在不在名单里（is_allowed_admin 是 SECURITY DEFINER），
+     在 → 读角色、放行；不在 → 退出登录并把人送去统一登录页。
+     ⚠️ 用 C.sessionUser() 拿邮箱：getSession() 自己不带 email（见 cloud.js 注释）。 */
   function enterOrReject(email) {
     return C.isAllowedAdmin().then(function (r) {
-      var ok = !r.error && r.data === true;
-      if (!ok) {
-        C.auth.signOut();
-        showLogin();
-        alertIn($("auth-alerts"), "error",
-          "该邮箱（" + esc(email) + "）还没有加入后台人员名单。请让义工组织执委会先到后台「人员管理」页签把邮箱加进来并开通账号。");
-        return false;
+      if (!r.error && r.data === true) {
+        return C.myAccess().then(function (ar) {
+          var row = (ar && ar.data && ar.data[0]) || {};
+          me = row.email || email || "";
+          ME.email = me;
+          /* 归一化走 roles.js：二选一写法会把「普通成员」当成老师，
+             那就能改义工小时了 —— 服务端 i_manage_activity() 已收紧，前端不能再漏。 */
+          ME.role = window.GUISRoles.norm(row.role);
+          showSignedIn();
+          return true;
+        });
       }
-      /* 拿到角色再决定能改哪些活动。my_access() 是 SECURITY DEFINER，
-         负责老师也能读到自己的角色（allowed_admins 表的读策略只有执委会）。 */
-      return C.myAccess().then(function (ar) {
-        var row = (ar && ar.data && ar.data[0]) || {};
-        ME.email = row.email || email || "";
-        ME.role = row.role === "owner" ? "owner" : "teacher";
-        showSignedIn(ME.email);
-        return true;
-      });
+      C.auth.signOut();
+      showLogin("这个邮箱还不在后台人员名单里");
+      return false;
     }).catch(function () {
       C.auth.signOut();
-      showLogin();
-      alertIn($("auth-alerts"), "error", "权限校验失败，请重试。");
+      showLogin("权限校验失败，请重试");
       return false;
     });
   }
 
-  /* ⚠️ 用 C.sessionUser() 拿邮箱：getSession() 自己不带 email
-     （详见 cloud.js 的注释），读 s.user.email 会永远判成没登录。 */
-  C.sessionUser().then(function (u) {
-    if (u) enterOrReject(u.email || "");
-    else showLogin();
-  }).catch(showLogin);
-
-  $("logout-btn").addEventListener("click", function () {
-    stopScan();
-    C.auth.signOut().then(showLogin).catch(showLogin);
-  });
-
-  /* 密码 / 邮箱验证码 两种登录方式切换 */
-  var forms = { password: $("form-password"), otp: $("form-otp") };
-  function showForm(name) {
-    Object.keys(forms).forEach(function (k) { forms[k].hidden = k !== name; });
-    Array.prototype.forEach.call($("auth-seg").children, function (b) {
-      b.classList.toggle("is-on", b.getAttribute("data-mode") === name);
-    });
-    clear($("auth-alerts"));
+  function boot() {
+    C.sessionUser().then(function (u) {
+      if (u) enterOrReject(u.email || "");
+      else showLogin();
+    }).catch(function () { showLogin(); });
   }
-  Array.prototype.forEach.call($("auth-seg").children, function (b) {
-    b.addEventListener("click", function () { showForm(b.getAttribute("data-mode")); });
-  });
+  boot();
 
-  $("form-password").addEventListener("submit", function (e) {
-    e.preventDefault();
-    var btn = $("ci-submit"), email = $("ci-email").value.trim(), pass = $("ci-pass").value;
-    if (!email || !pass) { alertIn($("auth-alerts"), "error", "请填写邮箱和密码。"); return; }
-    btn.disabled = true; btn.textContent = "登录中…";
-    C.auth.signInWithPassword({ email: email, password: pass }).then(function (r) {
-      if (r.error) { btn.disabled = false; btn.textContent = "登录"; alertIn($("auth-alerts"), "error", "邮箱或密码不正确。"); return; }
-      enterOrReject(email);
-    }).catch(function () {
-      btn.disabled = false; btn.textContent = "登录";
-      alertIn($("auth-alerts"), "error", "登录失败，请稍后重试。");
-    });
-  });
-
-  var pendingOtp = null;
-  $("ci-otp-send").addEventListener("click", function () {
-    var email = $("ci-otp-email").value.trim();
-    if (!email) { alertIn($("auth-alerts"), "error", "请先填写邮箱。"); return; }
-    busyOn(this, "发送中…");
-    C.auth.sendOtp({ email: email }).then(function (r) {
-      busyOff(this);
-      if (r.error) { alertIn($("auth-alerts"), "error", "验证码发送失败：" + (r.error.message || "请稍后重试")); return; }
-      pendingOtp = { email: email, verificationId: r.data.verificationId, isExistingUser: r.data.isExistingUser };
-      alertIn($("auth-alerts"), "ok", "验证码已发送，请查收邮箱（含垃圾邮件）。");
-    }.bind(this)).catch(function () {
-      busyOff($("ci-otp-send"));
-      alertIn($("auth-alerts"), "error", "验证码发送失败，请稍后重试。");
-    });
-  });
-
-  $("form-otp").addEventListener("submit", function (e) {
-    e.preventDefault();
-    var email = $("ci-otp-email").value.trim(), code = $("ci-otp-code").value.trim();
-    if (!pendingOtp || pendingOtp.email !== email) { alertIn($("auth-alerts"), "error", "请先为当前邮箱获取验证码。"); return; }
-    if (!code) { alertIn($("auth-alerts"), "error", "请填写验证码。"); return; }
-    busyOn($("ci-otp-submit"), "验证中…");
-    C.auth.verifyOtp({
-      email: pendingOtp.email,
-      verificationId: pendingOtp.verificationId,
-      isExistingUser: pendingOtp.isExistingUser,
-      token: code
-    }).then(function (r) {
-      busyOff($("ci-otp-submit"));
-      if (r.error) { alertIn($("auth-alerts"), "error", "验证码不正确或已过期。"); return; }
-      pendingOtp = null;
-      enterOrReject(email);
-    }).catch(function () {
-      busyOff($("ci-otp-submit"));
-      alertIn($("auth-alerts"), "error", "验证失败，请重试。");
-    });
+  /* 退出登录：登完把人送到统一登录页（换个身份重新进） */
+  var logoutBtn = $("logout-btn");
+  if (logoutBtn) logoutBtn.addEventListener("click", function () {
+    var btn = this;
+    btn.disabled = true;
+    C.auth.signOut().then(function () { location.href = loginURL(); })
+      .catch(function () { btn.disabled = false; showLogin(); });
   });
 
   /* ---------------- 活动下拉 ---------------- */
@@ -274,7 +238,7 @@ document.addEventListener("DOMContentLoaded", function () {
       } else if (!isOwner()) {
         alertIn($("ci-alerts"), "warn",
           "还没有活动分配给你。可以在上面任选一个活动<b>查看名单（只读）</b>；" +
-          "要获得签到权限，请让执委会在后台「活动」里把这个活动的负责老师选成你。");
+          "要获得签到权限，请让组织成员在后台「活动」里把这个活动的负责老师选成你。");
       }
     }).catch(function (err) {
       alertIn($("ci-alerts"), "error", failMsg(err, "读取活动失败"));
@@ -283,7 +247,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   /* ---------- 这个活动我能不能动 ----------
      看名单是所有人都可以（服务端 registrations 的读策略是 is_allowed_admin）；
-     签到 / 改小时只有负责人能操作。执委会一视同仁全都能改。 */
+     签到 / 改小时只有负责人能操作。组织成员一视同仁全都能改。 */
   function applyGate() {
     var box = $("ci-gate");
     var act = currentActivity();
@@ -305,7 +269,7 @@ document.addEventListener("DOMContentLoaded", function () {
           "</b> 负责，你只能<b>查看名单</b>，不能扫码签到或修改义工小时。</div>";
     }
 
-    /* 本次义工时长：只有能管这个活动的人可以改（负责人或执委会） */
+    /* 本次义工时长：只有能管这个活动的人可以改（负责人或组织成员） */
     var hoursBar = $("ci-hours-bar");
     var hoursIn = $("ci-hours-all");
     var hoursBtn = $("ci-hours-save");
@@ -336,7 +300,7 @@ document.addEventListener("DOMContentLoaded", function () {
   /* ---------------- 本次义工时长（活动默认值） ----------------
      后台「活动」表单里那个「本次义工时长」在签到现场改不了 —— 老师临时发现活动多干了
      半小时，还得回后台绕一圈。这里直接给一个输入框，走 set_activity_hours()，
-     服务端用 i_manage_activity() 再判一次：只有负责老师本人和执委会能写进去。
+     服务端用 i_manage_activity() 再判一次：只有负责老师本人和组织成员能写进去。
      ⚠️ 已经单独填过小时的同学不会被覆盖（registrations.hours 优先级更高）。 */
   var hoursBtnEl = $("ci-hours-save");
   if (hoursBtnEl) {

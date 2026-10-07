@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-ver="20261003a">
+<html lang="zh-CN" data-ver="20261003b">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,7 +10,7 @@
    于是点站内链接（全是裸路径）进去时整页退回旧设计。
    这里比对 <html data-ver>：不是当前版本就带查询串重拉一次（查询串必定回源）。 */
 (function () {
-  var VER = "20261003a";
+  var VER = "20261003b";
   try {
     var el = document.documentElement;
     var healed = /[?&]_v=/.test(location.search);
@@ -49,8 +49,8 @@
 <meta name="description" content="GUIS 义工组织招新面试工作台：看当天场次、点开就记分与评语，记录存在云端。" />
 <meta name="theme-color" content="#FFFFFF" />
 <meta name="robots" content="noindex, nofollow" />
-<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261003a" />
-<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261003a" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261003b" />
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261003b" />
 <!-- 品牌标志兜底样式（内联，随 HTML 一起下发）。
      即使 assets/site.css 被浏览器缓存成旧版本，标志也不会按图片原始尺寸撑破布局。 -->
 <style>
@@ -67,8 +67,8 @@
   .footer-brand img{max-height:24px}
 }
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20261003a" />
-<link rel="stylesheet" href="assets/app.css?v=20261003a" />
+<link rel="stylesheet" href="assets/site.css?v=20261003b" />
+<link rel="stylesheet" href="assets/app.css?v=20261003b" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
@@ -107,64 +107,23 @@
 
       <!-- ============ 登录 ============ -->
       <div id="login-view" hidden>
-        <div class="login-wrap">
-          <div style="text-align:center;margin-bottom:1.75rem;">
-            <img src="assets/logo/guis-ulc-lockup.png" alt="GUIS | ULC" style="width:220px;margin:0 auto 1rem;" />
-            <p class="eyebrow">招新面试</p>
-            <h1 class="page-title">面试官登录</h1>
-            <p class="page-lede" style="margin:0 auto;">登录后可以看到本次招新的全部场次，点开候选人的卡片就能记录面试结果。</p>
-          </div>
-
-          <div class="panel">
+        <div class="login-wrap" style="text-align:center;padding:3rem 1.5rem;">
+          <div class="panel" style="max-width:520px;margin:0 auto;">
             <div class="panel-body">
-              <div class="seg" id="auth-seg">
-                <button type="button" class="is-on" data-mode="password">密码登录</button>
-                <button type="button" data-mode="otp">验证码登录</button>
-              </div>
-
-              <p class="hint" style="margin:-0.55rem 0 1.25rem;text-align:center;">
-                和后台同一套白名单 —— 需要先由义工组织执委会把你的邮箱加进白名单。
-              </p>
-
               <div id="auth-alerts"></div>
-
-              <form id="form-password" novalidate>
-                <div class="form-grid">
-                  <div class="field span-2">
-                    <label for="iv-email">邮箱</label>
-                    <input id="iv-email" type="email" autocomplete="username" required />
-                  </div>
-                  <div class="field span-2">
-                    <label for="iv-pass">密码</label>
-                    <input id="iv-pass" type="password" autocomplete="current-password" required />
-                  </div>
-                </div>
-                <div class="form-actions">
-                  <button type="submit" class="btn btn-primary" id="iv-submit">登录</button>
-                </div>
-              </form>
-
-              <form id="form-otp" novalidate hidden>
-                <div class="form-grid">
-                  <div class="field span-2">
-                    <label for="iv-otp-email">邮箱</label>
-                    <input id="iv-otp-email" type="email" autocomplete="username" required />
-                  </div>
-                  <div class="field span-2">
-                    <label for="iv-otp-code">验证码</label>
-                    <input id="iv-otp-code" type="text" inputmode="numeric" placeholder="邮箱收到的 6 位验证码" />
-                    <span class="hint" id="iv-otp-hint">先点「获取验证码」，再把邮箱里的验证码填进来。</span>
-                  </div>
-                </div>
-                <div class="form-actions">
-                  <button type="button" class="btn btn-secondary" id="iv-otp-send">获取验证码</button>
-                  <button type="submit" class="btn btn-primary" id="iv-otp-submit">登录</button>
-                </div>
-              </form>
-
-              <p class="hint" style="margin-top:1.25rem;text-align:center;">
-                还没有账号？请让执委会先加白名单，再访问 <a href="admin.html?setup=1" style="color:var(--brand);text-decoration:underline;">admin.html?setup=1</a> 开通。
+              <div id="auth-gate" class="empty" style="min-height:7rem;">
+                <span class="loading"></span> 正在前往统一登录页…
+              </div>
+              <p class="hint" style="margin-top:1.1rem;">
+                登录已统一到 <a href="login.html" style="color:var(--brand);">login.html</a>，
+                每种身份都从那一个界面进，登录后自动识别身份并带你去对应的页面。
+                <br />如果你已经登录过却看到这一页，说明这个邮箱还不在后台人员名单里 ——
+                请让组织成员先在「人员管理」里把邮箱加进来并开通账号。
               </p>
+              <div class="form-actions" style="justify-content:center;">
+                <a class="btn btn-primary" id="auth-gate-go" href="login.html">去登录</a>
+                <button type="button" class="link-btn" id="auth-retry">重试</button>
+              </div>
             </div>
           </div>
         </div>
@@ -208,7 +167,7 @@
           </div>
         </div>
 
-        <!-- ---------- 临时加人（只有执委会能加） ---------- -->
+        <!-- ---------- 临时加人（只有组织成员能加） ---------- -->
         <div class="panel" id="iv-quick" hidden>
           <div class="panel-head">
             <div>
@@ -255,7 +214,7 @@
           </div>
         </div>
 
-        <!-- ---------- 时间表管理（只有执委会能改） ---------- -->
+        <!-- ---------- 时间表管理（只有组织成员能改） ---------- -->
         <div class="panel" id="iv-admin" hidden>
           <div class="panel-head">
             <div>
@@ -389,10 +348,11 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
-<script src="assets/cloud-config.js?v=20261003a"></script>
-<script src="assets/cloud.js?v=20261003a"></script>
-<script src="assets/navfit.js?v=20261003a"></script>
-<script src="assets/session.js?v=20261003a"></script>
-<script src="assets/interview.js?v=20261003a"></script>
+<script src="assets/cloud-config.js?v=20261003b"></script>
+<script src="assets/cloud.js?v=20261003b"></script>
+<script src="assets/navfit.js?v=20261003b"></script>
+<script src="assets/roles.js?v=20261003b"></script>
+<script src="assets/session.js?v=20261003b"></script>
+<script src="assets/interview.js?v=20261003b"></script>
 </body>
 </html>

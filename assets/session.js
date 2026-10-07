@@ -92,13 +92,13 @@
          拿不到角色时不把人踢出去 —— 按缓存里的角色，没有就当学生。 */
       return C.myAccess().then(function (ar) {
         var row = (ar && ar.data && ar.data[0]) || {};
-        var role = row.role === "owner" ? "owner"
-          : row.role === "teacher" ? "teacher" : "student";
-        return { state: "ok", email: email, role: role };
+        /* ⚠️ 归一化交给 roles.js：库里出现前端不认识的 role 时，
+           宁可当成学生（权限最低）也不要当成老师（能改义工小时）。 */
+        return { state: "ok", email: email, role: window.GUISRoles.norm(row.role) };
       }, function () {
         var c = readCache();
         var role = (c && String(c.email).toLowerCase() === email.toLowerCase() && c.role) || "student";
-        return { state: "ok", email: email, role: role };
+        return { state: "ok", email: email, role: window.GUISRoles.norm(role) };
       });
     }, function () { return { state: "transient" }; });
   }
@@ -110,19 +110,16 @@
      没人再调它，一并删掉，免得留一段死代码让人以为是头像还在。 */
 
   function roleLabelOf(role) {
-    return role === "owner" ? t("navme.owner", "执委会")
-      : role === "teacher" ? t("navme.teacher", "负责老师")
-      : t("navme.student", "义工学生");
+    return window.GUISRoles.labelOf(role);
   }
   function destOf(role) {
-    return role === "owner" ? { href: "admin.html", label: t("lg.footAdmin", "执委会后台") }
-      : role === "teacher" ? { href: "checkin.html", label: t("lg.footTeacher", "老师签到页") }
-      : { href: "me.html", label: t("lg.footStudent", "我的义工账户") };
+    return { href: window.GUISRoles.home(role), label: window.GUISRoles.labelOf(role) };
   }
 
-  /* 账户菜单里的「面试工作台」入口。学生不给（见 paint() 里的说明）。 */
+  /* 账户菜单里的「面试工作台」入口。普通成员不给 —— 他连报名名单都只能看，
+     面试记录更不该他碰（服务端 RLS 也已经挡住了）。 */
   function interviewLink(role) {
-    if (role !== "owner" && role !== "teacher") return "";
+    if (!window.GUISRoles.canUseInterview(role)) return "";
     return '<a href="interview.html">' + esc(t("navme.interview", "面试工作台")) + "</a>";
   }
 
@@ -195,7 +192,7 @@
       '<div class="nav-me-head"><b>' + esc(info.email) + "</b><span>" + esc(label) + "</span></div>" +
       '<a href="' + dest.href + '">' + esc(dest.label) + "</a>" +
       /* 面试工作台（2026-10-06 加）：招新季才用得上的一个独立页面，
-         不占主导航 —— 挂在账户菜单里，执委会和老师从任何一页都点得到。
+         不占主导航 —— 挂在账户菜单里，组织成员和老师从任何一页都点得到。
          ⚠️ 学生不显示这一条：那张表读不出来（RLS 只放行 allowed_admins），
             点进去只会看到「读取失败」，不如不给。 */
       interviewLink(info.role) +

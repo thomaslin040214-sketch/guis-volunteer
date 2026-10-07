@@ -172,7 +172,7 @@ document.addEventListener("DOMContentLoaded", function () {
         busyOff(btn);
         alertIn($("me-alerts"), "error",
           "这个邮箱（" + esc(email) + "）不在学校登记的学生名单里，暂时不能开通。" +
-          "请确认前缀有没有打错，或联系义工组织执委会把你的邮箱加进名单。");
+          "请确认前缀有没有打错，或联系义工组织把你的邮箱加进名单。");
         return;
       }
       if (row.activated) {
@@ -300,11 +300,11 @@ document.addEventListener("DOMContentLoaded", function () {
     $("me-sub").textContent = bits.join(" · ");
   }
 
-  /* 执委会给设了初始密码的人，第一次进来必须先改掉 */
+  /* 组织成员给设了初始密码的人，第一次进来必须先改掉 */
   function paintForceChange() {
     $("me-force").innerHTML =
       '<div class="alert alert-warn" style="margin-bottom:1.25rem;">' +
-      "<b>请先改掉初始密码。</b>这个账号是执委会帮你开通的，初始密码只有你自己知道才安全。" +
+      "<b>请先改掉初始密码。</b>这个账号是组织成员帮你开通的，初始密码只有你自己知道才安全。" +
       '<div class="peo-open-row">' +
       '<input id="me-fc-code" type="text" inputmode="numeric" placeholder="邮箱里的验证码" />' +
       '<input id="me-fc-pass" type="password" placeholder="新密码（至少 6 位）" />' +
@@ -343,7 +343,7 @@ document.addEventListener("DOMContentLoaded", function () {
   /* ---------------- 面试安排（2026-10-06 加） ----------------
      只有被排进招新面试时间表的同学这里才有内容 —— 服务端 my_interview()
      先按邮箱直配，配不上再用学生名单里的中文姓名去对，对不上返回 found:false。
-     ⚠️ 它刻意不回分数、不回结论、不回评语：那些由执委会单独通知。
+     ⚠️ 它刻意不回分数、不回结论、不回评语：那些由组织成员单独通知。
         这里只负责告诉他「哪天几点、面哪个部门、面完了没有」。
      ⚠️ 这个函数自己吞掉异常：没有面试安排是常态，不该让整页报错。 */
   function loadInterview() {
@@ -368,7 +368,7 @@ document.addEventListener("DOMContentLoaded", function () {
             '<div class="me-iv-line">面试部门：<b>' + esc(d.dept || "待定") + "</b></div>" +
             '<div class="me-iv-line">' +
               (d.done
-                ? "这场已经面完了 —— 结果会由执委会另行通知。"
+                ? "这场已经面完了 —— 结果会由组织成员另行通知。"
                 : "还没开始，提前 5 分钟到面试地点就行。") +
             "</div>" +
           "</div>" +

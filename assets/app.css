@@ -1824,3 +1824,111 @@ table.data tr.is-done { background: rgba(45, 138, 78, 0.045); }
 
 /* 表格里「没填」的占位（例如人员名单里还没登记的姓名） */
 .muted { color: var(--text-subtle); }
+
+/* ============================================================
+   后台左侧分组侧边栏（2026-10-07）
+   原来是 11 个 tab 按钮平铺一行，宽度一窄就换行、谁也分不清主次。
+   现在按「活动 / 内容 / 人员与名单 / 审核」四组竖排。
+   ============================================================ */
+.admin-shell {
+  /* flex 而不是 grid。
+     ⚠️ 侧边栏这一格必须显式 align-self:flex-start：
+        作为 flex item 时浏览器会把它压成「首行高度」（实测 4 个分组共 640px
+        的内容被塞进 64px 的框，后面三组直接看不见 —— 而且按钮 hidden=false，
+        肉眼看「都显示着」，只有量高度才发现）。 */
+  display: flex;
+  align-items: flex-start;
+  gap: 1.35rem;
+  margin-bottom: 1.5rem;
+}
+.admin-side {
+  flex: 0 0 190px;
+  align-self: flex-start;
+  position: sticky;
+  top: calc(var(--nav-h, 64px) + 0.9rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.6rem;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  background: var(--bg-soft);
+  max-height: calc(100vh - var(--nav-h, 64px) - 2.4rem);
+  overflow-y: auto;
+  /* 兜底：万一 align-self 仍被别处覆盖，height:auto 也保证按内容撑开 */
+  height: auto;
+}
+.admin-main { flex: 1 1 auto; min-width: 0; }   /* 不给 min-width:0，长表格会把侧边栏挤变形 */
+
+.side-group { display: flex; flex-direction: column; gap: 0.12rem; }
+.side-group + .side-group { margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--card-border); }
+.side-group[hidden] { display: none; }   /* 组里一项都看不到时整组藏掉（作者 display 会盖 hidden） */
+
+.side-title {
+  padding: 0.3rem 0.55rem 0.35rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  color: var(--text-subtle);
+}
+
+.side-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.44rem 0.6rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-soft);
+  font: inherit;
+  font-size: 0.86rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+.side-btn:hover { background: #fff; color: var(--text-main); transform: translateX(1px); }
+.side-btn.is-on {
+  background: #fff;
+  border-color: var(--brand);
+  color: var(--brand);
+  font-weight: 600;
+}
+.side-btn[hidden] { display: none; }
+.side-btn .tab-badge { margin-left: auto; }
+
+/* 人员列表里的角色下拉（从「owner/teacher 两档一个按钮」改成三档下拉） */
+.tbl-role {
+  font: inherit;
+  font-size: 0.8rem;
+  padding: 0.24rem 0.4rem;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  color: var(--text-main);
+  max-width: 8.4rem;
+}
+
+@media (max-width: 860px) {
+  /* 窄屏改横排：侧边栏变成一条可横向滚动的窄条，不占竖向空间 */
+  .admin-shell { flex-direction: column; gap: 0.85rem; }
+  .admin-side {
+    flex: 0 0 auto;
+    width: 100%;
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    max-height: none;
+    overflow-x: auto;
+    padding: 0.5rem;
+  }
+  .side-group { flex-direction: row; flex-wrap: wrap; align-items: center; }
+  .side-group + .side-group {
+    margin-top: 0; padding-top: 0; padding-left: 0.6rem;
+    border-top: none; border-left: 1px solid var(--card-border);
+  }
+  .side-title { padding: 0 0.35rem; }
+  .side-btn { width: auto; white-space: nowrap; }
+  .side-btn:hover { transform: none; }
+}

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-ver="20261003a" data-page-title="doc.signup.title">
+<html lang="zh-CN" data-ver="20261003b" data-page-title="doc.signup.title">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,7 +10,7 @@
    于是点站内链接（全是裸路径）进去时整页退回旧设计。
    这里比对 <html data-ver>：不是当前版本就带查询串重拉一次（查询串必定回源）。 */
 (function () {
-  var VER = "20261003a";
+  var VER = "20261003b";
   try {
     var el = document.documentElement;
     var healed = /[?&]_v=/.test(location.search);
@@ -45,11 +45,11 @@
   } catch (e) {}
 })();
 </script>
-<title>活动报名 | GUIS 义工组织</title>
+<title>义工活动报名 | GUIS 义工组织</title>
 <meta name="description" content="GUIS 义工组织义工活动报名 —— 广州优联国际学校学生志愿服务组织。" />
 <meta name="theme-color" content="#FFFFFF" />
-<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261003a" />
-<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261003a" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261003b" />
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261003b" />
 <!-- 品牌标志兜底样式（内联，随 HTML 一起下发）。
      即使 assets/site.css 被浏览器缓存成旧版本，标志也不会按图片原始尺寸撑破布局。
      这里只设尺寸上限（max-*），正常加载 site.css 时这些上限都不会生效。 -->
@@ -73,8 +73,8 @@
   .hero-brand .hero-va{max-height:40px}
 }
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20261003a" />
-<link rel="stylesheet" href="assets/app.css?v=20261003a" />
+<link rel="stylesheet" href="assets/site.css?v=20261003b" />
+<link rel="stylesheet" href="assets/app.css?v=20261003b" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
@@ -115,8 +115,8 @@
       </div>
     </div>
 
-    <a href="programs.html" data-i18n="nav.programs">项目类型</a>
-    <a href="signup.html" class="is-active" data-i18n="nav.signup">活动报名</a>
+    <a href="programs.html" data-i18n="nav.programs">活动</a>
+    <a href="signup.html" class="is-active" data-i18n="nav.signup">义工活动报名</a>
     <a href="announcements.html" data-i18n="nav.news">公告</a>
     <a href="index.html#journal" data-i18n="nav.journal">刊物</a>
 
@@ -135,7 +135,7 @@
     <div class="wrap">
 
       <div class="reveal" style="margin-bottom:2rem;">
-        <p class="eyebrow" data-i18n="sg.eyebrow">活动报名</p>
+        <p class="eyebrow" data-i18n="sg.eyebrow">义工活动报名</p>
         <h1 class="page-title" data-i18n="sg.title">报名成为下一次行动的志愿者</h1>
         <p class="page-lede" data-i18n="sg.lede">选一个你愿意固定参加的板块，填完下面这张表就可以了。不需要经验，也不需要提前准备什么 —— 但需要守时。</p>
       </div>
@@ -238,7 +238,7 @@
               </div>
             </div>
 
-            <p class="hint" style="margin-top:1.1rem;" data-i18n="f.privacy">这些信息只用于本次活动的联络与排班，由义工组织执委会保管，不会对外公开。</p>
+            <p class="hint" style="margin-top:1.1rem;" data-i18n="f.privacy">这些信息只用于本次活动的联络与排班，由义工组织保管，不会对外公开。</p>
 
             <div class="form-actions">
               <button type="submit" class="btn btn-primary" id="submit-btn" data-i18n="f.submit">提交报名</button>
@@ -301,16 +301,17 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
-<script src="assets/cloud-config.js?v=20261003a"></script>
-<script src="assets/cloud.js?v=20261003a"></script>
-<script src="assets/i18n.js?v=20261003a"></script>
-<script src="assets/board.js?v=20261003a"></script>
-<script src="assets/calendar.js?v=20261003a"></script>
-<script src="assets/nav.js?v=20261003a"></script>
-<script src="assets/navfit.js?v=20261003a"></script>
-<script src="assets/session.js?v=20261003a"></script>
-<script src="assets/main.js?v=20261003a"></script>
-<script src="assets/queue.js?v=20261003a"></script>
+<script src="assets/cloud-config.js?v=20261003b"></script>
+<script src="assets/cloud.js?v=20261003b"></script>
+<script src="assets/i18n.js?v=20261003b"></script>
+<script src="assets/board.js?v=20261003b"></script>
+<script src="assets/calendar.js?v=20261003b"></script>
+<script src="assets/nav.js?v=20261003b"></script>
+<script src="assets/navfit.js?v=20261003b"></script>
+<script src="assets/roles.js?v=20261003b"></script>
+<script src="assets/session.js?v=20261003b"></script>
+<script src="assets/main.js?v=20261003b"></script>
+<script src="assets/queue.js?v=20261003b"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   "use strict";
@@ -824,7 +825,7 @@ document.addEventListener("DOMContentLoaded", function () {
         $("done-detail").textContent =
           t("sg.doneLead", "我们已收到你对") + "「" + selected.title + "」" +
           (pos ? "（" + pos + "）" : "") +
-          t("sg.doneTail", "的报名，执委会会在活动前通过邮件与你确认排班。");
+          t("sg.doneTail", "的报名，组织成员会在活动前通过邮件与你确认排班。");
       }
       donePanel.scrollIntoView({ behavior: "smooth", block: "start" });
     }).catch(function (err) {

@@ -14,7 +14,7 @@
    3) **页面上学生只能填证件类型 + 号码。** 姓名和英文名来自在册名单
       （check_student_email → student_directory 的 name / name_en），时长和服务内容按勾选
       自动算，出具日期是今天，经办人 / 电话写死 —— 这五项一律不给改。
-      ⚠️ 英文名没登记就不会显示。要改请找执委会改名单，**不要**为此开一个输入框让学生填。
+      ⚠️ 英文名没登记就不会显示。要改请找组织成员改名单，**不要**为此开一个输入框让学生填。
    4) **PDF 是浏览器打印出来的**（window.print() + @media print 只留证明那一块），不拼 docx、
       不引第三方库。本机 Word 自动化被 macOS 权限拦着、也没装 LibreOffice，所以这条路是一次选定：
       好处是离线可用、版式就是预览那版；代价是学生要在打印框里选「另存为 PDF」。
@@ -129,7 +129,7 @@
 
   /* 姓名 / 英文名全部取自在册名单 —— 页面上不给这两个框，
      所以名单里没有（或没登记英文名）就只能显示已有的那部分，
-     要补请让执委会去「学生名单」页补 —— 不是在这里开一个输入框。 */
+     要补请让组织成员去「学生名单」页补 —— 不是在这里开一个输入框。 */
   function prefillStudent() {
     if (typeof C.checkStudentEmail !== "function") return;
     C.checkStudentEmail(ME.email).then(function (res) {
@@ -139,7 +139,7 @@
       if (!NAME.cn) {
         alertIn($("ct-alerts"), "warn",
           "在册名单里还没有你登记的姓名 —— 证明开不出来。" +
-          "请联系执委会在「学生名单」里把姓名补上，再来提交。");
+          "请联系组织成员在「学生名单」里把姓名补上，再来提交。");
       }
       sync();
     }).catch(function () { /* 查不到不算错，后面 sync 会提示 */ });
@@ -352,7 +352,7 @@
   function check(d) {
     /* ⚠️ 姓名要看 d.student_name 本身 —— 证明上没名字不能用。
        证件号码不在这里查：它是打印那一刻的事，跟提交无关。 */
-    if (!d.student_name) return "在册名单里还没有你登记的姓名，先请执委会补上再来提交。";
+    if (!d.student_name) return "在册名单里还没有你登记的姓名，先请组织成员补上再来提交。";
     if (!Number(d.hours)) return "时长是 0 —— 至少在上一步勾一条已核定的记录。";
     return "";
   }
@@ -615,7 +615,7 @@
   /* ---------- 应急离线打印： emergencies 用，带水印，不走审核 ---------- */
   function offlinePrint() {
     if (!NAME.cn) {
-      alertIn($("ct-alerts"), "error", "在册名单里还没有你登记的姓名，先请执委会补上。");
+      alertIn($("ct-alerts"), "error", "在册名单里还没有你登记的姓名，先请组织成员补上。");
       return;
     }
     if (!Number(pickedHours())) {

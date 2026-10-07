@@ -2,7 +2,7 @@
    GUIS 义工组织 — 统一登录（login.html）
 
    一个入口，登录后自动分流：
-     执委会 owner   → admin.html    后台（能改活动/刊物/公告）
+     组织成员 owner   → admin.html    后台（能改活动/刊物/公告）
      负责老师 teacher → checkin.html  签到页（只能给自己负责的活动签到）
      学生 student   → me.html       我的义工账户
 
@@ -13,7 +13,7 @@
 
    首次开通只对学生开放：@guiscn.com + 在后台「学生名单」里登记过，
    走 check_student_email()（匿名可调的 SECURITY DEFINER 函数）核对。
-   老师和执委会没有自助开通入口 —— 由执委会在后台加进名单。
+   老师和组织成员没有自助开通入口 —— 由组织成员在后台加进名单。
    ============================================================ */
 document.addEventListener("DOMContentLoaded", function () {
   "use strict";
@@ -22,25 +22,22 @@ document.addEventListener("DOMContentLoaded", function () {
   var $ = function (id) { return document.getElementById(id); };
   var SUFFIX = "@guiscn.com";
 
-  var DEST = {
-    owner: "admin.html",
-    teacher: "checkin.html",
-    student: "me.html"
-  };
+  /* 登录后的落脚页由 roles.js 统一管（owner→后台、teacher→签到、member→后台、student→我的账户），
+     免得这里和 session.js 各写一份、以后改一处忘一处。 */
+  function destFor(role) { return window.GUISRoles.home(role); }
 
   /* ?next=xxx.html —— 从别的页面被弹过来登录时，登完回到那一页。
-     （校外时长认定页就是这么跳过来的。）
+     （校外时长认定页、后台、签到页、面试台都是这么跳过来的。）
      ⚠️ 只认本站的 .html 相对路径，别的什么都不认 —— 否则这就是一个开放重定向，
-        把 ?next= 换成外站链接就能把人骗出去。 */
+        把 ?next= 换成外站链接就能把人骗出去。
+     落地页自己会再查一次服务端权限（is_allowed_admin / my_access），
+     所以就算有人拿 ?next=admin.html 把自己塞进后台，服务端也会按真实角色挡住。 */
   function nextDest(role) {
     try {
       var n = new URLSearchParams(location.search).get("next") || "";
-      if (!/^[a-zA-Z0-9_-]+\.html$/.test(n)) return DEST[role];
-      /* 执委会/老师有自己的固定去处，next 只在学生这条路上生效 ——
-         免得有人拿一个 next 把管理员塞进学生页。 */
-      if (role !== "student") return DEST[role];
+      if (!/^[a-zA-Z0-9_-]+\.html$/.test(n)) return destFor(role);
       return n;
-    } catch (e) { return DEST[role]; }
+    } catch (e) { return destFor(role); }
   }
 
   function esc(s) {
@@ -91,11 +88,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
     return C.myAccess().then(function (ar) {
       var row = (ar && ar.data && ar.data[0]) || {};
-      var role = row.role === "owner" ? "owner" : row.role === "teacher" ? "teacher" : "student";
+      /* 归一化在 roles.js：库里出现前端不认识的 role 时宁可当学生，
+         也不要因为二选一的 else 支把人当成能改小时的老师。 */
+      var role = window.GUISRoles.norm(row.role);
       var dest = nextDest(role);
-      var msg = role === "owner" ? t("lg.goOwner", "识别到你是指委会成员，正在进入后台…")
-        : role === "teacher" ? t("lg.goTeacher", "识别到你是负责老师，正在进入签到页…")
-        : t("lg.goStudent", "进入「我的义工账户」…");
+      var who = window.GUISRoles.labelOf(role);
+      var msg = window.GUISRoles.isMember(role)
+        ? "识别到你是" + who + "，正在进入后台…"
+        : "进入「我的义工账户」…";
       box.innerHTML = '<div class="alert alert-ok">' + esc(msg) + "</div>";
       setTimeout(function () { location.href = dest; }, 650);
       return role;
@@ -171,7 +171,7 @@ document.addEventListener("DOMContentLoaded", function () {
     var email = fullEmail($("lg-new-email").value);
     if (!email) { alertIn($("lg-alerts"), "error", "请先填写学校邮箱前缀。"); return; }
     if (!/@guiscn\.com$/.test(email)) {
-      alertIn($("lg-alerts"), "error", "自助开通只对学校邮箱（@guiscn.com）开放。负责老师和执委会请让执委会先在后台「人员管理」里加你的邮箱。");
+      alertIn($("lg-alerts"), "error", "自助开通只对学校邮箱（@guiscn.com）开放。负责老师和组织成员请让组织成员先在后台「人员管理」里加你的邮箱。");
       return;
     }
     busyOn(this, "核对中…");
@@ -181,7 +181,7 @@ document.addEventListener("DOMContentLoaded", function () {
         busyOff($("lg-new-send"));
         alertIn($("lg-alerts"), "error",
           "这个邮箱（" + esc(email) + "）不在学校登记的学生名单里，暂时不能自助开通。" +
-          "请确认前缀有没有打错，或联系义工组织执委会把你的邮箱加进名单。");
+          "请确认前缀有没有打错，或联系义工组织把你的邮箱加进名单。");
         return;
       }
       if (row.activated) {

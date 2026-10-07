@@ -9,13 +9,13 @@
    三块内容：
      1. 面试台    —— 按天分组的候选人卡片。正在面的那张会亮起来，
                     并显示还剩几分钟；点「记录」弹出打分 / 结论 / 评语。
-     2. 时间表管理 —— 只有执委会（owner）看得到。表格里直接改字，
+     2. 时间表管理 —— 只有组织成员（owner）看得到。表格里直接改字，
                     也可以整段粘贴导入（从 Excel 复制过来的那种）。
      3. 导出      —— 把当天记录导成 CSV。
 
    数据在两张表里（见 cloud.js 的「招新面试」一节）：
-     · interview_slots   —— 时间表，执委会能改，负责老师可读
-     · interview_records —— 记录，一个时段一条，执委会与负责老师都能写
+     · interview_slots   —— 时间表，组织成员能改，负责老师可读
+     · interview_records —— 记录，一个时段一条，组织成员与负责老师都能写
    学生读不到这两张表；学生只看得到 my_interview() 给的那一条安排。
 
    ⚠️ 页面里所有时间一律按**本地时间**算（new Date("2026-10-07T16:40")）——
@@ -34,7 +34,7 @@ document.addEventListener("DOMContentLoaded", function () {
   var RESULT_LABEL = { pending: "未定", pass: "通过", hold: "待定", fail: "不通过" };
 
   var ME = { email: "", role: "teacher" };
-  function isOwner() { return ME.role === "owner"; }
+  function isOwner() { return window.GUISRoles.isOwner(ME.role); }
 
   var slots = [];      /* 全部场次（服务端已按 day, slot_start 排好） */
   var recs = {};       /* slot_id -> 记录，只留最新一条（唯一索引保证只有一个） */
@@ -77,7 +77,7 @@ document.addEventListener("DOMContentLoaded", function () {
       return "同一时段同一个人已经有一条了 —— 改一改时间或姓名再存。";
     }
     if (code === "42501" || /row-level security|violates row-level/i.test(m)) {
-      return "权限不足：服务端拒绝了这次写入。改时间表需要执委会身份，记面试结果需要先加入后台人员名单。";
+      return "权限不足：服务端拒绝了这次写入。改时间表需要组织成员身份，记面试结果需要先加入后台人员名单。";
     }
     if (!m && !code) return (fallback || "操作失败") + "。";
     return (fallback || "操作失败") + "：" + m;
@@ -364,7 +364,7 @@ document.addEventListener("DOMContentLoaded", function () {
       if (!slots.length) {
         $("iv-empty").hidden = false;
         $("iv-empty").innerHTML = "还没有面试安排。" +
-          (isOwner() ? "往下滚到「时间表管理」，把时间表整段粘贴进去。" : "请让执委会先导入时间表。");
+          (isOwner() ? "往下滚到「时间表管理」，把时间表整段粘贴进去。" : "请让组织成员先导入时间表。");
       }
       renderAll();
     }).catch(function (err) {
@@ -373,130 +373,88 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  /* ---------------- 登录 ---------------- */
-  var loginView = $("login-view"), appView = $("app-view");
+  /* ---------------- 登录（统一到 login.html，2026-10-07）----------------
+     原来这一页自带一套登录表单，和 login.html 那套几乎逐行重复。
+     现在这里只留一扇门：没登录 / 不在名单里 → 送去统一登录页，登完 ?next= 回来。
+     白名单判断仍以服务端 is_allowed_admin() 为准，前端只是提前给个说法。 */
 
-  function showSignedIn(email) {
-    ME.email = email || "";
-    $("who-email").textContent = ME.email + (isOwner() ? " · 执委会" : " · 负责老师");
+  function loginURL() {
+    return "login.html?next=" + encodeURIComponent("interview.html");
+  }
+
+  function gotoLogin(msg) {
+    var go = $("auth-gate-go");
+    if (go) go.href = loginURL();
+    var box = $("auth-gate");
+    if (box) {
+      box.innerHTML = "<b>请先登录</b><br />" +
+        "这个页面需要组织成员或负责老师身份。<br />" +
+        "<span class=\"hint\">登录后会带你回到这一页。" +
+        (msg ? "（" + esc(msg) + "）" : "") + "</span>";
+    }
+  }
+
+  function showLogin(msg) {
+    loginView.hidden = false;
+    appView.hidden = true;
+    gotoLogin(msg);
+  }
+
+  var loginView = $("login-view");
+  var appView = $("app-view");
+
+  function showSignedIn() {
+    /* 身份后缀跟着角色走 —— 普通成员不该顶着「负责老师」的字样。 */
+    $("who-email").textContent = ME.email + " · " + window.GUISRoles.labelOf(ME.role);
     loginView.hidden = true;
     appView.hidden = false;
     C.touchLogin();
     loadAll();
   }
-  function showLogin() {
-    appView.hidden = true;
-    loginView.hidden = false;
-  }
 
+  /* 准入：先问服务端在不在名单里，在 → 读角色放行；不在 → 送去统一登录页。 */
   function enterOrReject(email) {
     return C.isAllowedAdmin().then(function (r) {
-      if (r.error || r.data !== true) {
-        C.auth.signOut();
-        showLogin();
-        alertIn($("auth-alerts"), "error",
-          "该邮箱（" + esc(email) + "）还没有加入后台人员名单。请让义工组织执委会先到后台「人员管理」页签把邮箱加进来并开通账号。");
-        return false;
+      if (!r.error && r.data === true) {
+        return C.myAccess().then(function (ar) {
+          var row = (ar && ar.data && ar.data[0]) || {};
+          ME.email = row.email || email || "";
+          /* 归一化走 roles.js：二选一写法会把「普通成员」当成面试官，
+             那他就能改面试记录了 —— 服务端 ivrec_* 策略已收紧，前端不能再漏。 */
+          ME.role = window.GUISRoles.norm(row.role);
+          showSignedIn();
+          return true;
+        });
       }
-      /* 角色只有服务端说了算（my_access 是 SECURITY DEFINER）——
-         决定「时间表管理」这一块给不给他看。 */
-      return C.myAccess().then(function (ar) {
-        var row = (ar && ar.data && ar.data[0]) || {};
-        ME.email = row.email || email || "";
-        ME.role = row.role === "owner" ? "owner" : "teacher";
-        showSignedIn(ME.email);
-        return true;
-      });
+      C.auth.signOut();
+      showLogin("这个邮箱还不在后台人员名单里");
+      return false;
     }).catch(function () {
       C.auth.signOut();
-      showLogin();
-      alertIn($("auth-alerts"), "error", "权限校验失败，请重试。");
+      showLogin("权限校验失败，请重试");
       return false;
     });
   }
 
-  (function () {
-    var host = location.origin;
-    if (host && C.endpoint && host.replace(/\/+$/, "") !== C.endpoint.replace(/\/+$/, "")) {
-      $("origin-link").textContent = C.endpoint;
-      $("origin-link").href = C.endpoint + "/interview.html";
-      $("origin-banner").hidden = false;
-    }
-  })();
-
-  /* ⚠️ 用 C.sessionUser() 拿邮箱：getSession() 自己不带 email（见 cloud.js）。 */
-  C.sessionUser().then(function (u) {
-    if (u) enterOrReject(u.email || "");
-    else showLogin();
-  }).catch(showLogin);
-
-  $("logout-btn").addEventListener("click", function () {
-    C.auth.signOut().then(showLogin).catch(showLogin);
-  });
-
-  /* 登录表单：密码 / 邮箱验证码 两种 */
-  var forms = { password: $("form-password"), otp: $("form-otp") };
-  function showForm(name) {
-    Object.keys(forms).forEach(function (k) { forms[k].hidden = k !== name; });
-    Array.prototype.forEach.call($("auth-seg").children, function (b) {
-      b.classList.toggle("is-on", b.getAttribute("data-mode") === name);
-    });
-    clear($("auth-alerts"));
+  function boot() {
+    C.sessionUser().then(function (u) {
+      if (u) enterOrReject(u.email || "");
+      else showLogin();
+    }).catch(function () { showLogin(); });
   }
-  Array.prototype.forEach.call($("auth-seg").children, function (b) {
-    b.addEventListener("click", function () { showForm(b.getAttribute("data-mode")); });
+  boot();
+
+  /* 退出登录：登完把人送到统一登录页（换个身份重新进） */
+  var logoutBtn = $("logout-btn");
+  if (logoutBtn) logoutBtn.addEventListener("click", function () {
+    var btn = this;
+    btn.disabled = true;
+    C.auth.signOut().then(function () { location.href = loginURL(); })
+      .catch(function () { btn.disabled = false; showLogin(); });
   });
 
-  $("form-password").addEventListener("submit", function (e) {
-    e.preventDefault();
-    var btn = $("iv-submit"), email = $("iv-email").value.trim(), pass = $("iv-pass").value;
-    if (!email || !pass) { alertIn($("auth-alerts"), "error", "请填写邮箱和密码。"); return; }
-    btn.disabled = true; btn.textContent = "登录中…";
-    C.auth.signInWithPassword({ email: email, password: pass }).then(function (r) {
-      if (r.error) {
-        btn.disabled = false; btn.textContent = "登录";
-        alertIn($("auth-alerts"), "error", "邮箱或密码不正确。");
-        return;
-      }
-      enterOrReject(email);
-    }).catch(function () {
-      btn.disabled = false; btn.textContent = "登录";
-      alertIn($("auth-alerts"), "error", "登录失败，请稍后重试。");
-    });
-  });
-
-  var pendingOtp = null;
-  $("iv-otp-send").addEventListener("click", function () {
-    var email = $("iv-otp-email").value.trim();
-    if (!email) { alertIn($("auth-alerts"), "error", "请先填写邮箱。"); return; }
-    busyOn($("iv-otp-send"), "发送中…");
-    C.auth.sendOtp({ email: email }).then(function (r) {
-      busyOff($("iv-otp-send"));
-      if (r.error) { alertIn($("auth-alerts"), "error", "发送失败：" + (r.error.message || "")); return; }
-      pendingOtp = r.data;
-      alertIn($("auth-alerts"), "ok", "验证码已发到 " + esc(email) + "。");
-    }).catch(function () {
-      busyOff($("iv-otp-send"));
-      alertIn($("auth-alerts"), "error", "发送失败，请稍后重试。");
-    });
-  });
-
-  $("form-otp").addEventListener("submit", function (e) {
-    e.preventDefault();
-    var email = $("iv-otp-email").value.trim(), code = $("iv-otp-code").value.trim();
-    if (!pendingOtp) { alertIn($("auth-alerts"), "error", "请先点「获取验证码」。"); return; }
-    if (!code) { alertIn($("auth-alerts"), "error", "请填写验证码。"); return; }
-    busyOn($("iv-otp-submit"), "登录中…");
-    pendingOtp.verify({ nonce: code, email: email }).then(function (r) {
-      busyOff($("iv-otp-submit"));
-      if (r && r.error) { alertIn($("auth-alerts"), "error", "验证码不正确或已过期。"); return; }
-      enterOrReject(email);
-    }).catch(function () {
-      busyOff($("iv-otp-submit"));
-      alertIn($("auth-alerts"), "error", "验证失败，请重新获取验证码。");
-    });
-  });
-
+  var retryBtn = $("auth-retry");
+  if (retryBtn) retryBtn.addEventListener("click", function () { boot(); });
   /* ---------------- 记录弹层 ---------------- */
   function normalizeScores(raw) {
     var out = {};
@@ -725,7 +683,7 @@ document.addEventListener("DOMContentLoaded", function () {
   $("iv-refresh").addEventListener("click", function () { loadAll(); });
   $("iv-export").addEventListener("click", function () { exportCsv(); });
 
-  /* ---------------- 时间表管理（执委会） ---------------- */
+  /* ---------------- 时间表管理（组织成员） ---------------- */
   $("iv-paste-toggle").addEventListener("click", function () {
     var box = $("iv-paste-box");
     box.hidden = !box.hidden;
