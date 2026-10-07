@@ -1794,3 +1794,33 @@ table.data tr.is-done { background: rgba(45, 138, 78, 0.045); }
 .me-iv-when { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.02em; color: var(--brand); font-variant-numeric: tabular-nums; }
 .me-iv-line { font-size: 0.86rem; color: var(--text-soft); }
 .me-iv-line b { font-weight: 650; }
+
+/* ============================================================
+   批量导入区块 —— 后台「人员管理」加人、「学生名单」导入共用
+   虚线框是刻意的：跟周围实心卡片区分开，一眼看出「这里是往里塞东西的地方」
+   ============================================================ */
+.import-box {
+  margin-bottom: 1.25rem;
+  padding: 1rem 1.1rem 1.1rem;
+  border: 1px dashed var(--hairline-strong);
+  border-radius: var(--radius-md);
+  background: var(--bg-soft);
+}
+.import-box input[type="file"] {
+  display: block; width: 100%; max-width: 460px; margin-top: 0.4rem;
+  font: inherit; font-size: 0.86rem; color: var(--text-soft);
+}
+.import-box input[type="file"]::file-selector-button {
+  margin-right: 0.7rem; padding: 0.42rem 0.85rem;
+  border: 1px solid var(--hairline-strong); border-radius: var(--radius-sm);
+  background: #fff; color: var(--text-main); font: inherit; font-size: 0.84rem;
+  cursor: pointer; transition: background 0.16s ease, border-color 0.16s ease;
+}
+.import-box input[type="file"]::file-selector-button:hover {
+  background: var(--brand-wash, #EAF1FA); border-color: var(--brand);
+}
+.import-box .hint { color: var(--text-subtle); }
+.import-box .hint b { color: var(--text-soft); }
+
+/* 表格里「没填」的占位（例如人员名单里还没登记的姓名） */
+.muted { color: var(--text-subtle); }

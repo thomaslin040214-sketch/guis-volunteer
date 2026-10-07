@@ -537,12 +537,20 @@
     listMembers: function () {
       return db
         .from("allowed_admins")
-        .select("email, note, role, is_student, must_change_password, last_login_at, created_at")
+        .select("email, name, note, role, is_student, must_change_password, last_login_at, created_at")
         .order("created_at", { ascending: true });
     },
 
     addMember: function (payload) {
       return db.from("allowed_admins").insert(payload).select();
+    },
+
+    /* 批量加人（从 CSV / Excel 导入）。走 upsert：邮箱是主键，
+       同一份名单导两次只会刷新姓名角色备注，不会报「已存在」炸掉整批。
+       ⚠️ 不链 .select()：这张表的读策略是 is_owner()，回读对非执委会一律被拒。 */
+    importMembers: function (rows) {
+      if (!rows || !rows.length) return Promise.resolve({ data: [], error: null });
+      return db.from("allowed_admins").upsert(rows, { onConflict: "email" });
     },
 
     updateMember: function (email, patch) {

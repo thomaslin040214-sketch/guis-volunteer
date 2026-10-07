@@ -1819,13 +1819,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function loadPeople() {
     var body = $("peo-body");
-    body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-subtle);"><span class="loading"></span> 读取中…</td></tr>';
+    body.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-subtle);"><span class="loading"></span> 读取中…</td></tr>';
     clear($("peo-alerts"));
 
     C.listMembers().then(function (res) {
       var rows = C.unwrap(res, "读取失败") || [];
       if (!rows.length) {
-        body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-subtle);">还没有任何成员。</td></tr>';
+        body.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-subtle);">还没有任何成员。</td></tr>';
         $("peo-stats").innerHTML = "";
         $("peo-count").textContent = "";
         return;
@@ -1850,6 +1850,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (r.must_change_password) tags.push('<span class="badge badge-draft">待改密码</span>');
         return "<tr>" +
           "<td>" + esc(r.email) + (isMe ? '<span class="roster-flag">我</span>' : "") + "</td>" +
+          "<td>" + (r.name ? esc(r.name) : '<span class="muted">—</span>') + "</td>" +
           "<td>" + roleLabel(r.role) + "</td>" +
           "<td>" + tags.join(" ") + "</td>" +
           "<td>" + esc(r.note) + "</td>" +
@@ -1880,6 +1881,99 @@ document.addEventListener("DOMContentLoaded", function () {
 
   $("peo-refresh").addEventListener("click", loadPeople);
 
+  /* ---------------- 批量加人：从一个文件 / 一段粘贴文本导入 ----------------
+     列顺序：邮箱, 姓名, 角色, 备注 —— 与页面上的提示一致，别改。
+     走 upsert（邮箱是主键），所以同一份名单导两遍只会刷新姓名备注，
+     不会因为「已经存在」整批失败。 */
+  function parsePeople(grid) {
+    var rows = [];
+    var bad = 0;
+    var seen = {};
+    grid.forEach(function (cells) {
+      var email = String(cells[0] || "").trim().toLowerCase();
+      if (!email) return;
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { bad++; return; }
+      if (seen[email]) { bad++; return; }        /* 同一份文件里重复出现也只写一次 */
+      seen[email] = 1;
+      var roleTxt = String(cells[2] || "").toLowerCase();
+      rows.push({
+        email: email,
+        name: cells[1] || null,
+        role: /owner|执委|admin|管理/.test(roleTxt) ? "owner" : "teacher",
+        note: cells[3] || null
+      });
+    });
+    return { rows: rows, bad: bad };
+  }
+
+  function runPeopleImport(grid, cleanup) {
+    var p = parsePeople(grid);
+    if (!p.rows.length) {
+      alertIn($("peo-alerts"), "error", "没解析出任何有效邮箱。每行一条：邮箱, 姓名, 角色, 备注");
+      return;
+    }
+    var btn = $("peo-import");
+    busyOn(btn, "导入中…");
+    C.importMembers(p.rows).then(function (res) {
+      busyOff(btn);
+      C.unwrap(res, "导入失败");
+      /* ⚠️ 顺序刻意的：loadPeople() 一上来就会 clear(#peo-alerts)，
+         先弹提示再刷新，等于提示刚出来就被自己擦掉了 —— 必须反过来。 */
+      if (cleanup) cleanup();
+      loadPeople();
+      alertIn($("peo-alerts"), "ok", "已导入 " + p.rows.length + " 人" +
+        (p.bad ? "（另 " + p.bad + " 行没有邮箱或重复，已跳过）" : "") +
+        "。名单里的人还要逐个点「开通账号」才能真正登录。");
+    }).catch(function (err) {
+      busyOff(btn);
+      alertIn($("peo-alerts"), "error", "导入失败：" + failMsg(err));
+    });
+  }
+
+  function peopleFileOK() { return !!($("peo-file").files && $("peo-file").files[0]); }
+
+  $("peo-file").addEventListener("change", function () {
+    var f = this.files && this.files[0];
+    $("peo-file-hint").textContent = f ? "已选：" + f.name : "";
+    $("peo-import").disabled = !f;
+  });
+
+  $("peo-import").addEventListener("click", function () {
+    var inp = $("peo-file");
+    var f = inp.files && inp.files[0];
+    var btn = this;
+
+    if (f) {
+      busyOn(btn, "读取中…");
+      window.GUISImport.readAsTable(f).then(function (grid) {
+        busyOff(btn);
+        runPeopleImport(grid, function () {
+          inp.value = "";
+          $("peo-file-hint").textContent = "";
+          btn.disabled = !peopleFileOK();
+        });
+      }).catch(function (err) {
+        busyOff(btn);
+        alertIn($("peo-alerts"), "error", "读不了这个文件：" + (err && err.message ? err.message : "未知原因") +
+          "。可以试试在 Excel 里「另存为 → CSV UTF-8」再选一次。");
+      });
+      return;
+    }
+
+    /* 没选文件 → 改用粘贴框里的内容 */
+    var txt = $("peo-paste").value || "";
+    if (!txt.trim()) { alertIn($("peo-alerts"), "error", "先选个文件，或者把名单粘进下面的框里。"); return; }
+    runPeopleImport(window.GUISImport.textToRows(txt), function () { $("peo-paste").value = ""; });
+  });
+
+  $("peo-paste-toggle").addEventListener("click", function () {
+    var wrap = $("peo-paste-wrap");
+    wrap.hidden = !wrap.hidden;
+    this.textContent = wrap.hidden ? "改为粘贴名单" : "收起粘贴框";
+    if (!wrap.hidden) { $("peo-import").disabled = false; }
+    else { $("peo-import").disabled = !peopleFileOK(); }
+  });
+
   $("peo-form").addEventListener("submit", function (e) {
     e.preventDefault();
     var email = $("peo-email").value.trim().toLowerCase();
@@ -1892,6 +1986,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     C.addMember({
       email: email,
+      name: $("peo-name").value.trim() || null,
       note: $("peo-note").value.trim() || null,
       role: $("peo-role").value === "owner" ? "owner" : "teacher",
       is_student: $("peo-is-student").checked,
@@ -1900,6 +1995,7 @@ document.addEventListener("DOMContentLoaded", function () {
       C.unwrap(res, "添加失败");
       btn.disabled = false;
       $("peo-email").value = "";
+      $("peo-name").value = "";
       $("peo-note").value = "";
       $("peo-initial").value = "";
       $("peo-is-student").checked = false;
@@ -2085,41 +2181,79 @@ document.addEventListener("DOMContentLoaded", function () {
   $("stu-refresh").addEventListener("click", loadStudents);
   $("stu-search").addEventListener("input", renderStudents);
 
-  $("stu-import").addEventListener("click", function () {
-    var raw = $("stu-paste").value || "";
-    var lines = raw.split(/\r?\n/);
+  function studentRowsFromGrid(grid) {
     var rows = [];
     var bad = 0;
-    lines.forEach(function (ln) {
-      var parts = ln.split(/[,\t，]/).map(function (s) { return s.trim(); });
-      var email = (parts[0] || "").toLowerCase();
+    var seen = {};
+    grid.forEach(function (cells) {
+      var email = String(cells[0] || "").trim().toLowerCase();
       if (!email) return;
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { bad++; return; }
+      if (seen[email]) { bad++; return; }
+      seen[email] = 1;
       rows.push({
         email: email,
-        name: parts[1] || null,
-        grade: parts[2] || null,
-        student_id: parts[3] || null,
+        name: cells[1] || null,
+        grade: cells[2] || null,
+        student_id: cells[3] || null,
         /* 英文名（第 5 列，可省）—— 会印在义工证明的姓名栏里 */
-        name_en: parts[4] || null
+        name_en: cells[4] || null
       });
     });
-    if (!rows.length) {
+    return { rows: rows, bad: bad };
+  }
+
+  function runStudentImport(grid, cleanup, caller) {
+    var p = studentRowsFromGrid(grid);
+    var btn = caller || $("stu-import");
+    if (!p.rows.length) {
       alertIn($("stu-alerts"), "error", "没解析出任何有效邮箱。每行一条：邮箱, 姓名, 年级, 学号, 英文名（可选）");
       return;
     }
-    var btn = this;
     busyOn(btn, "导入中…");
-    C.importStudents(rows).then(function (res) {
+    C.importStudents(p.rows).then(function (res) {
       busyOff(btn);
       C.unwrap(res, "导入失败");
-      $("stu-paste").value = "";
-      alertIn($("stu-alerts"), "ok", "已导入 " + rows.length + " 个邮箱" +
-        (bad ? "（另 " + bad + " 行格式不对，已跳过）" : "") + "。");
+      if (cleanup) cleanup();
+      /* 同上：loadStudents() 会清掉 alerts，先刷新再弹提示 */
       loadStudents();
+      alertIn($("stu-alerts"), "ok", "已导入 " + p.rows.length + " 个邮箱" +
+        (p.bad ? "（另 " + p.bad + " 行格式不对或重复，已跳过）" : "") + "。");
     }).catch(function (err) {
       busyOff(btn);
       alertIn($("stu-alerts"), "error", "导入失败：" + failMsg(err));
+    });
+  }
+
+  $("stu-import").addEventListener("click", function () {
+    var raw = $("stu-paste").value || "";
+    runStudentImport(window.GUISImport.textToRows(raw), function () { $("stu-paste").value = ""; }, this);
+  });
+
+  /* 从文件导入（CSV / Excel）—— 和上面粘贴走同一套行解析 */
+  $("stu-file").addEventListener("change", function () {
+    var f = this.files && this.files[0];
+    $("stu-file-hint").textContent = f ? "已选：" + f.name : "";
+    $("stu-file-go").disabled = !f;
+  });
+
+  $("stu-file-go").addEventListener("click", function () {
+    var inp = $("stu-file");
+    var f = inp.files && inp.files[0];
+    if (!f) return;
+    var btn = this;
+    busyOn(btn, "读取中…");
+    window.GUISImport.readAsTable(f).then(function (grid) {
+      busyOff(btn);
+      runStudentImport(grid, function () {
+        inp.value = "";
+        $("stu-file-hint").textContent = "";
+        btn.disabled = true;
+      }, btn);
+    }).catch(function (err) {
+      busyOff(btn);
+      alertIn($("stu-alerts"), "error", "读不了这个文件：" + (err && err.message ? err.message : "未知原因") +
+        "。可以试试在 Excel 里「另存为 → CSV UTF-8」再选一次。");
     });
   });
 

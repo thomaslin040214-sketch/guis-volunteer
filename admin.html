@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-ver="20261002z">
+<html lang="zh-CN" data-ver="20261003a">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,7 +10,7 @@
    于是点站内链接（全是裸路径）进去时整页退回旧设计。
    这里比对 <html data-ver>：不是当前版本就带查询串重拉一次（查询串必定回源）。 */
 (function () {
-  var VER = "20261002z";
+  var VER = "20261003a";
   try {
     var el = document.documentElement;
     var healed = /[?&]_v=/.test(location.search);
@@ -49,8 +49,8 @@
 <meta name="description" content="GUIS 义工组织后台管理：创建义工活动、查看报名名单、导出 Excel。" />
 <meta name="theme-color" content="#FFFFFF" />
 <meta name="robots" content="noindex, nofollow" />
-<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261002z" />
-<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261002z" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261003a" />
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261003a" />
 <!-- 品牌标志兜底样式（内联，随 HTML 一起下发）。
      即使 assets/site.css 被浏览器缓存成旧版本，标志也不会按图片原始尺寸撑破布局。
      这里只设尺寸上限（max-*），正常加载 site.css 时这些上限都不会生效。 -->
@@ -74,8 +74,8 @@
   .hero-brand .hero-va{max-height:40px}
 }
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20261002z" />
-<link rel="stylesheet" href="assets/app.css?v=20261002z" />
+<link rel="stylesheet" href="assets/site.css?v=20261003a" />
+<link rel="stylesheet" href="assets/app.css?v=20261003a" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
@@ -805,6 +805,10 @@
                     <input id="peo-email" type="email" placeholder="name@guiscn.com" required />
                   </div>
                   <div class="field">
+                    <label for="peo-name">姓名</label>
+                    <input id="peo-name" type="text" placeholder="例如：林骏玮 / Emily Li" />
+                  </div>
+                  <div class="field">
                     <label for="peo-note">备注</label>
                     <input id="peo-note" type="text" placeholder="例如：社区关怀组组长 / 教务处李老师" />
                   </div>
@@ -833,11 +837,33 @@
                 </div>
               </form>
 
+              <!-- ---------- 批量加人：选一个文件导进来 ---------- -->
+              <div class="import-box">
+                <div class="field">
+                  <label for="peo-file">一次性加一批人（选文件）</label>
+                  <input type="file" id="peo-file" accept=".csv,.txt,.tsv,.xlsx,.xls" />
+                  <span class="hint">
+                    列顺序：<b>邮箱, 姓名, 角色, 备注</b>（带表头的文件会自动跳过表头那一行）。<br />
+                    角色写「执委会」或 owner 就是可编辑的人；留空、写「老师」或 teacher 都是负责老师。<br />
+                    邮箱重复的会刷新姓名和备注，不会报错 —— 同一份名单导两遍也不会冒出重复的人。
+                  </span>
+                </div>
+                <div class="form-actions" style="margin-top:0.85rem;">
+                  <button type="button" class="btn btn-primary" id="peo-import" disabled>导入名单</button>
+                  <button type="button" class="link-btn" id="peo-paste-toggle">改为粘贴名单</button>
+                  <span class="hint" id="peo-file-hint" style="align-self:center;"></span>
+                </div>
+                <div class="field" id="peo-paste-wrap" hidden style="margin-top:0.85rem;">
+                  <label for="peo-paste">或者把表格内容直接粘进来（每行一人）</label>
+                  <textarea id="peo-paste" placeholder="linjtom@gmail.com, 林骏玮, owner, 执委会&#10;li@guiscn.com, 李老师, teacher, 教务处" style="min-height:120px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:0.84rem;"></textarea>
+                </div>
+              </div>
+
               <div class="table-scroll">
                 <table class="data" style="min-width:640px;">
                   <thead>
                     <tr>
-                      <th>邮箱</th><th>角色</th><th>标签</th><th>备注</th>
+                      <th>邮箱</th><th>姓名</th><th>角色</th><th>标签</th><th>备注</th>
                       <th>最后登录</th><th style="width:230px;">操作</th>
                     </tr>
                   </thead>
@@ -861,8 +887,23 @@
             </div>
             <div class="panel-body">
               <div id="stu-alerts"></div>
-              <div class="field">
-                <label for="stu-paste">每行一条，用逗号或制表符分隔：邮箱, 姓名, 年级, 学号, 英文名（可选）</label>
+              <div class="import-box">
+                <div class="field">
+                  <label for="stu-file">从一个文件导入（CSV / Excel）</label>
+                  <input type="file" id="stu-file" accept=".csv,.txt,.tsv,.xlsx,.xls" />
+                  <span class="hint">
+                    列顺序：<b>邮箱, 姓名, 年级, 学号, 英文名</b>（带表头的文件会自动跳过表头那一行；英文名可以没有）。<br />
+                    重复导入同一份名单不会报错，只会刷新姓名年级。
+                  </span>
+                </div>
+                <div class="form-actions" style="margin-top:0.85rem;">
+                  <button type="button" class="btn btn-primary" id="stu-file-go" disabled>导入名单</button>
+                  <span class="hint" id="stu-file-hint" style="align-self:center;"></span>
+                </div>
+              </div>
+
+              <div class="field" style="margin-top:1.25rem;">
+                <label for="stu-paste">或者每行一条，用逗号或制表符分隔：邮箱, 姓名, 年级, 学号, 英文名（可选）</label>
                 <textarea id="stu-paste" placeholder="2510032@guiscn.com, 陈同学, G10, 2510032, Chen Thomas&#10;2510033@guiscn.com, 李同学, G11, 2510033, Li Emily" style="min-height:150px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:0.84rem;"></textarea>
                 <span class="hint">
                   可以直接从 Excel 复制一整列粘进来。重复导入同一份名单不会报错，只会刷新姓名年级。
@@ -1041,17 +1082,18 @@
 <!-- 导出 Excel：ExcelJS 才能往表里插 logo（SheetJS 社区版写不了图片），加载失败时用 SheetJS 降级 -->
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="assets/cloud-config.js?v=20261002z"></script>
-<script src="assets/cloud.js?v=20261002z"></script>
-<script src="assets/navfit.js?v=20261002z"></script>
-<script src="assets/session.js?v=20261002z"></script>
-<script src="assets/qr.js?v=20261002z"></script>
-<script src="assets/board.js?v=20261002z"></script>
-<script src="assets/calendar.js?v=20261002z"></script>
-<script src="assets/export.js?v=20261002z"></script>
-<script src="assets/editor.js?v=20261002z"></script>
-<script src="assets/feed.js?v=20261002z"></script>
-<script src="assets/backup.js?v=20261002z"></script>
-<script src="assets/admin.js?v=20261002z"></script>
+<script src="assets/cloud-config.js?v=20261003a"></script>
+<script src="assets/cloud.js?v=20261003a"></script>
+<script src="assets/navfit.js?v=20261003a"></script>
+<script src="assets/session.js?v=20261003a"></script>
+<script src="assets/qr.js?v=20261003a"></script>
+<script src="assets/board.js?v=20261003a"></script>
+<script src="assets/calendar.js?v=20261003a"></script>
+<script src="assets/export.js?v=20261003a"></script>
+<script src="assets/editor.js?v=20261003a"></script>
+<script src="assets/feed.js?v=20261003a"></script>
+<script src="assets/backup.js?v=20261003a"></script>
+<script src="assets/table-import.js?v=20261003a"></script>
+<script src="assets/admin.js?v=20261003a"></script>
 </body>
 </html>
