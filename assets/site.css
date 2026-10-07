@@ -888,7 +888,7 @@ section { position: relative; z-index: 2; padding: clamp(4rem, 9vw, 7rem) 0; scr
   .hero-actions { margin-top: 1.5rem; }
   .hero-tab { margin-top: 1.3rem; }
 }
-/* 更矮的视口（笔记本 + 浏览器工具栏，或者还挂着国庆横幅）再收一档：
+/* 更矮的视口（笔记本 + 浏览器工具栏）再收一档：
    这一档要把打字机完整留在首屏里，所以留白和字号一起压。 */
 @media (max-height: 780px) {
   .hero { padding-top: calc(var(--nav-h) + 0.6rem); padding-bottom: 1.3rem; }

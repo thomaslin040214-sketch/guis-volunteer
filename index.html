@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-ver="20261003c" data-page-title="doc.title">
+<html lang="zh-CN" data-ver="20261003d" data-page-title="doc.title">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,7 +10,7 @@
    于是点站内链接（全是裸路径）进去时整页退回旧设计。
    这里比对 <html data-ver>：不是当前版本就带查询串重拉一次（查询串必定回源）。 */
 (function () {
-  var VER = "20261003c";
+  var VER = "20261003d";
   try {
     var el = document.documentElement;
     var healed = /[?&]_v=/.test(location.search);
@@ -48,8 +48,8 @@
 <title>GUIS 义工组织 | 广州优联国际学校学生志愿服务组织</title>
 <meta name="description" content="广州优联国际学校（GUIS）义工组织 —— 由学生自主运营的志愿服务组织。社区关怀、环保行动、教育支持、公益募捐、赛事会务与文化交流。" />
 <meta name="theme-color" content="#FFFFFF" />
-<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261003c" />
-<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261003c" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261003d" />
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261003d" />
 
 <!-- Open Graph -->
 <meta property="og:type" content="website" />
@@ -80,8 +80,8 @@
   .hero-brand .hero-va{max-height:40px}
 }
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20261003c" />
-<link rel="stylesheet" href="assets/app.css?v=20261003c" />
+<link rel="stylesheet" href="assets/site.css?v=20261003d" />
+<link rel="stylesheet" href="assets/app.css?v=20261003d" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <!-- ⚠️ page-home 是「浮动闪现进场」的开关：site.css 里 fx-pop / fx-bob 只认这个类名，
@@ -140,23 +140,6 @@
   </div>
 </nav>
 
-<!-- ======================= 国庆横幅（节日限定，过期自动消失）======================= -->
-<div class="nd-bar" id="nd-bar" hidden>
-  <!-- 左侧五颗星，只当背景（aria-hidden + pointer-events:none） -->
-  <span class="nd-bar-stars" aria-hidden="true"><svg viewBox="0 0 90 60"><use href="#nd-star-art" /></svg></span>
-  <div class="nd-bar-inner">
-    <span class="nd-years">
-      <span id="nd-year-start">1949</span><span class="nd-dash" aria-hidden="true"></span><span id="nd-year-now">2026</span>
-    </span>
-    <span class="nd-text">
-      <span data-i18n="nd.bar">庆祝中华人民共和国成立 <span id="nd-anniv">77</span> 周年</span>
-      <span class="nd-sub" data-i18n="nd.barSub">愿山河锦绣，岁岁长安</span>
-    </span>
-    <span class="nd-grow"></span>
-    <button type="button" class="nd-close" id="nd-close" aria-label="关闭" data-i18n-attr="aria-label:ui.close">✕</button>
-  </div>
-</div>
-
 <!-- ======================= HERO ======================= -->
 <header class="hero" id="home">
   <!-- 首屏原来这里有一组大标志（GUIS·ULC 锁标 | 竖线 | VA 标志）。
@@ -207,9 +190,8 @@
 <main>
 
   <!-- ======================= STATS =======================
-       ⚠️ 2026-10-02 用户要求把数据看板提到国庆卡片**上面**（原来顺序是「国庆专区 → 数据看板」）。
-          这块带 padding-top:0，本来就是给「紧贴上一块」写的；现在紧跟首屏，正好。
-          main 里的顺序因此变成：stats → national → about → programs → signup → news → journal。 -->
+       这块带 padding-top:0，本来就是给「紧贴上一块」写的；现在紧跟首屏，正好。
+       main 里的顺序：stats → about → programs → signup → news → journal。 -->
   <section id="stats" style="padding-top:0;">
     <div class="wrap">
       <div class="stats reveal">
@@ -226,36 +208,6 @@
         <div class="stat">
           <div class="num"><span data-count="40" data-suffix="+">0</span></div>
           <div class="label" data-i18n="stat3.label">每学年平均义工活动场次</div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ======================= 国庆专区（节日限定）=======================
-       EDIT: 祝福语写在 nd.p1（assets/i18n.js 里，中英都要改）。
-       ⚠️ 这块 2026-10-02 从「数据看板上面」挪到了它下面（用户要求调换这两个元素）。
-          它是节日限定的：不在国庆窗口内会保持 hidden，不占位。 -->
-  <section id="national" class="nd-section" hidden>
-    <div class="wrap">
-      <div class="nd-card reveal">
-        <span class="nd-flag">10.01</span>
-        <div class="nd-grid-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
-        <!-- 左侧五颗星，压在文字底下当背景 -->
-        <span class="nd-stars" aria-hidden="true"><svg viewBox="0 0 90 60"><use href="#nd-star-art" /></svg></span>
-
-        <div class="nd-inner">
-          <div class="nd-body">
-            <p class="nd-eyebrow" data-i18n="nd.eyebrow">National Day · 国庆</p>
-            <h2 class="nd-title" data-i18n="nd.title">山河锦绣，<span class="grad-gold">庆祝中华人民共和国成立 <span id="nd-anniv-2">77</span> 周年</span></h2>
-            <!-- 2026-10-01 用户决定删掉原来第二段「祝祖国生日快乐。愿山河锦绣，岁岁长安。」，
-                 现在祝福区只剩 nd.p1 这一段。 -->
-            <div class="nd-copy">
-              <p class="nd-lead" data-i18n="nd.p1">盛世华夏七十七载，山河无恙，国泰民安。</p>
-            </div>
-          </div>
-
-          <!-- 右侧那三面会飘的国旗 2026-10-01 由用户决定删掉，.nd-flags / .nd-fly 的样式
-               和 #nd-wave 滤镜、#nd-flag-art 图形一起清掉了。想找回看 git 历史。 -->
         </div>
       </div>
     </div>
@@ -497,38 +449,22 @@
 
 <!-- 工作照（#gallery）已整块删除，灯箱只服务那一块的 .shot，一起删掉 -->
 
-<!-- 国庆专区用的五颗星：只定义一次，横幅和专区左侧的「星阵背景」用 <use> 复用。
-     （原来还有 #nd-wave 布料起伏滤镜 + #nd-flag-art 旗面，2026-10-01 三面飘旗删掉后一并清了。） -->
-<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" focusable="false">
-  <defs>
-    <g id="nd-star-art">
-      <polygon points="15.00,6.00 17.02,12.22 23.56,12.22 18.27,16.06 20.29,22.28 15.00,18.44 9.71,22.28 11.73,16.06 6.44,12.22 12.98,12.22" fill="#FFDE00" />
-      <polygon points="27.43,7.54 28.86,5.90 27.74,4.03 29.74,4.88 31.17,3.24 30.98,5.41 32.99,6.26 30.86,6.75 30.67,8.92 29.55,7.05" fill="#FFDE00" />
-      <polygon points="33.03,12.42 34.99,11.46 34.68,9.31 36.20,10.87 38.15,9.91 37.13,11.84 38.65,13.40 36.50,13.03 35.49,14.96 35.18,12.80" fill="#FFDE00" />
-      <polygon points="33.12,20.18 35.29,20.10 35.89,18.00 36.64,20.05 38.82,19.97 37.10,21.31 37.85,23.36 36.04,22.15 34.32,23.49 34.92,21.39" fill="#FFDE00" />
-      <polygon points="27.66,25.13 29.70,25.89 31.06,24.19 30.96,26.37 33.00,27.14 30.89,27.72 30.79,29.89 29.60,28.07 27.49,28.65 28.86,26.95" fill="#FFDE00" />
-    </g>
-  </defs>
-</svg>
-
 <script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
-<script src="assets/cloud-config.js?v=20261003c"></script>
-<script src="assets/cloud.js?v=20261003c"></script>
-<script src="assets/i18n.js?v=20261003c"></script>
-<script src="assets/board.js?v=20261003c"></script>
-<script src="assets/editor.js?v=20261003c"></script>
-<script src="assets/feed.js?v=20261003c"></script>
+<script src="assets/cloud-config.js?v=20261003d"></script>
+<script src="assets/cloud.js?v=20261003d"></script>
+<script src="assets/i18n.js?v=20261003d"></script>
+<script src="assets/board.js?v=20261003d"></script>
+<script src="assets/editor.js?v=20261003d"></script>
+<script src="assets/feed.js?v=20261003d"></script>
 <!-- 部门成员已独立成 team.html，team.js / team-render.js 只在那一页加载 -->
-<script src="assets/queue.js?v=20261003c"></script>
-<script src="assets/nav.js?v=20261003c"></script>
-<script src="assets/navfit.js?v=20261003c"></script>
-<script src="assets/time.js?v=20261003c"></script>
-<script src="assets/roles.js?v=20261003c"></script>
-<script src="assets/session.js?v=20261003c"></script>
-<script src="assets/main.js?v=20261003c"></script>
-<script src="assets/typer.js?v=20261003c"></script>
-<!-- 国庆横幅 / 专区：放在 main.js 之后，这样填进去的周年数字不会被 applyLang 覆盖回去 -->
-<script src="assets/national.js?v=20261003c"></script>
+<script src="assets/queue.js?v=20261003d"></script>
+<script src="assets/nav.js?v=20261003d"></script>
+<script src="assets/navfit.js?v=20261003d"></script>
+<script src="assets/time.js?v=20261003d"></script>
+<script src="assets/roles.js?v=20261003d"></script>
+<script src="assets/session.js?v=20261003d"></script>
+<script src="assets/main.js?v=20261003d"></script>
+<script src="assets/typer.js?v=20261003d"></script>
 <script>
 /* ---------- 首页「活动报名」板块 ----------
    看板的全部逻辑（红绿灯判定、数字、图例、以及「旧结构自愈」）都在 assets/board.js，

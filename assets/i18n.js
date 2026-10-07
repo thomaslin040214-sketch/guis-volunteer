@@ -345,12 +345,6 @@ window.SITE_I18N = {
     "cal.timeline": "当日时间轴",
     "cal.now": "现在",
 
-    /* ---------- 国庆（节日限定，assets/national.js 控制显示窗口）---------- */
-    "nd.bar": "庆祝中华人民共和国成立 <span id=\"nd-anniv\">77</span> 周年",
-    "nd.barSub": "愿山河锦绣，岁岁长安",
-    "nd.eyebrow": "National Day · 国庆",
-    "nd.title": "山河锦绣，<span class=\"grad-gold\">庆祝中华人民共和国成立 <span id=\"nd-anniv-2\">77</span> 周年</span>",
-    "nd.p1": "盛世华夏七十七载，山河无恙，国泰民安。",
 
     /* ---------- 公开内容流通用 ---------- */
     "feed.mirrorTitle": "当前站点是静态镜像，读不到云端内容。",
@@ -777,12 +771,6 @@ window.SITE_I18N = {
     "cal.timeline": "Timeline for the day",
     "cal.now": "Now",
 
-    /* ---------- National Day (shown only around 1 Oct) ---------- */
-    "nd.bar": "Celebrating <span id=\"nd-anniv\">77</span> years of the People's Republic of China",
-    "nd.barSub": "Wishing the country peace and prosperity, year after year",
-    "nd.eyebrow": "National Day · 国庆",
-    "nd.title": "A land worth singing for — <span class=\"grad-gold\">celebrating <span id=\"nd-anniv-2\">77</span> years of the People's Republic of China</span>",
-    "nd.p1": "Seventy-seven years of a flourishing China — the land is unbroken, the country at peace.",
 
     /* ---------- Shared by public feeds ---------- */
     "feed.mirrorTitle": "This site is a static mirror and cannot read the cloud content.",
