@@ -578,6 +578,14 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function closeEditor() {
+    /* ⚠️ 关之前先把焦点从弹层里踢出来：
+       藏起来的元素还会是 document.activeElement（连隐藏的输入框也算「正在打字」），
+       不 blur 的话自动同步会一直以为你在写字，从此再也不刷新了。 */
+    try {
+      /* 弹层容器只有 class 没有 id，按 class 找 */
+      var a = document.activeElement;
+      if (a && a.blur && a.closest && a.closest(".iv-modal")) a.blur();
+    } catch (e) {}
     $("iv-mask").hidden = true;
     editing = null;
     draft = null;
@@ -970,6 +978,35 @@ document.addEventListener("DOMContentLoaded", function () {
     alertIn($("iv-alerts"), "ok", "已导出 " + list.length + " 行的 CSV，用 Excel 打开即可。");
   }
 
+  /* ---------------- 自动同步（两个人同时在场时不互相看不见） ----------------
+     面试官常常是一整晚开着这一页，不同场次由不同的人各记一段。所以隔一小会儿就静默重拉一次：
+     - 静默：不显示 loading、失败也不弹提示（下一轮自然会补上）；
+     - 有礼貌：页面不在前台 / 登录框还没过 / 弹层开着 / 光标正在输入框里，一律跳过
+       —— 重画会把输入内容和光标位置一起冲掉，现场手快的时候不能来这一下；
+     - 同一时刻只跑一个请求（pulling 挡着），弱网也不会攒成一串。 */
+  var pulling = false;
+  function busyHere() {
+    var el = document.activeElement;
+    if (el && el.tagName && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) return true;
+    return false;
+  }
+  function pullQuiet() {
+    if (pulling) return Promise.resolve();
+    if (appView.hidden || document.hidden) return Promise.resolve();
+    if (!$("iv-mask").hidden || busyHere()) return Promise.resolve();
+    pulling = true;
+    return Promise.all([
+      C.listInterviewSlots().then(function (r) { return C.unwrap(r, "读取时间表失败"); }),
+      C.listInterviewRecords().then(function (r) { return C.unwrap(r, "读取面试记录失败"); })
+    ]).then(function (out) {
+      slots = out[0] || [];
+      recs = {};
+      (out[1] || []).forEach(function (x) { recs[x.slot_id] = x; });
+      renderAll();
+    }).catch(function () { /* 静默，下一次再试 */ })
+      .then(function () { pulling = false; });
+  }
+
   /* ---------------- 每分钟刷新一次「现在 / 还剩几分钟」 ----------------
      ⚠️ 只重画跟时间有关的三块，不重拉数据、也不碰输入框 ——
         这个页面常常就开着放在面试官面前。 */
@@ -980,6 +1017,14 @@ document.addEventListener("DOMContentLoaded", function () {
       renderList();
     }
   }, 60000);
+
+  /* 20 秒静默同步一次 */
+  setInterval(pullQuiet, 20000);
+  /* 从别的标签页 / 别的窗口切回来那一刻立刻同步一次（等轮询会让人以为没保存） */
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) pullQuiet();
+  });
+  window.addEventListener("focus", pullQuiet);
 
   window.GUISInterview = {
     parseLine: parseLine,
