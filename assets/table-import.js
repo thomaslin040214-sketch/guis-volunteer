@@ -104,7 +104,7 @@
   /* ---------- 表头识别 ----------
      复制粘贴 / 导出常常带着一行列名，认出来就丢掉，
      免得把「张三」当成一行数据写进库里。 */
-  var HEAD_WORDS = ["邮箱", "邮件", "email", "e-mail", "姓名", "名字", "name", "角色", "备注", "学号", "年级", "英文名"];
+  var HEAD_WORDS = ["邮箱", "邮件", "email", "e-mail", "姓名", "名字", "name", "角色", "备注", "学号", "va id", "年级", "英文名"];
 
   function looksHeader(cells) {
     var joined = cells.join(" ").toLowerCase();

@@ -1876,7 +1876,13 @@ document.addEventListener("DOMContentLoaded", function () {
         if (r.must_change_password) tags.push('<span class="badge badge-draft">待改密码</span>');
         return "<tr>" +
           "<td>" + esc(r.email) + (isMe ? '<span class="roster-flag">我</span>' : "") + "</td>" +
-          "<td>" + (r.name ? esc(r.name) : '<span class="muted">—</span>') + "</td>" +
+          /* 姓名行内可改：改完失焦即存。
+             为什么必须能改 —— 姓名只有这一处能填（导入文件也行），
+             但填错、或者事后才知道英文名，都得能在列表里就地改，
+             不至于为了改个字把整个人移除再重加。 */
+          '<td><input type="text" class="tbl-inline" data-name-set="' + esc(r.email) + '"' +
+            ' value="' + esc(r.name) + '" placeholder="未填写"' +
+            ' style="' + (r.name ? "" : "color:var(--text-subtle)") + '" /></td>' +
           "<td>" + roleLabel(r.role) + "</td>" +
           "<td>" + tags.join(" ") + "</td>" +
           "<td>" + esc(r.note) + "</td>" +
@@ -1918,8 +1924,13 @@ document.addEventListener("DOMContentLoaded", function () {
      列顺序：邮箱, 姓名, 角色, 备注 —— 与页面上的提示一致，别改。
      走 upsert（邮箱是主键），所以同一份名单导两遍只会刷新姓名备注，
      不会因为「已经存在」整批失败。 */
+  /* 列：邮箱, 姓名, 角色, 备注, 是否学生（可选）
+     ⚠️ 第 5 列写「是 / 是学生 / student / y / 1 / true」都会认。
+        学生名单的写入在 runPeopleImport 里跟着一起做 —— 加人的时候勾了「也是学生」
+        就会自动进学生名单，导入同理，不必再去「学生名单」导一遍。 */
   function parsePeople(grid) {
     var rows = [];
+    var students = [];
     var bad = 0;
     var seen = {};
     grid.forEach(function (cells) {
@@ -1929,34 +1940,72 @@ document.addEventListener("DOMContentLoaded", function () {
       if (seen[email]) { bad++; return; }        /* 同一份文件里重复出现也只写一次 */
       seen[email] = 1;
       var roleTxt = String(cells[2] || "").toLowerCase();
+      var role = /owner|执委|admin|管理/.test(roleTxt) ? "owner"
+               : /member|普通|只读/.test(roleTxt) ? "member" : "teacher";
+      var stuTxt = String(cells[4] || "").trim().toLowerCase();
+      var isStu = /^(是|学生|是学生|student|y|yes|true|1)$/.test(stuTxt);
       rows.push({
         email: email,
         name: cells[1] || null,
-        role: /owner|执委|admin|管理/.test(roleTxt) ? "owner" : "teacher",
+        role: role,
+        is_student: isStu,
         note: cells[3] || null
       });
+      if (isStu) students.push(email);
     });
-    return { rows: rows, bad: bad };
+    return { rows: rows, students: students, bad: bad };
   }
 
   function runPeopleImport(grid, cleanup) {
     var p = parsePeople(grid);
     if (!p.rows.length) {
-      alertIn($("peo-alerts"), "error", "没解析出任何有效邮箱。每行一条：邮箱, 姓名, 角色, 备注");
+      alertIn($("peo-alerts"), "error", "没解析出任何有效邮箱。每行一条：邮箱, 姓名, 角色, 备注, 是否学生");
       return;
     }
     var btn = $("peo-import");
     busyOn(btn, "导入中…");
+    /* 先把人写进人员名单；成功后再把标了「是学生」的那批写进学生名单。
+       ⚠️ 顺序不能反 —— 人还没进白名单就发学生名单，出问题时分不清是哪一步坏的。 */
     C.importMembers(p.rows).then(function (res) {
-      busyOff(btn);
       C.unwrap(res, "导入失败");
-      /* ⚠️ 顺序刻意的：loadPeople() 一上来就会 clear(#peo-alerts)，
-         先弹提示再刷新，等于提示刚出来就被自己擦掉了 —— 必须反过来。 */
-      if (cleanup) cleanup();
-      loadPeople();
-      alertIn($("peo-alerts"), "ok", "已导入 " + p.rows.length + " 人" +
-        (p.bad ? "（另 " + p.bad + " 行没有邮箱或重复，已跳过）" : "") +
-        "。名单里的人还要逐个点「开通账号」才能真正登录。");
+      if (!p.students.length) {
+        busyOff(btn);
+        if (cleanup) cleanup();
+        loadPeople();
+        alertIn($("peo-alerts"), "ok", "已导入 " + p.rows.length + " 人" +
+          (p.bad ? "（另 " + p.bad + " 行没有邮箱或重复，已跳过）" : "") +
+          "。名单里的人还要逐个点「开通账号」才能真正登录。");
+        return;
+      }
+      /* 批量写学生名单：一次请求，别一行一个 */
+      var studRows = p.students.map(function (m) {
+        var mail = String(m).trim().toLowerCase();
+        var at = mail.indexOf("@");
+        var prefix = at > 0 ? mail.slice(0, at) : "";
+        var row = { email: mail };
+        if (/^\d{6,}$/.test(prefix)) row.student_id = prefix;
+        return row;
+      });
+      return C.importStudents(studRows).then(function (r2) {
+        busyOff(btn);
+        if (cleanup) cleanup();
+        loadPeople();
+        alertIn($("peo-alerts"), (r2 && r2.error) ? "warn" : "ok",
+          "已导入 " + p.rows.length + " 人" +
+          (p.bad ? "（另 " + p.bad + " 行没有邮箱或重复，已跳过）" : "") + "。" +
+          (r2 && r2.error
+            ? "<b>其中 " + p.students.length + " 个标了「是学生」，但没能自动加进学生名单</b>（" +
+              esc(failMsg(r2.error)) + "）—— 请到「学生名单」页导入一次这些邮箱。"
+            : "其中 " + p.students.length + " 人已同时登记为学生（可在登录页自助开通）。") +
+          " 名单里的人还要逐个点「开通账号」才能真正登录。");
+      }, function (e2) {
+        busyOff(btn);
+        if (cleanup) cleanup();
+        loadPeople();
+        alertIn($("peo-alerts"), "warn", "已导入 " + p.rows.length + " 人，但其中 " +
+          p.students.length + " 个标了「是学生」的没能自动加进学生名单（" + failMsg(e2) +
+          "）—— 请到「学生名单」页导入一次这些邮箱。");
+      });
     }).catch(function (err) {
       busyOff(btn);
       alertIn($("peo-alerts"), "error", "导入失败：" + failMsg(err));
@@ -2014,6 +2063,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { alertIn($("peo-alerts"), "error", "邮箱格式看起来不对。"); return; }
 
     var initial = $("peo-initial").value.trim();
+    var alsoStudent = $("peo-is-student").checked;
     var btn = $("peo-submit");
     btn.disabled = true;
 
@@ -2024,24 +2074,47 @@ document.addEventListener("DOMContentLoaded", function () {
       /* 归一化：下拉里只有三档合法值，这里再兜一层，
          万一以后有人手改 HTML 塞了个非法值，也不会写坏库里的 role。 */
       role: R.norm($("peo-role").value) === "student" ? "member" : R.norm($("peo-role").value),
-      is_student: $("peo-is-student").checked,
+      is_student: alsoStudent,
       must_change_password: !!initial
     }).then(function (res) {
       C.unwrap(res, "添加失败");
       btn.disabled = false;
-      $("peo-email").value = "";
-      $("peo-name").value = "";
-      $("peo-note").value = "";
-      $("peo-initial").value = "";
-      $("peo-is-student").checked = false;
-      alertIn($("peo-alerts"), "ok", "已加入人员名单：" + esc(email) +
-        "。下一步点列表里的「开通账号」给 TA 开一个能登录的账号。");
-      loadPeople();
+
+      /* 勾了「同时也是学生」就顺手把 TA 写进学生名单 ——
+         以前这个勾选框只是打个标签，勾了之后本人照样开不了账号、用不了学生端，
+         还得再来「学生名单」导一遍，纯属多此一举（2026-10-08 改）。
+         ⚠️ 这一步失败不能算「加人失败」：人已经在人员名单里了，
+            所以只提示一句，让人知道学生端还没开通，别把整次操作说成失败。 */
+      if (!alsoStudent) return finishAdd(email, false);
+
+      return C.addStudentFromEmail(email).then(function (r2) {
+        if (r2 && r2.error) return finishAdd(email, false, r2.error);
+        return finishAdd(email, true);
+      }, function () { return finishAdd(email, false); });
     }).catch(function (err) {
       btn.disabled = false;
       if (err && err.code === "23505") alertIn($("peo-alerts"), "warn", "这个邮箱已经在名单里了。");
       else alertIn($("peo-alerts"), "error", "添加失败：" + failMsg(err));
     });
+
+    function finishAdd(email2, intoStudents, syncErr) {
+      $("peo-email").value = "";
+      $("peo-name").value = "";
+      $("peo-note").value = "";
+      $("peo-initial").value = "";
+      $("peo-is-student").checked = false;
+      var msg = "已加入人员名单：" + esc(email2) + "。";
+      if (intoStudents) {
+        msg += "同时已登记为学生，他可以在登录页自助开通，也能用「我的义工账户」。" +
+               "（姓名和年级还没填，去「学生名单」补一下，或直接导入文件。）";
+      } else if (syncErr) {
+        msg += "<b>但没能自动加进学生名单</b>（" + esc(failMsg(syncErr)) +
+               "），学生自助开通和义工账户暂时用不了 —— 请到「学生名单」页导入一次这个邮箱。";
+      }
+      msg += " 下一步点列表里的「开通账号」给 TA 开一个能登录的账号。";
+      alertIn($("peo-alerts"), syncErr ? "warn" : "ok", msg);
+      loadPeople();
+    }
   });
 
   /* ---------------- 开通账号 / 设初始密码 ----------------
@@ -2110,11 +2183,39 @@ document.addEventListener("DOMContentLoaded", function () {
   /* 角色下拉：三档之间任意切换（change 触发，不用点按钮）。
      ⚠️ 不给自己降权：把自己降下去会立刻失去这个页面的权限，
      界面上会瞬间塌掉一半，用户还以为坏了。 */
+  /* 姓名行内编辑：失焦即存（change 事件）。
+     为什么用 change 而不是每敲一下就存：中文输入法打字过程中会触发多次 input，
+     一边打字一边写库既吵又可能存下半截的名字。等失焦（点别处 / 回车）再一次性提交。 */
+  function saveNameInline(input, mail, patch, alertsId) {
+    var box = $(alertsId);
+    var v = String(input.value || "").trim();
+    busyOn(input, "…");
+    C.updateMember(mail, patch).then(function (res) {
+      busyOff(input);
+      var out = C.unwrap(res, "修改失败") || [];
+      if (!out.length) { alertIn(box, "error", "没有改动 —— 只有组织成员能改这里。"); return; }
+      input.value = v;
+      input.style.color = v ? "" : "var(--text-subtle)";
+      alertIn(box, "ok", esc(mail) + " 的" + (patch.name_en !== undefined ? "英文名" : "姓名") +
+        "已更新为「" + (v || "（空）") + "」。");
+    }).catch(function (err) {
+      busyOff(input);
+      alertIn(box, "error", "修改失败：" + failMsg(err));
+      loadPeople();
+    });
+  }
+
   $("peo-body").addEventListener("change", function (e) {
     var t = e.target;
-    if (!t || t.tagName !== "SELECT") return;
-    var mail = t.getAttribute("data-role-set");
-    if (!mail) return;
+    if (!t) return;
+    /* 姓名输入框 */
+    if (t.tagName === "INPUT") {
+      var nameMail = t.getAttribute("data-name-set");
+      if (nameMail) { saveNameInline(t, nameMail, { name: String(t.value || "").trim() || null }, "peo-alerts"); return; }
+      return;
+    }
+    if (t.tagName !== "SELECT") return;
+    var mail = t.getAttribute("data-role-set");    if (!mail) return;
     var next = R.norm(t.value);
     if (String(mail).toLowerCase() === String(ME.email || "").toLowerCase() && next !== "owner") {
       t.value = ME.role;
@@ -2203,13 +2304,20 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
     body.innerHTML = list.slice(0, 400).map(function (r) {
+      /* VA ID = 邮箱前缀（学生的学校邮箱就是 <学号>@guiscn.com），
+         不用人填 —— 2026-10-08 起这一列只读。 */
+      var vaId = String(r.email || "").split("@")[0] || "";
       return "<tr>" +
         "<td>" + esc(r.email) + "</td>" +
-        "<td>" + esc(r.name) + "</td>" +
+        '<td><input type="text" class="tbl-inline" data-stu-name="' + esc(r.email) + '"' +
+          ' value="' + esc(r.name) + '" placeholder="未填写"' +
+          ' style="' + (r.name ? "" : "color:var(--text-subtle)") + '" /></td>' +
         /* 英文名印在义工证明上（中文名前面）。没登记就只能显示中文名，学生在证明页改不了这一项 */
-        "<td>" + (r.name_en ? esc(r.name_en) : '<span class="hint">未登记</span>') + "</td>" +
+        '<td><input type="text" class="tbl-inline" data-stu-name-en="' + esc(r.email) + '"' +
+          ' value="' + esc(r.name_en) + '" placeholder="未登记"' +
+          ' style="' + (r.name_en ? "" : "color:var(--text-subtle)") + '" /></td>' +
         "<td>" + esc(r.grade) + "</td>" +
-        "<td>" + esc(r.student_id) + "</td>" +
+        '<td class="va-id">' + esc(vaId) + "</td>" +
         "<td>" + (r.activated ? '<span class="ci-yes">已开通</span>' : '<span class="ci-no">未开通</span>') + "</td>" +
         '<td><div class="row-actions">' +
           '<button type="button" class="tbl-btn danger" data-delstudent="' + esc(r.email) + '">移除</button>' +
@@ -2225,6 +2333,39 @@ document.addEventListener("DOMContentLoaded", function () {
   $("stu-refresh").addEventListener("click", loadStudents);
   $("stu-search").addEventListener("input", renderStudents);
 
+  /* 姓名 / 英文名行内编辑：失焦即存。
+     ⚠️ 英文名会印在义工证明上（中文名前面），学生自己改不了 ——
+        所以这里必须能就地补上，否则只能重新导一遍整份名单。 */
+  $("stu-body").addEventListener("change", function (e) {
+    var t = e.target;
+    if (!t || t.tagName !== "INPUT") return;
+    var mail = t.getAttribute("data-stu-name");
+    var mailEn = t.getAttribute("data-stu-name-en");
+    var box = $("stu-alerts");
+    var key = mail || mailEn;
+    if (!key) return;
+    var v = String(t.value || "").trim();
+    var patch = mail ? { name: v || null } : { name_en: v || null };
+    busyOn(t, "…");
+    C.updateStudent(key, patch).then(function (res) {
+      busyOff(t);
+      if (res && res.error) { alertIn(box, "error", "保存失败：" + failMsg(res.error)); return; }
+      t.value = v;
+      t.style.color = v ? "" : "var(--text-subtle)";
+      alertIn(box, "ok", esc(key) + " 的" + (mail ? "姓名" : "英文名") + "已更新" + (v ? "为「" + esc(v) + "」" : "（清空）") + "。");
+    }).catch(function (err) {
+      busyOff(t);
+      alertIn(box, "error", "保存失败：" + failMsg(err));
+      loadStudents();
+    });
+  });
+
+  /* 列：邮箱, 姓名, 年级, 英文名（英文名可省）
+     ⚠️ 2026-10-08 去掉了「学号」列 —— 它就是邮箱前缀（学生的学校邮箱是 <学号>@guiscn.com），
+        让人手填一遍纯属多此一举，而且填错了还多一处不一致的来源。
+        现在 VA ID 一律由邮箱前缀自动生成。
+        ⚠️ 英文名同时兼容两种位置：第 4 列（新写法）或第 5 列（旧名单里学号占着第 4 列）——
+           有人拿旧格式的表再来导入，不至于把英文名读成学号。 */
   function studentRowsFromGrid(grid) {
     var rows = [];
     var bad = 0;
@@ -2235,13 +2376,20 @@ document.addEventListener("DOMContentLoaded", function () {
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { bad++; return; }
       if (seen[email]) { bad++; return; }
       seen[email] = 1;
+      var prefix = email.split("@")[0];
+      /* 新写法第 4 列是英文名；旧写法第 4 列是学号、第 5 列才是英文名。
+         判据：第 4 列是一串纯数字且第 5 列非空 → 当作旧格式。 */
+      var c4 = String(cells[3] || "").trim();
+      var c5 = String(cells[4] || "").trim();
+      var legacy = /^\d{4,}$/.test(c4) && !!c5;
       rows.push({
         email: email,
         name: cells[1] || null,
         grade: cells[2] || null,
-        student_id: cells[3] || null,
-        /* 英文名（第 5 列，可省）—— 会印在义工证明的姓名栏里 */
-        name_en: cells[4] || null
+        /* VA ID：邮箱前缀。纯数字才写（比如 teacher.demo@guiscn.com 前缀不是数字，那就空着）。 */
+        student_id: /^\d{4,}$/.test(prefix) ? prefix : null,
+        /* 英文名 —— 会印在义工证明的姓名栏里 */
+        name_en: (legacy ? c5 : c4) || null
       });
     });
     return { rows: rows, bad: bad };
@@ -2251,7 +2399,7 @@ document.addEventListener("DOMContentLoaded", function () {
     var p = studentRowsFromGrid(grid);
     var btn = caller || $("stu-import");
     if (!p.rows.length) {
-      alertIn($("stu-alerts"), "error", "没解析出任何有效邮箱。每行一条：邮箱, 姓名, 年级, 学号, 英文名（可选）");
+      alertIn($("stu-alerts"), "error", "没解析出任何有效邮箱。每行一条：邮箱, 姓名, 年级, 英文名（英文名可省）");
       return;
     }
     busyOn(btn, "导入中…");

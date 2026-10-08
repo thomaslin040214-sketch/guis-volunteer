@@ -1731,3 +1731,38 @@ table.data tr.is-done { background: rgba(45, 138, 78, 0.045); }
   padding: 0.05em 0.32em;
   border-radius: 4px;
 }
+
+/* ============================================================
+   名单里的行内编辑（2026-10-08）
+   姓名 / 英文名 / VA ID 这类「想起来就补一下」的字段，
+   做成列表里直接能改的输入框，失焦即存 —— 不必为了改个字
+   把整个人移除再重加（那会连带丢掉角色与账号开通状态）。
+   ============================================================ */
+.tbl-inline {
+  width: 100%;
+  min-width: 7.5rem;
+  font: inherit;
+  font-size: 0.86rem;
+  padding: 0.26rem 0.42rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-main);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.tbl-inline:hover { border-color: var(--hairline-strong); background: #fff; }
+.tbl-inline:focus {
+  border-color: var(--brand);
+  background: #fff;
+  outline: none;
+  box-shadow: 0 0 0 3px var(--brand-tint);
+}
+.tbl-inline::placeholder { color: var(--text-subtle); font-style: normal; }
+
+/* VA ID：只是显示，不给人改 */
+.va-id {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.84rem;
+  color: var(--text-soft);
+  letter-spacing: 0.02em;
+}

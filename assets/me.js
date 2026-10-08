@@ -292,7 +292,7 @@ document.addEventListener("DOMContentLoaded", function () {
     var bits = [];
     if (me.email) bits.push(me.email);
     if (me.grade) bits.push(me.grade);
-    if (me.student_id) bits.push("学号 " + me.student_id);
+    if (me.student_id) bits.push("VA ID " + me.student_id);
     $("me-sub").textContent = bits.join(" · ");
   }
 

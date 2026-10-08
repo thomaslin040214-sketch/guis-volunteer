@@ -577,6 +577,37 @@
       return db.from("student_directory").upsert(rows, { onConflict: "email" }).select("email");
     },
 
+    /* ---------- 「同时也是学生」→ 自动进学生名单（2026-10-08）----------
+       以前人员管理里那个「同时也是义工组织学生成员」勾选框只是打个标签，
+       勾了之后本人依然在登录页开不了账号、也用不了学生端 ——
+       学生端查的是 my_service()、自助开通查的是 student_directory，都不看 is_student。
+       所以勾选框现在直接把人写进 student_directory，一个动作完成两件事。
+
+       学号从邮箱前缀推：GUIS 的学生邮箱就是 <学号>@guiscn.com（现有名单也印证了这一点）。
+       姓名/年级这里拿不到，留空 —— 之后在「学生名单」页补，或用文件导入一次补齐。
+       ⚠️ upsert（onConflict email）：已经登记过的不会被覆盖，
+          免得把已经填好的姓名年级冲掉。 */
+    addStudentFromEmail: function (email) {
+      var mail = String(email || "").trim().toLowerCase();
+      if (!mail) return Promise.resolve({ data: [], error: null });
+      var at = mail.indexOf("@");
+      var prefix = at > 0 ? mail.slice(0, at) : "";
+      var row = { email: mail };
+      if (/^\d{6,}$/.test(prefix)) row.student_id = prefix;
+      return db.from("student_directory").upsert([row], { onConflict: "email" });
+    },
+
+    /* 行内改姓名 / 英文名（学生名单）。upsert：邮件是主键，
+       这样「改名」和「补名」是同一套代码 —— 学生名单的 UPDATE 策略
+       允许本人改自己那一行，但组织成员改别人时更需要这条。
+       ⚠️ 不链 .select()：回读受读策略约束（学生目录只允许 owner 或本人读）。 */
+    updateStudent: function (email, patch) {
+      if (!email) return Promise.resolve({ data: [], error: null });
+      var key = String(email).trim().toLowerCase();
+      var row = Object.assign({ email: key }, patch || {});
+      return db.from("student_directory").upsert([row], { onConflict: "email" });
+    },
+
     deleteStudent: function (email) {
       return db.from("student_directory").delete().eq("email", email).select("email");
     },
