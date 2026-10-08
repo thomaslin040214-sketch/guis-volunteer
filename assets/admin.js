@@ -1841,13 +1841,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function loadPeople() {
     var body = $("peo-body");
-    body.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-subtle);"><span class="loading"></span> 读取中…</td></tr>';
+    body.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-subtle);"><span class="loading"></span> 读取中…</td></tr>';
     clear($("peo-alerts"));
 
     C.listMembers().then(function (res) {
       var rows = C.unwrap(res, "读取失败") || [];
       if (!rows.length) {
-        body.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-subtle);">还没有任何成员。</td></tr>';
+        body.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-subtle);">还没有任何成员。</td></tr>';
         $("peo-stats").innerHTML = "";
         $("peo-count").textContent = "";
         return;
@@ -1883,6 +1883,12 @@ document.addEventListener("DOMContentLoaded", function () {
           '<td><input type="text" class="tbl-inline" data-name-set="' + esc(r.email) + '"' +
             ' value="' + esc(r.name) + '" placeholder="未填写"' +
             ' style="' + (r.name ? "" : "color:var(--text-subtle)") + '" /></td>' +
+          /* 英文名单独占一格（与中文名分开）。用 data-name-en-set 区分，
+             委托里靠它决定 patch 的是 name 还是 name_en —— 两个属性名挨在一起，
+             用同一个处理器容易写错键，表现就是「改了英文名结果中文名变了」。 */
+          '<td><input type="text" class="tbl-inline" data-name-en-set="' + esc(r.email) + '"' +
+            ' value="' + esc(r.name_en) + '" placeholder="未填写"' +
+            ' style="' + (r.name_en ? "" : "color:var(--text-subtle)") + '" /></td>' +
           "<td>" + roleLabel(r.role) + "</td>" +
           "<td>" + tags.join(" ") + "</td>" +
           "<td>" + esc(r.note) + "</td>" +
@@ -1924,10 +1930,17 @@ document.addEventListener("DOMContentLoaded", function () {
      列顺序：邮箱, 姓名, 角色, 备注 —— 与页面上的提示一致，别改。
      走 upsert（邮箱是主键），所以同一份名单导两遍只会刷新姓名备注，
      不会因为「已经存在」整批失败。 */
-  /* 列：邮箱, 姓名, 角色, 备注, 是否学生（可选）
-     ⚠️ 第 5 列写「是 / 是学生 / student / y / 1 / true」都会认。
+  /* 列：邮箱, 中文姓名, 英文名, 角色, 备注, 是否学生（可选）
+     ⚠️ 第 3 列写「是 / 是学生 / student / y / 1 / true」都会认（那是第 6 列）。
         学生名单的写入在 runPeopleImport 里跟着一起做 —— 加人的时候勾了「也是学生」
-        就会自动进学生名单，导入同理，不必再去「学生名单」导一遍。 */
+        就会自动进学生名单，导入同理，不必再去「学生名单」导一遍。
+
+     ⚠️ 兼容旧格式（邮箱, 姓名, 角色, 备注, 是否学生）：
+        2026-10-08 之前导出去的文件都是 5 列。直接在第 3 位插一列会让
+        旧文件的「角色」被当成英文名、「备注」被当成角色 —— 而且不报错，
+        只是一整批人的角色全变成默认的「负责老师」，很难发现。
+        所以按「第 3 列长得不像角色词」来判定新格式。 */
+  var ROLE_RE = /owner|teacher|member|admin|执委|组织成员|老师|教师|普通|成员|只读|管理员/i;
   function parsePeople(grid) {
     var rows = [];
     var students = [];
@@ -1939,17 +1952,22 @@ document.addEventListener("DOMContentLoaded", function () {
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { bad++; return; }
       if (seen[email]) { bad++; return; }        /* 同一份文件里重复出现也只写一次 */
       seen[email] = 1;
-      var roleTxt = String(cells[2] || "").toLowerCase();
+      /* 新旧格式判定：第 3 列是角色词 → 旧格式（没有英文名那一列） */
+      var legacy = ROLE_RE.test(String(cells[2] || "").trim());
+      var name = cells[1] || null;
+      var nameEn = legacy ? null : (cells[2] || null);
+      var roleTxt = String(cells[legacy ? 2 : 3] || "").toLowerCase();
       var role = /owner|执委|admin|管理/.test(roleTxt) ? "owner"
                : /member|普通|只读/.test(roleTxt) ? "member" : "teacher";
-      var stuTxt = String(cells[4] || "").trim().toLowerCase();
+      var stuTxt = String(cells[legacy ? 4 : 5] || "").trim().toLowerCase();
       var isStu = /^(是|学生|是学生|student|y|yes|true|1)$/.test(stuTxt);
       rows.push({
         email: email,
-        name: cells[1] || null,
+        name: name,
+        name_en: nameEn,
         role: role,
         is_student: isStu,
-        note: cells[3] || null
+        note: cells[legacy ? 3 : 4] || null
       });
       if (isStu) students.push(email);
     });
@@ -2070,6 +2088,7 @@ document.addEventListener("DOMContentLoaded", function () {
     C.addMember({
       email: email,
       name: $("peo-name").value.trim() || null,
+      name_en: $("peo-name-en").value.trim() || null,
       note: $("peo-note").value.trim() || null,
       /* 归一化：下拉里只有三档合法值，这里再兜一层，
          万一以后有人手改 HTML 塞了个非法值，也不会写坏库里的 role。 */
@@ -2100,6 +2119,7 @@ document.addEventListener("DOMContentLoaded", function () {
     function finishAdd(email2, intoStudents, syncErr) {
       $("peo-email").value = "";
       $("peo-name").value = "";
+      $("peo-name-en").value = "";
       $("peo-note").value = "";
       $("peo-initial").value = "";
       $("peo-is-student").checked = false;
@@ -2208,10 +2228,12 @@ document.addEventListener("DOMContentLoaded", function () {
   $("peo-body").addEventListener("change", function (e) {
     var t = e.target;
     if (!t) return;
-    /* 姓名输入框 */
+    /* 姓名输入框（中文名 / 英文名各一个） */
     if (t.tagName === "INPUT") {
       var nameMail = t.getAttribute("data-name-set");
       if (nameMail) { saveNameInline(t, nameMail, { name: String(t.value || "").trim() || null }, "peo-alerts"); return; }
+      var enMail = t.getAttribute("data-name-en-set");
+      if (enMail) { saveNameInline(t, enMail, { name_en: String(t.value || "").trim() || null }, "peo-alerts"); return; }
       return;
     }
     if (t.tagName !== "SELECT") return;
@@ -2280,7 +2302,7 @@ document.addEventListener("DOMContentLoaded", function () {
   function loadStudents() {
     var body = $("stu-body");
     /* 加了「英文名」一列之后这里是 7 列 */
-    body.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-subtle);"><span class="loading"></span> 读取中…</td></tr>';
+    body.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-subtle);"><span class="loading"></span> 读取中…</td></tr>';
     C.listStudents().then(function (res) {
       studentRows = C.unwrap(res, "读取失败") || [];
       renderStudents();

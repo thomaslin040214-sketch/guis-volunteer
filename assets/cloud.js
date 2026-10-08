@@ -537,7 +537,10 @@
     listMembers: function () {
       return db
         .from("allowed_admins")
-        .select("email, name, note, role, is_student, must_change_password, last_login_at, created_at")
+        /* name_en —— 英文名，与中文名分开存（2026-10-08）。
+           为什么分开而不是塞进 name：Excel 导出、审核记录、义工证明上都要
+           中英文分别呈现，混在一个字段里迟早要靠 split(" / ") 猜，猜错就出洋相。 */
+        .select("email, name, name_en, note, role, is_student, must_change_password, last_login_at, created_at")
         .order("created_at", { ascending: true });
     },
 
