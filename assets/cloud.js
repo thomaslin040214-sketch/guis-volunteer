@@ -144,6 +144,19 @@
     checkStudentEmail: function (email) {
       return db.rpc("check_student_email", { p_email: email });
     },
+    /* 首次开通前的核对（2026-10-12）。
+       ⚠️ 为什么不能直接用 check_student_email：它只看 student_directory.activated，
+          而「有没有账号」的真���事实在 auth.users。
+          两者会不一致 —— 最典型的就是后台那边给某人开了账号（auth.users 有了），
+          但他从没走过「首次开通」，student_directory.activated 还是 false。
+          这时前端以为「还没开通」，把人送进首次开通流程，
+          verifyOtp 对已存在的账号不返回 verificationToken →
+          用户看到的是毫无线索的「没有拿到开通凭证，请重试」。
+          （2026-10-12 yeewu2742 就是这么被卡住的，其实她直接密码登录就能进。）
+       has_account 由服务端直接查 auth.users，前端不猜。 */
+    checkStudentSignup: function (email) {
+      return db.rpc("check_student_signup", { p_email: email });
+    },
     markStudentActivated: function () {
       return db.rpc("mark_student_activated");
     },

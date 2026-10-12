@@ -70,6 +70,40 @@
     try { localStorage.removeItem(CACHE_KEY); } catch (e) {}
   }
 
+  /* ---------------- 「必须改密码」标记自愈（2026-10-12） ----------------
+     真实故障：陈颂茵今天 14:22 改完密码后就再也进不去后台了，反复改都进不去。
+     成因是三个环节凑在一起：
+
+       1. 后台「开通账号」signUp 成功后写 must_change_password = true；
+       2. 全站**只有 me.html 会清这个标记**（me.js 的 paintForceChange 里那一行）；
+       3. 而 role=owner/teacher 登录后 nextDest() 直接送后台，根本不经 me.html。
+
+     于是标记永远留着 → 每次回来都被判定「还必须改密码」→ 死循环。
+     更隐蔽的是：她改密码那一步其实**成功了**（auth.users 里
+     password_updated_at 是 14:22:24，说明新密码已经写进去），
+     只是标记没清，看起来像「密码没生效」。
+
+     为什么放在这里清：session.js 是 16 个页面都挂的会话复核，
+     等于全站每次打开都会顺手清一次 —— 谁改了密码、走的哪条路径，都不再有残留。
+
+     ⚠️ 三条铁律：
+       - 静默失败。updateMember 挂了（网络差 / 权限策略拒绝）也不能影响返回结果，
+         绝不能因为「清理动作」把人拦在门外。
+       - 只在标记为true 时才写，避免每次复核都打一次无意义的请求。
+       - 只清自己这一行。email 优先用服务端给的 row.email，取不到就不做。 */
+  var mustChangeCleared = {};        /* 同一页面生命周期内只试一次，避免每次复核都打请求 */
+  function clearMustChange(row, fallbackEmail) {
+    try {
+      if (!row || !row.must_change_password) return;
+      var mail = String(row.email || fallbackEmail || "").toLowerCase();
+      if (!mail || mustChangeCleared[mail]) return;
+      if (typeof C.updateMember !== "function") return;
+      mustChangeCleared[mail] = 1;
+      Promise.resolve(C.updateMember(mail, { must_change_password: false }))
+        .catch(function () { delete mustChangeCleared[mail]; });   /* 失败就允许下次重试 */
+    } catch (e) {}
+  }
+
   /* ---------------- 跟服务端对一次 ----------------
      三种结果：
        ok        → 会话还在，返回 { email, role }
@@ -94,6 +128,7 @@
         var row = (ar && ar.data && ar.data[0]) || {};
         /* ⚠️ 归一化交给 roles.js：库里出现前端不认识的 role 时，
            宁可当成学生（权限最低）也不要当成老师（能改义工小时）。 */
+        clearMustChange(row, email);
         return { state: "ok", email: email, role: window.GUISRoles.norm(row.role) };
       }, function () {
         var c = readCache();

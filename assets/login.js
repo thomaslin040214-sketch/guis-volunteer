@@ -96,6 +96,27 @@ document.addEventListener("DOMContentLoaded", function () {
       var msg = window.GUISRoles.isMember(role)
         ? "识别到你是" + who + "，正在进入后台…"
         : "进入「我的义工账户」…";
+
+      /* ⚠️ 2026-10-12 死循环修复（真实故障：陈颂茵今天 14:22 改了密码却再也进不去）。
+         成因链条：
+           后台「开通账号」→ signUp 成功 → 写 must_change_password = true
+           → 她改了自己的密码
+           → 但**只有 me.html 会清这个标记**（me.js 的 paintForceChange 里那一行）
+           → 而 role=owner/teacher 登录后 nextDest() 直接送后台，根本不经 me.html
+           → 标记永远留着，于是每次回来都被判定「还必须改密码」，反复改、永远进不去。
+         所以这里在**登录成功这一刻**清掉：能走到 go() 说明密码已经验证通过了，
+         标记的唯一作用就是「提醒首次登录者改掉初始密码」，
+         它没被清本身就是上一次流程漏了步，不是现在还需要拦的事。
+         ⚠️ 静默失败：清不掉也不能挡住跳转 —— 否则这条线会把人卡死在登录页。 */
+      var pending = !!row.must_change_password;
+      if (pending) {
+        box.innerHTML = '<div class="alert alert-ok">' + esc(msg) + "</div>";
+        setTimeout(function () { location.href = dest; }, 650);
+        Promise.resolve(C.updateMember(row.email || email, { must_change_password: false }))
+          .catch(function () { /* 清理失败不阻断登录 */ });
+        return role;
+      }
+
       box.innerHTML = '<div class="alert alert-ok">' + esc(msg) + "</div>";
       setTimeout(function () { location.href = dest; }, 650);
       return role;
@@ -175,7 +196,7 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
     busyOn(this, "核对中…");
-    C.checkStudentEmail(email).then(function (res) {
+    C.checkStudentSignup(email).then(function (res) {
       var row = (C.unwrap(res, "核对失败") || [])[0] || {};
       if (!row.known) {
         busyOff($("lg-new-send"));
@@ -184,9 +205,20 @@ document.addEventListener("DOMContentLoaded", function () {
           "请确认前缀有没有打错，或联系义工组织把你的邮箱加进名单。");
         return;
       }
-      if (row.activated) {
+      /* ⚠️ 2026-10-12 修的真故障（yeewu2742 等人卡在这里，报「没有拿到开通凭证」）。
+         判断「能不能走首次开通」必须看 has_account（服务端查 auth.users），
+         **不能只看 student_directory.activated** —— 那两个状态会不一致：
+         后台开通了账号但人没走过首次开通时，activated 还是 false。
+         继续走下去的话 verifyOtp 对已存在的账号不返回 verificationToken，
+         用户只看到一句「没有拿到开通凭证，请重试」，完全不知道该干嘛。
+
+         有账号就直接把人送到密码登录，并把提示说清楚 ——
+         「你已经有账号了」这件事本身就是要传达的核心信息。 */
+      if (row.has_account || row.activated) {
         busyOff($("lg-new-send"));
-        alertIn($("lg-alerts"), "warn", "这个邮箱已经开通过了 —— 切到「密码登录」直接进就行。");
+        alertIn($("lg-alerts"), "warn",
+          "这个邮箱**已经有账号了**，用「密码登录」直接进就行。" +
+          "（忘了密码 → 点下面的「忘记密码」。）");
         showForm("pass");
         $("lg-email").value = String(email).replace(/@.*$/, "");
         return;
@@ -219,7 +251,19 @@ document.addEventListener("DOMContentLoaded", function () {
     }).then(function (r) {
       if (r.error) { busyOff($("lg-new-go")); alertIn($("lg-alerts"), "error", "验证码不正确或已过期。"); return; }
       var vt = r.data && r.data.verificationToken;
-      if (!vt) { busyOff($("lg-new-go")); alertIn($("lg-alerts"), "error", "没有拿到开通凭证，请重试。"); return; }
+      if (!vt) {
+        busyOff($("lg-new-go"));
+        /* ⚠️ 这里几乎可以断定是「这个邮箱已经有账号了」——
+           verifyOtp 对已存在的账号会正常返回但不带 verificationToken。
+           所以别再丢一句「请重试」（用户会反复点，永远还是这个结果），
+           直接告诉他下一步该做什么。 */
+        alertIn($("lg-alerts"), "warn",
+          "这个邮箱**已经有账号了**，所以不能再走「首次开通」。" +
+          "请点下面的「密码登录」直接进；若密码忘了，点「忘记密码」重置。");
+        showForm("pass");
+        $("lg-email").value = String(pendingNew.email).replace(/@.*$/, "");
+        return;
+      }
       return C.auth.signUp({ email: pendingNew.email, password: pass, verificationToken: vt })
         .then(function (s) {
           if (s.error) { busyOff($("lg-new-go")); alertIn($("lg-alerts"), "error", "开通失败：" + (s.error.message || "请重试")); return; }

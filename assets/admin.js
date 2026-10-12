@@ -285,6 +285,14 @@ document.addEventListener("DOMContentLoaded", function () {
         ME.role = R.norm(row.role);
         ME.isStudent = !!row.is_student;
         ME.mustChange = !!row.must_change_password;
+        /* ⚠️ 第二道保险（2026-10-12）。第一道在 login.js 的 go() 里；
+           这里再清一次是因为组织成员有时是「已登录状态下直接打开后台页」
+           （session.js 会自动补签），压根不经login.html。
+           同样静默失败、不阻断登录 —— 这条线绝对不能把人拦在门外。 */
+        if (ME.mustChange) {
+          ME.mustChange = false;
+          C.updateMember(ME.email, { must_change_password: false }).catch(function () {});
+        }
         showSignedIn(ME.email);
         return true;
       });
