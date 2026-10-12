@@ -156,16 +156,77 @@ document.addEventListener("DOMContentLoaded", function () {
      曾经还有「验证码登录」这一档：它和「首次开通」的第二半步完全重复
      （都是「发 6 位码到邮箱 → 填码」），多一个入口只是多一种走错的可能，
      2026-09-30 由用户决定删掉。要找回就看 git 历史里的 mode:"otp"。 */
+  /* ---------------- 自动判断该走哪一步（2026-10-12） ----------------
+     原来是 .seg 两个 tab（密码登录 / 首次开通）让用户自己选，
+     现在按用户要求合并成一个表单：填了邮箱就自动判断。
+     ⚠️ 结构没变，showForm 这个函数名和签名都留着，只是去掉了切换 tab 那部分 ——
+        后面几处有has_account 分支会调它来「把人导去密码登录」。
+
+     mode: "pass" 已有账号 → 只出密码那一格
+           "new"  还没开通 → 出验证码 + 设密码两格
+           null   还不知道 / 没填邮箱 → 两个都不出，给一句提示
+     ⚠️ 别一上来就 showForm("pass")：那等于又变回「默认密码登录」，
+        没开通的同学又会撞上「没有拿到开通凭证」。默认应该是「等你填邮箱」。 */
   var forms = { pass: $("form-pass"), neu: $("form-new") };
   function showForm(name) {
     Object.keys(forms).forEach(function (k) { forms[k].hidden = k !== name; });
-    Array.prototype.forEach.call($("lg-seg").children, function (b) {
-      b.classList.toggle("is-on", b.getAttribute("data-mode") === name);
-    });
-    clear($("lg-alerts"));
+    var hint = $("lg-nohint");
+    if (hint) hint.hidden = !!name;
+    if (!name) clear($("lg-alerts"));
   }
-  Array.prototype.forEach.call($("lg-seg").children, function (b) {
-    b.addEventListener("click", function () { showForm(b.getAttribute("data-mode")); });
+  showForm(null);
+
+  /* 邮箱输入框：失焦时自动判断。⚠️ 两个分支各有自己的邮箱框，
+     所以两边都要挂；pendingNew 也要跟着换，否则核对的是另一个邮箱。 */
+  function detect(from) {
+    var src = from || "lg-email";
+    var email = fullEmail($(src).value);
+    if (!email) { showForm(null); return Promise.resolve(null); }
+    if (src === "lg-email") { $("lg-new-email").value = String(email).replace(/@.*$/, ""); }
+    else { $("lg-email").value = String(email).replace(/@.*$/, ""); }
+
+    return C.checkStudentSignup(email).then(function (res) {
+      var row = (C.unwrap(res, "核对失败") || [])[0] || {};
+      /* 组织成员 / 老师不在学生名单里（known=false）但有账号 ——
+         他们只能走密码登录，所以不能因为 known 为false 就说「不在名单」。
+         这也顺带覆盖了 linjtom@gmail.com 这类非学校邮箱的开通者。 */
+      if (!row.known && !row.has_account) {
+        showForm(null);
+        alertIn($("lg-alerts"), "error",
+          "这个邮箱（" + esc(email) + "）不在学校登记的学生名单里，也还没有账号。" +
+          "请确认前缀有没有打错，或联系义工组织把它加进名单。");
+        return null;
+      }
+      if (row.has_account || row.activated) {
+        showForm("pass");
+        alertIn($("lg-alerts"), "ok", "这个邮箱已经有账号了 —— 填密码就能登录。");
+      } else {
+        showForm("new");
+        alertIn($("lg-alerts"), "ok",
+          "这个邮箱还没开通过 —— 点「获取验证码」，收信里的 6 位数字，设一个密码就好。");
+      }
+      return row;
+    }).catch(function (err) {
+      /* ⚠️ 查不到就退回「问用户要密码」，但别卡死 ——
+         网络抖动不该让人连表单都填不了。 */
+      showForm("pass");
+      alertIn($("lg-alerts"), "warn",
+        "没能自动判断（" + ((err && err.message) || "网络问题") + "），请直接用密码登录。");
+      return null;
+    });
+  }
+  ["lg-email", "lg-new-email"].forEach(function (id) {
+    var el = $(id);
+    if (el) el.addEventListener("blur", function () { detect(id); });
+  });
+
+  /* 「我已经有账号了」：手动覆盖自动判断的结果（自动判断万一查错了还能救）。 */
+  var sw = $("lg-switch");
+  if (sw) sw.addEventListener("click", function () {
+    showForm("pass");
+    alertIn($("lg-alerts"), "ok", "已切到密码登录。填邮箱后如果又跳回来，点下面那个链接就行。");
+    var e = $("lg-email");
+    if (e) e.focus();
   });
 
   /* ---------------- 密码登录 ---------------- */
@@ -198,7 +259,10 @@ document.addEventListener("DOMContentLoaded", function () {
     busyOn(this, "核对中…");
     C.checkStudentSignup(email).then(function (res) {
       var row = (C.unwrap(res, "核对失败") || [])[0] || {};
-      if (!row.known) {
+      /* ⚠️ 判定条件与上面的 detect() 必须一致：不光看 known，还要看 has_account。
+         组织成员 / 老师的邮箱往往不在学生名单里（known=false）但**有账号** ——
+         他们该走密码登录，而不是被一句「不在学生名单」拦在这里。 */
+      if (!row.known && !row.has_account) {
         busyOff($("lg-new-send"));
         alertIn($("lg-alerts"), "error",
           "这个邮箱（" + esc(email) + "）不在学校登记的学生名单里，暂时不能自助开通。" +

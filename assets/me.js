@@ -137,17 +137,67 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  /* ---------------- 登录 / 开通 两个表单切换 ---------------- */
+  /* ---------------- 自动判断该走哪一步（2026-10-12） ----------------
+     和 login.html 一样，原来这里是「登录 / 首次开通」两个 tab 让用户自己选，
+     现在按用户要求合并：填了邮箱自动判断该走哪一步。
+     ⚠️ 两页的判定逻辑必须一致（都是 check_student_signup + has_account/activated），
+        不然同一个学生在 login.html 能进、在 me.html 却撞「已经开通过了」。 */
   var forms = { login: $("me-login"), activate: $("me-activate") };
   function showForm(name) {
     Object.keys(forms).forEach(function (k) { forms[k].hidden = k !== name; });
-    Array.prototype.forEach.call($("me-seg").children, function (b) {
-      b.classList.toggle("is-on", b.getAttribute("data-mode") === name);
-    });
-    clear($("me-alerts"));
+    var hint = $("me-nohint");
+    if (hint) hint.hidden = !!name;
+    if (!name) clear($("me-alerts"));
   }
-  Array.prototype.forEach.call($("me-seg").children, function (b) {
-    b.addEventListener("click", function () { showForm(b.getAttribute("data-mode")); });
+  showForm(null);
+
+  /* 邮箱失焦 → 自动判断。
+     ⚠️ known=false 不代表「没账号」：组织成员/老师的邮箱往往不在学生名单里，
+        但有账号、该走密码登录。所以两个条件都要看。 */
+  function detect(from) {
+    var src = from || "me-user";
+    var email = fullEmail($(src).value);
+    if (!email) { showForm(null); return Promise.resolve(null); }
+    if (src === "me-user") { $("me-new-user").value = String(email).replace(/@.*$/, ""); }
+    else { $("me-user").value = String(email).replace(/@.*$/, ""); }
+
+    return C.checkStudentSignup(email).then(function (res) {
+      var row = (C.unwrap(res, "核对失败") || [])[0] || {};
+      if (!row.known && !row.has_account) {
+        showForm(null);
+        alertIn($("me-alerts"), "error",
+          "这个邮箱（" + esc(email) + "）不在学校登记的学生名单里，也还没有账号。" +
+          "请确认前缀有没有打错，或联系义工组织把它加进名单。");
+        return null;
+      }
+      if (row.has_account || row.activated) {
+        showForm("login");
+        alertIn($("me-alerts"), "ok", "这个邮箱已经有账号了 —— 填密码就能登录。");
+      } else {
+        showForm("activate");
+        alertIn($("me-alerts"), "ok",
+          "这个邮箱还没开通过 —— 点「获取验证码」，收信里的 6 位数字，设一个密码就好。");
+      }
+      return row;
+    }).catch(function (err) {
+      showForm("login");
+      alertIn($("me-alerts"), "warn",
+        "没能自动判断（" + ((err && err.message) || "网络问题") + "），请直接用密码登录。");
+      return null;
+    });
+  }
+  ["me-user", "me-new-user"].forEach(function (id) {
+    var el = $(id);
+    if (el) el.addEventListener("blur", function () { detect(id); });
+  });
+
+  /* 手动覆盖：自动判断万一查错了还能救 */
+  var sw = $("me-switch");
+  if (sw) sw.addEventListener("click", function () {
+    showForm("login");
+    alertIn($("me-alerts"), "ok", "已切到登录。填邮箱后如果又跳回来，点下面那个链接就行。");
+    var e = $("me-user");
+    if (e) e.focus();
   });
 
   /* ---------------- 首次开通 ----------------
@@ -162,18 +212,22 @@ document.addEventListener("DOMContentLoaded", function () {
     var btn = this;
     busyOn(btn, "核对中…");
 
-    C.checkStudentEmail(email).then(function (res) {
+    C.checkStudentSignup(email).then(function (res) {
       var row = (C.unwrap(res, "核对失败") || [])[0] || {};
-      if (!row.known) {
+      /* 判定必须与上面的 detect() 一致：不光看 known，还要看 has_account */
+      if (!row.known && !row.has_account) {
         busyOff(btn);
         alertIn($("me-alerts"), "error",
           "这个邮箱（" + esc(email) + "）不在学校登记的学生名单里，暂时不能开通。" +
           "请确认前缀有没有打错，或联系义工组织把你的邮箱加进名单。");
         return;
       }
-      if (row.activated) {
+      /* ⚠️ 2026-10-12：只看 activated 会漏掉「后台开了账号但人没走过首次开通」那种情况
+         （yeewu2742 就是）。此时 verifyOtp 会正常返回但不带 verificationToken，
+         用户只看到「没有拿到开通凭证，请重试」，反复点也没用。 */
+      if (row.has_account || row.activated) {
         busyOff(btn);
-        alertIn($("me-alerts"), "warn", "这个邮箱已经开通过了，直接用「登录」进去就行。");
+        alertIn($("me-alerts"), "warn", "这个邮箱**已经有账号了**，用「登录」直接进就行。");
         showForm("login");
         $("me-user").value = String(email).replace(/@.*$/, "");
         return;
@@ -209,7 +263,18 @@ document.addEventListener("DOMContentLoaded", function () {
     }).then(function (r) {
       if (r.error) { busyOff(btn); alertIn($("me-alerts"), "error", "验证码不正确或已过期。"); return; }
       var vt = r.data && r.data.verificationToken;
-      if (!vt) { busyOff(btn); alertIn($("me-alerts"), "error", "没有拿到开通凭证，请重试。"); return; }
+      /* ⚠️ 这里几乎可以断定是「这个邮箱已经有账号了」——
+         verifyOtp 对已存在的账号会正常返回但不带 verificationToken。
+         别再丢一句「请重试」（用户会反复点，永远还是这个结果）。 */
+      if (!vt) {
+        busyOff(btn);
+        alertIn($("me-alerts"), "warn",
+          "这个邮箱**已经有账号了**，所以不能再走开通流程。" +
+          "请用「登录」直接进；若密码忘了，点「忘记密码」重置。");
+        showForm("login");
+        $("me-user").value = String(pending.email).replace(/@.*$/, "");
+        return;
+      }
       return C.auth.signUp({ email: pending.email, password: pass, verificationToken: vt }).then(function (s) {
         if (s.error) { busyOff(btn); alertIn($("me-alerts"), "error", "开通失败：" + (s.error.message || "请重试")); return; }
         return C.markStudentActivated().catch(function () {}).then(function () {

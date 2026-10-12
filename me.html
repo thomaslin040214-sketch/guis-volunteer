@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-ver="20261003h">
+<html lang="zh-CN" data-ver="20261003i">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,8 +7,8 @@
 <meta name="description" content="GUIS 义工组织学生账户：查看自己报名参加的义工活动、签到二维码与累计义工小时。" />
 <meta name="theme-color" content="#FFFFFF" />
 <meta name="robots" content="noindex, nofollow" />
-<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261003h" />
-<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261003h" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261003i" />
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261003i" />
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate" />
 <script>
 /* 文档自愈：托管服务器只给 last-modified，没有 Cache-Control / ETag，
@@ -16,7 +16,7 @@
    于是点站内链接（全是裸路径）进去时整页退回旧设计。
    这里比对 <html data-ver>：不是当前版本就带查询串重拉一次（查询串必定回源）。 */
 (function () {
-  var VER = "20261003h";
+  var VER = "20261003i";
   try {
     var el = document.documentElement;
     var healed = /[?&]_v=/.test(location.search);
@@ -65,8 +65,8 @@
   .footer-brand img{max-height:24px}
 }
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20261003h" />
-<link rel="stylesheet" href="assets/app.css?v=20261003h" />
+<link rel="stylesheet" href="assets/site.css?v=20261003i" />
+<link rel="stylesheet" href="assets/app.css?v=20261003i" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
@@ -118,15 +118,19 @@
 
           <div class="panel">
             <div class="panel-body">
-              <div class="seg" id="me-seg">
-                <button type="button" class="is-on" data-mode="login">登录</button>
-                <button type="button" data-mode="activate">首次开通</button>
-              </div>
+              <!-- 2026-10-12 用户要求：把「登录」和「首次开通」合并成一个表单。
+                   填了邮箱就自动判断该走哪一步（判定逻辑与 login.html 完全一致）。
+                   ⚠️ 结构没动：还是同一个 .panel / .field / .form-actions，
+                      两个分支各自一个 <form>，按判定结果显示其中一个。
+                      原来的 .seg（登录 / 首次开通 两个 tab）已删除。 -->
+              <p class="hint" style="margin:0 0 1.1rem;">
+                填学校邮箱，系统会自动判断 —— 已有账号的用密码，还没开通的会让你收验证码设密码。
+              </p>
 
               <div id="me-alerts"></div>
 
-              <!-- 登录 -->
-              <form id="me-login" novalidate>
+              <!-- 已有账号 → 登录 -->
+              <form id="me-login" novalidate hidden>
                 <div class="field" style="margin-bottom:1rem;">
                   <label for="me-user">学校邮箱</label>
                   <div class="me-suffix">
@@ -167,8 +171,17 @@
                 <div class="form-actions" style="margin-top:0;">
                   <button type="button" class="btn btn-secondary" id="me-send">获取验证码</button>
                   <button type="submit" class="btn btn-primary" id="me-activate-go">开通并登录</button>
+                  <button type="button" class="link-btn" id="me-switch">我已经有账号了，改用登录</button>
                 </div>
               </form>
+
+              <!-- 还没填邮箱 / 不在名单：给一句明确的下一步，别让人对着一屏空白猜 -->
+              <div id="me-nohint" hidden>
+                <p class="hint" style="margin:0;">
+                  请先填学校邮箱前缀（学号），系统才知道该走哪一步。
+                  不在学生名单里的邮箱请联系义工组织添加。
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -275,13 +288,13 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
-<script src="assets/cloud-config.js?v=20261003h"></script>
-<script src="assets/cloud.js?v=20261003h"></script>
-<script src="assets/navfit.js?v=20261003h"></script>
-<script src="assets/time.js?v=20261003h"></script>
-<script src="assets/roles.js?v=20261003h"></script>
-<script src="assets/session.js?v=20261003h"></script>
-<script src="assets/qr.js?v=20261003h"></script>
-<script src="assets/me.js?v=20261003h"></script>
+<script src="assets/cloud-config.js?v=20261003i"></script>
+<script src="assets/cloud.js?v=20261003i"></script>
+<script src="assets/navfit.js?v=20261003i"></script>
+<script src="assets/time.js?v=20261003i"></script>
+<script src="assets/roles.js?v=20261003i"></script>
+<script src="assets/session.js?v=20261003i"></script>
+<script src="assets/qr.js?v=20261003i"></script>
+<script src="assets/me.js?v=20261003i"></script>
 </body>
 </html>
