@@ -142,24 +142,29 @@ document.addEventListener("DOMContentLoaded", function () {
      现在按用户要求合并：填了邮箱自动判断该走哪一步。
      ⚠️ 两页的判定逻辑必须一致（都是 check_student_signup + has_account/activated），
         不然同一个学生在 login.html 能进、在 me.html 却撞「已经开通过了」。 */
+  /* ⚠️ login.js 里踩过这个坑：键名（neu）与调用（"new"）不一致，
+     forms["new"] 是 undefined → 赋 .hidden 抛异常 → 被 catch 吞掉 →
+     「提示对了但表单不显示」。这里加同样的守卫：键名写错立刻炸。 */
   var forms = { login: $("me-login"), activate: $("me-activate") };
   function showForm(name) {
+    if (name && !forms[name]) {
+      throw new Error("showForm: 未知分支 '" + name + "'（可用：" + Object.keys(forms).join("/") + "）");
+    }
     Object.keys(forms).forEach(function (k) { forms[k].hidden = k !== name; });
-    var hint = $("me-nohint");
-    if (hint) hint.hidden = !!name;
+    var step = $("me-step-row");
+    if (step) step.hidden = !!name;      /* 判定出来了就不用再点「下一步」 */
     if (!name) clear($("me-alerts"));
   }
   showForm(null);
 
   /* 邮箱失焦 → 自动判断。
      ⚠️ known=false 不代表「没账号」：组织成员/老师的邮箱往往不在学生名单里，
-        但有账号、该走密码登录。所以两个条件都要看。 */
-  function detect(from) {
-    var src = from || "me-user";
-    var email = fullEmail($(src).value);
+        但有账号、该走密码登录。所以两个条件都要看。
+     ⚠️ 邮箱框现在**只有一个**（常驻在两个 form 之外，见 me.html）——
+        原来这里挂两个框互相复制前缀，me-new-user 那个已删。 */
+  function detect() {
+    var email = fullEmail($("me-user").value);
     if (!email) { showForm(null); return Promise.resolve(null); }
-    if (src === "me-user") { $("me-new-user").value = String(email).replace(/@.*$/, ""); }
-    else { $("me-user").value = String(email).replace(/@.*$/, ""); }
 
     return C.checkStudentSignup(email).then(function (res) {
       var row = (C.unwrap(res, "核对失败") || [])[0] || {};
@@ -186,17 +191,17 @@ document.addEventListener("DOMContentLoaded", function () {
       return null;
     });
   }
-  ["me-user", "me-new-user"].forEach(function (id) {
-    var el = $(id);
-    if (el) el.addEventListener("blur", function () { detect(id); });
-  });
+  var emailBox = $("me-user");
+  if (emailBox) emailBox.addEventListener("blur", detect);
+  var stepBtn = $("me-step");
+  if (stepBtn) stepBtn.addEventListener("click", detect);
 
   /* 手动覆盖：自动判断万一查错了还能救 */
   var sw = $("me-switch");
   if (sw) sw.addEventListener("click", function () {
     showForm("login");
     alertIn($("me-alerts"), "ok", "已切到登录。填邮箱后如果又跳回来，点下面那个链接就行。");
-    var e = $("me-user");
+    var e = $("me-pass");
     if (e) e.focus();
   });
 
@@ -207,7 +212,9 @@ document.addEventListener("DOMContentLoaded", function () {
   var pending = null;
 
   $("me-send").addEventListener("click", function () {
-    var email = fullEmail($("me-new-user").value);
+    /* ⚠️ 邮箱框已合并成一个（常驻在两个 form 之外），原来读的是 me-new-user，
+       那个框随分支一起删掉了 —— 改成读同一个 me-user。 */
+    var email = fullEmail($("me-user").value);
     if (!email) { alertIn($("me-alerts"), "error", "请先填写学校邮箱前缀。"); return; }
     var btn = this;
     busyOn(btn, "核对中…");

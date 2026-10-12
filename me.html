@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-ver="20261003i">
+<html lang="zh-CN" data-ver="20261003j">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,8 +7,8 @@
 <meta name="description" content="GUIS 义工组织学生账户：查看自己报名参加的义工活动、签到二维码与累计义工小时。" />
 <meta name="theme-color" content="#FFFFFF" />
 <meta name="robots" content="noindex, nofollow" />
-<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261003i" />
-<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261003i" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261003j" />
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261003j" />
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate" />
 <script>
 /* 文档自愈：托管服务器只给 last-modified，没有 Cache-Control / ETag，
@@ -16,7 +16,7 @@
    于是点站内链接（全是裸路径）进去时整页退回旧设计。
    这里比对 <html data-ver>：不是当前版本就带查询串重拉一次（查询串必定回源）。 */
 (function () {
-  var VER = "20261003i";
+  var VER = "20261003j";
   try {
     var el = document.documentElement;
     var healed = /[?&]_v=/.test(location.search);
@@ -65,8 +65,8 @@
   .footer-brand img{max-height:24px}
 }
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20261003i" />
-<link rel="stylesheet" href="assets/app.css?v=20261003i" />
+<link rel="stylesheet" href="assets/site.css?v=20261003j" />
+<link rel="stylesheet" href="assets/app.css?v=20261003j" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
@@ -122,23 +122,30 @@
                    填了邮箱就自动判断该走哪一步（判定逻辑与 login.html 完全一致）。
                    ⚠️ 结构没动：还是同一个 .panel / .field / .form-actions，
                       两个分支各自一个 <form>，按判定结果显示其中一个。
-                      原来的 .seg（登录 / 首次开通 两个 tab）已删除。 -->
-              <p class="hint" style="margin:0 0 1.1rem;">
-                填学校邮箱，系统会自动判断 —— 已有账号的用密码，还没开通的会让你收验证码设密码。
-              </p>
+                      原来的 .seg（登录 / 首次开通 两个 tab）已删除。
+
+                   🚨 与 login.html 同一个坑：邮箱框**必须常驻在所有 form 之外**。
+                      第一版把邮箱框放在 me-login / me-activate 里面，
+                      初始又 showForm(null) —— 两个都藏着，邮箱框跟着一起消失，
+                      页面一片空白，用户根本没法登录。
+                      所以现在邮箱框在两个 form 外面，永远可见可填。 -->
+              <div class="field" style="margin-bottom:1rem;">
+                <label for="me-user">学校邮箱</label>
+                <div class="me-suffix">
+                  <input id="me-user" type="text" autocomplete="username" placeholder="例如 2510032" spellcheck="false" />
+                  <span class="suf">@guiscn.com</span>
+                </div>
+                <span class="hint">只用填 @ 前面的部分，后缀我们帮你补上。填完系统自动判断下一步。</span>
+              </div>
 
               <div id="me-alerts"></div>
 
+              <div class="form-actions" id="me-step-row" style="margin:0 0 1rem;">
+                <button type="button" class="btn btn-secondary" id="me-step">下一步</button>
+              </div>
+
               <!-- 已有账号 → 登录 -->
               <form id="me-login" novalidate hidden>
-                <div class="field" style="margin-bottom:1rem;">
-                  <label for="me-user">学校邮箱</label>
-                  <div class="me-suffix">
-                    <input id="me-user" type="text" autocomplete="username" placeholder="例如 2510032" spellcheck="false" />
-                    <span class="suf">@guiscn.com</span>
-                  </div>
-                  <span class="hint">只用填 @ 前面的部分，后缀我们帮你补上。</span>
-                </div>
                 <div class="field" style="margin-bottom:1rem;">
                   <label for="me-pass">密码</label>
                   <input id="me-pass" type="password" autocomplete="current-password" />
@@ -149,16 +156,8 @@
                 </div>
               </form>
 
-              <!-- 首次开通 -->
+              <!-- 还没开通 → 收验证码 + 设密码（邮箱框已提到 form 之外常驻） -->
               <form id="me-activate" novalidate hidden>
-                <div class="field" style="margin-bottom:1rem;">
-                  <label for="me-new-user">学校邮箱</label>
-                  <div class="me-suffix">
-                    <input id="me-new-user" type="text" autocomplete="username" placeholder="例如 2510032" spellcheck="false" />
-                    <span class="suf">@guiscn.com</span>
-                  </div>
-                  <span class="hint">必须是学校已经登记进名单的邮箱，校外邮箱开不了。</span>
-                </div>
                 <div class="field" style="margin-bottom:1rem;">
                   <label for="me-code">邮箱验证码</label>
                   <input id="me-code" type="text" inputmode="numeric" placeholder="邮箱收到的 6 位验证码" />
@@ -174,14 +173,6 @@
                   <button type="button" class="link-btn" id="me-switch">我已经有账号了，改用登录</button>
                 </div>
               </form>
-
-              <!-- 还没填邮箱 / 不在名单：给一句明确的下一步，别让人对着一屏空白猜 -->
-              <div id="me-nohint" hidden>
-                <p class="hint" style="margin:0;">
-                  请先填学校邮箱前缀（学号），系统才知道该走哪一步。
-                  不在学生名单里的邮箱请联系义工组织添加。
-                </p>
-              </div>
             </div>
           </div>
         </div>
@@ -288,13 +279,13 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
-<script src="assets/cloud-config.js?v=20261003i"></script>
-<script src="assets/cloud.js?v=20261003i"></script>
-<script src="assets/navfit.js?v=20261003i"></script>
-<script src="assets/time.js?v=20261003i"></script>
-<script src="assets/roles.js?v=20261003i"></script>
-<script src="assets/session.js?v=20261003i"></script>
-<script src="assets/qr.js?v=20261003i"></script>
-<script src="assets/me.js?v=20261003i"></script>
+<script src="assets/cloud-config.js?v=20261003j"></script>
+<script src="assets/cloud.js?v=20261003j"></script>
+<script src="assets/navfit.js?v=20261003j"></script>
+<script src="assets/time.js?v=20261003j"></script>
+<script src="assets/roles.js?v=20261003j"></script>
+<script src="assets/session.js?v=20261003j"></script>
+<script src="assets/qr.js?v=20261003j"></script>
+<script src="assets/me.js?v=20261003j"></script>
 </body>
 </html>

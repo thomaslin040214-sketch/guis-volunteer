@@ -167,23 +167,39 @@ document.addEventListener("DOMContentLoaded", function () {
            null   还不知道 / 没填邮箱 → 两个都不出，给一句提示
      ⚠️ 别一上来就 showForm("pass")：那等于又变回「默认密码登录」，
         没开通的同学又会撞上「没有拿到开通凭证」。默认应该是「等你填邮箱」。 */
-  var forms = { pass: $("form-pass"), neu: $("form-new") };
+  /* 🚨🚨 这里曾经有一个极隐蔽的 bug，务必看懂：
+     键名叫 `neu`，而 detect() 里调的是 showForm("new") —— **不匹配**。
+     于是 forms["new"] 是 undefined，`forms["new"].hidden = ...` 抛 TypeError，
+     异常又被 detect().catch 吞掉。结果：
+       · 提示文字是对的（「这个邮箱还没开通过……」）
+       · 但 form-new 始终 hidden，用户只看到一句话、没有输入框
+     看起来像「判定对了但界面没反应」，极难定位。
+     现在两个动作：(1) 键名与调用统一用 new；(2) showForm 对未知键直接抛，
+     让这类拼写错误立刻炸出来，而不是被 catch 悄悄吃掉。 */
+  var forms = { pass: $("form-pass"), "new": $("form-new") };
   function showForm(name) {
+    if (name && !forms[name]) {
+      /* 键名写错时立刻炸，别让它变成「界面没反应」这种疑难杂症 */
+      throw new Error("showForm: 未知分支 '" + name + "'（可用：" + Object.keys(forms).join("/") + "）");
+    }
     Object.keys(forms).forEach(function (k) { forms[k].hidden = k !== name; });
-    var hint = $("lg-nohint");
-    if (hint) hint.hidden = !!name;
+    /* 「下一步」按钮：**未判定时反而要显示**（用户填完邮箱得有个可点的目标），
+       判定出结果后就没用了，藏起来免得点它又重新查一遍。
+       ⚠️ 逻辑别写反：showForm(null) 是「还没判定」，不是「什么都不给」。 */
+    var step = $("lg-step-row");
+    if (step) step.hidden = !!name;
     if (!name) clear($("lg-alerts"));
   }
   showForm(null);
 
-  /* 邮箱输入框：失焦时自动判断。⚠️ 两个分支各有自己的邮箱框，
-     所以两边都要挂；pendingNew 也要跟着换，否则核对的是另一个邮箱。 */
-  function detect(from) {
-    var src = from || "lg-email";
-    var email = fullEmail($(src).value);
+  /* 邮箱输入框：失焦时自动判断。
+     ⚠️ 现在只有一个邮箱框了（常驻在所有 form 之外，见 login.html）。
+        🚨 第一版把邮箱框放在两个分支 form 里面、初始又 showForm(null) ——
+        结果两个 form 都藏着，**邮箱框也跟着消失**，用户拿到的是一个空白页
+        （靠用户发截图才发现）。这个坑写进 login.html 的注释里了，别再犯。 */
+  function detect() {
+    var email = fullEmail($("lg-email").value);
     if (!email) { showForm(null); return Promise.resolve(null); }
-    if (src === "lg-email") { $("lg-new-email").value = String(email).replace(/@.*$/, ""); }
-    else { $("lg-email").value = String(email).replace(/@.*$/, ""); }
 
     return C.checkStudentSignup(email).then(function (res) {
       var row = (C.unwrap(res, "核对失败") || [])[0] || {};
@@ -215,17 +231,23 @@ document.addEventListener("DOMContentLoaded", function () {
       return null;
     });
   }
-  ["lg-email", "lg-new-email"].forEach(function (id) {
-    var el = $(id);
-    if (el) el.addEventListener("blur", function () { detect(id); });
-  });
+  /* 邮箱框只有一个（常驻在两个 form 之外，见 login.html），失焦时自动判断。
+     ⚠️ 原来这里挂两个框（lg-email / lg-new-email）互相复制前缀，
+        现在 lg-new-email 已随分支一起删掉 —— 复制逻辑一并去掉。 */
+  var emailBox = $("lg-email");
+  if (emailBox) emailBox.addEventListener("blur", detect);
+
+  /* 「下一步」按钮：填了邮箱但没触发失焦（比如直接点按钮）也能往下走。
+     没有它的话，用户填完只能干等着自己点走。 */
+  var stepBtn = $("lg-step");
+  if (stepBtn) stepBtn.addEventListener("click", detect);
 
   /* 「我已经有账号了」：手动覆盖自动判断的结果（自动判断万一查错了还能救）。 */
   var sw = $("lg-switch");
   if (sw) sw.addEventListener("click", function () {
     showForm("pass");
     alertIn($("lg-alerts"), "ok", "已切到密码登录。填邮箱后如果又跳回来，点下面那个链接就行。");
-    var e = $("lg-email");
+    var e = $("lg-pass");
     if (e) e.focus();
   });
 
@@ -250,7 +272,9 @@ document.addEventListener("DOMContentLoaded", function () {
      所以这一步会先拿 student_directory 核对名单，通过了才发码。 */
   var pendingNew = null;
   $("lg-new-send").addEventListener("click", function () {
-    var email = fullEmail($("lg-new-email").value);
+    /* ⚠️ 邮箱框已合并成一个（常驻在两个 form 之外），原来这里读的是
+       lg-new-email，那个框随分支一起删掉了 —— 改成读同一个 lg-email。 */
+    var email = fullEmail($("lg-email").value);
     if (!email) { alertIn($("lg-alerts"), "error", "请先填写学校邮箱前缀。"); return; }
     if (!/@guiscn\.com$/.test(email)) {
       alertIn($("lg-alerts"), "error", "自助开通只对学校邮箱（@guiscn.com）开放。负责老师和组织成员请让组织成员先在后台「人员管理」里加你的邮箱。");
