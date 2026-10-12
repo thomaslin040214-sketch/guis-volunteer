@@ -197,37 +197,60 @@ document.addEventListener("DOMContentLoaded", function () {
         🚨 第一版把邮箱框放在两个分支 form 里面、初始又 showForm(null) ——
         结果两个 form 都藏着，**邮箱框也跟着消失**，用户拿到的是一个空白页
         （靠用户发截图才发现）。这个坑写进 login.html 的注释里了，别再犯。 */
+
+  /* ---------- 自动识别身份：三类邮箱走三条路 ----------
+     ⚠️ 这一段是 2026-10-12 用户连着两次反馈后理清的：
+     dane.li 在人员名单里（role=owner，组织成员）但账号还没开通，
+     页面却说「不在学校登记的学生名单里」—— 措辞完全不对：
+     她不是学生，她的路径是「组织成员给她开账号」，不该被学生那套话术拦。
+     根因：check_student_signup 只查 student_directory，不查 allowed_admins，
+     组织成员压根不在那张表里 → known=false → 走进「不在名单」分支。
+     所以函数多返回一个 in_staff，现在按四档分：
+       已有账号（has_account || activated）→ 密码登录
+       在人员名单但账号未开通（in_staff）→ 提示联系组织成员开账号
+       在学生名单但账号未开通（known）→ 首次开通
+       三者都不满足 → 邮箱填写有误 / 不在任何名单
+
+     ⚠️ 成功提示一律只说「请输入密码登录」，不再解释「你已经有账号了」——
+        用户反馈过那种说法啰嗦，而且他只想知道现在该做什么。 */
   function detect() {
     var email = fullEmail($("lg-email").value);
     if (!email) { showForm(null); return Promise.resolve(null); }
 
     return C.checkStudentSignup(email).then(function (res) {
       var row = (C.unwrap(res, "核对失败") || [])[0] || {};
-      /* 组织成员 / 老师不在学生名单里（known=false）但有账号 ——
-         他们只能走密码登录，所以不能因为 known 为false 就说「不在名单」。
-         这也顺带覆盖了 linjtom@gmail.com 这类非学校邮箱的开通者。 */
-      if (!row.known && !row.has_account) {
-        showForm(null);
-        alertIn($("lg-alerts"), "error",
-          "这个邮箱（" + esc(email) + "）不在学校登记的学生名单里，也还没有账号。" +
-          "请确认前缀有没有打错，或联系义工组织把它加进名单。");
-        return null;
-      }
+
+      /* 第一档：已有账号 → 直接要密码（学生和组织成员都在这一档） */
       if (row.has_account || row.activated) {
         showForm("pass");
-        alertIn($("lg-alerts"), "ok", "这个邮箱已经有账号了 —— 填密码就能登录。");
-      } else {
+        alertIn($("lg-alerts"), "ok", "请输入密码登录。");
+        return row;
+      }
+      /* 第二档：在人员名单里但账号还没开通 —— 说清楚下一步找谁 */
+      if (row.in_staff) {
+        showForm("pass");
+        alertIn($("lg-alerts"), "warn",
+          "该邮箱已在义工组织人员名单中，但账号尚未开通。请联系组织成员在后台完成账号开通后再登录。");
+        return row;
+      }
+      /* 第三档：在学生名单里 → 首次开通 */
+      if (row.known) {
         showForm("new");
         alertIn($("lg-alerts"), "ok",
-          "这个邮箱还没开通过 —— 点「获取验证码」，收信里的 6 位数字，设一个密码就好。");
+          "请点击「获取验证码」，填写邮箱收到的验证码并设置密码即可完成开通。");
+        return row;
       }
-      return row;
-    }).catch(function (err) {
+      /* 第四档：不在任何名单 */
+      showForm(null);
+      alertIn($("lg-alerts"), "error",
+        "请确认邮箱地址是否填写正确，若有任何问题请联系义工组织。");
+      return null;
+    }).catch(function () {
       /* ⚠️ 查不到就退回「问用户要密码」，但别卡死 ——
          网络抖动不该让人连表单都填不了。 */
       showForm("pass");
       alertIn($("lg-alerts"), "warn",
-        "没能自动判断（" + ((err && err.message) || "网络问题") + "），请直接用密码登录。");
+        "系统暂时无法自动识别身份，请直接输入密码登录，或联系义工组织。");
       return null;
     });
   }
@@ -286,11 +309,26 @@ document.addEventListener("DOMContentLoaded", function () {
       /* ⚠️ 判定条件与上面的 detect() 必须一致：不光看 known，还要看 has_account。
          组织成员 / 老师的邮箱往往不在学生名单里（known=false）但**有账号** ——
          他们该走密码登录，而不是被一句「不在学生名单」拦在这里。 */
-      if (!row.known && !row.has_account) {
+      /* ⚠️ 三档都要看：组织成员的邮箱既不在学生名单、也可能还没账号，
+     只看 known 会让他们撞上「未在学生名单中登记」—— 那句话对他们是错的。
+         has_account/activated → 已在下面处理（跳去密码登录）
+         in_staff             → 组织成员，账号未开通
+         known                → 学生，首次开通
+         都不满足             → 邮箱有问题 */
+      if (!row.known && !row.has_account && !row.in_staff) {
         busyOff($("lg-new-send"));
         alertIn($("lg-alerts"), "error",
-          "这个邮箱（" + esc(email) + "）不在学校登记的学生名单里，暂时不能自助开通。" +
-          "请确认前缀有没有打错，或联系义工组织把你的邮箱加进名单。");
+          "该邮箱地址未在任何名单中登记，也无法使用自助开通服务。" +
+          "请确认邮箱地址是否填写正确，若有任何问题请联系义工组织。");
+        return;
+      }
+      if (row.in_staff && !row.has_account && !row.activated) {
+        busyOff($("lg-new-send"));
+        alertIn($("lg-alerts"), "warn",
+          "该邮箱已在义工组织人员名单中，但账号尚未开通。" +
+          "请联系组织成员在后台完成账号开通后再登录，无需自助开通。");
+        showForm("pass");
+        $("lg-email").value = String(email).replace(/@.*$/, "");
         return;
       }
       /* ⚠️ 2026-10-12 修的真故障（yeewu2742 等人卡在这里，报「没有拿到开通凭证」）。

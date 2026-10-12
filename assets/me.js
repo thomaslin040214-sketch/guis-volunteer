@@ -162,32 +162,46 @@ document.addEventListener("DOMContentLoaded", function () {
         但有账号、该走密码登录。所以两个条件都要看。
      ⚠️ 邮箱框现在**只有一个**（常驻在两个 form 之外，见 me.html）——
         原来这里挂两个框互相复制前缀，me-new-user 那个已删。 */
+  /* ---------- 自动识别身份：三类邮箱走三条路 ----------
+     ⚠️ 与 login.js 的 detect() 必须完全一致（同一天改的两处）。
+        关键是要看 in_staff：组织成员的邮箱不在 student_directory 里，
+        只看 known 会把他们误判成「不在名单」—— 2026-10-12 用户就是这么
+        输入 dane.li 被告知「没有这个人」的。 */
   function detect() {
     var email = fullEmail($("me-user").value);
     if (!email) { showForm(null); return Promise.resolve(null); }
 
     return C.checkStudentSignup(email).then(function (res) {
       var row = (C.unwrap(res, "核对失败") || [])[0] || {};
-      if (!row.known && !row.has_account) {
-        showForm(null);
-        alertIn($("me-alerts"), "error",
-          "这个邮箱（" + esc(email) + "）不在学校登记的学生名单里，也还没有账号。" +
-          "请确认前缀有没有打错，或联系义工组织把它加进名单。");
-        return null;
-      }
+      /* 第一档：已有账号 → 请输入密码登录 */
       if (row.has_account || row.activated) {
         showForm("login");
-        alertIn($("me-alerts"), "ok", "这个邮箱已经有账号了 —— 填密码就能登录。");
-      } else {
+        alertIn($("me-alerts"), "ok", "请输入密码登录。");
+        return row;
+      }
+      /* 第二档：在人员名单里但账号未开通 */
+      if (row.in_staff) {
+        showForm("login");
+        alertIn($("me-alerts"), "warn",
+          "该邮箱已在义工组织人员名单中，但账号尚未开通。请联系组织成员在后台完成账号开通后再登录。");
+        return row;
+      }
+      /* 第三档：在学生名单里但账号未开通 → 首次开通 */
+      if (row.known) {
         showForm("activate");
         alertIn($("me-alerts"), "ok",
-          "这个邮箱还没开通过 —— 点「获取验证码」，收信里的 6 位数字，设一个密码就好。");
+          "请点击「获取验证码」，填写邮箱收到的验证码并设置密码即可完成开通。");
+        return row;
       }
-      return row;
-    }).catch(function (err) {
+      /* 第四档：不在任何名单 */
+      showForm(null);
+      alertIn($("me-alerts"), "error",
+        "请确认邮箱地址是否填写正确，若有任何问题请联系义工组织。");
+      return null;
+    }).catch(function () {
       showForm("login");
       alertIn($("me-alerts"), "warn",
-        "没能自动判断（" + ((err && err.message) || "网络问题") + "），请直接用密码登录。");
+        "系统暂时无法自动识别身份，请直接输入密码登录，或联系义工组织。");
       return null;
     });
   }
@@ -222,11 +236,22 @@ document.addEventListener("DOMContentLoaded", function () {
     C.checkStudentSignup(email).then(function (res) {
       var row = (C.unwrap(res, "核对失败") || [])[0] || {};
       /* 判定必须与上面的 detect() 一致：不光看 known，还要看 has_account */
-      if (!row.known && !row.has_account) {
+      /* ⚠️ 三档都要看（与 detect() 一致）：组织成员邮箱不在学生名单里，
+         只看 known 会让他们撞上「未在学生名单中登记」—— 那句话对他们是错的。 */
+      if (!row.known && !row.has_account && !row.in_staff) {
         busyOff(btn);
         alertIn($("me-alerts"), "error",
-          "这个邮箱（" + esc(email) + "）不在学校登记的学生名单里，暂时不能开通。" +
-          "请确认前缀有没有打错，或联系义工组织把你的邮箱加进名单。");
+          "该邮箱地址未在任何名单中登记，无法使用自助开通服务。" +
+          "请确认邮箱地址是否填写正确，若有任何问题请联系义工组织。");
+        return;
+      }
+      if (row.in_staff && !row.has_account && !row.activated) {
+        busyOff(btn);
+        alertIn($("me-alerts"), "warn",
+          "该邮箱已在义工组织人员名单中，但账号尚未开通。" +
+          "请联系组织成员在后台完成账号开通后再登录，无需自助开通。");
+        showForm("login");
+        $("me-user").value = String(email).replace(/@.*$/, "");
         return;
       }
       /* ⚠️ 2026-10-12：只看 activated 会漏掉「后台开了账号但人没走过首次开通」那种情况
