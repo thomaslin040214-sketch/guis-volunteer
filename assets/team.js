@@ -70,7 +70,7 @@ window.GUIS_TEAM = {
       name_en: "Human Resources Department",
       head: {
         avatar: "assets/photos/dep-hr-head.jpg",
-        name: "邱梅馨颍",
+        name: "",
         name_en: "Evelyn Qiumei",
         role: "部长",
         role_en: "Department Head",
