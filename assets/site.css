@@ -469,79 +469,37 @@ section { position: relative; z-index: 2; padding: clamp(4rem, 9vw, 7rem) 0; scr
 }
 .hero-brand .hero-va { height: clamp(44px, 5.2vw, 62px); width: auto; }
 
-.hero-badge {
-  display: inline-flex; align-items: center; gap: 0.55rem;
-  padding: 0.42rem 1.05rem;
-  background: var(--brand-tint);
-  border: 1px solid rgba(20, 76, 144, 0.16);
-  border-radius: 9999px;
-  color: var(--brand-deep); font-size: 0.8rem; font-weight: 600;
-  margin-bottom: 1.7rem;
+/* ---------- 首屏机构名（三行结构的后两行）----------
+   2026-10-25 定稿（用户第二轮反馈）：首屏标题区是三行结构 ——
+     欢迎（转动，多语言）→ 来到 → GUIS-ULC义工组织
+   · **不要药丸框**：纯文字。「来到」是小号连接词，机构名加大做主视觉副题。
+   · 机构名 0.62em ≈ 主标题的 0.62 倍 —— 比当年药丸里的 0.8rem 大一圈还不止，
+     而且 em 相对 h1 字号，矮视口 / 手机上自动跟着缩，不用另开媒体查询。
+   ⚠️ 2026-10-03 的 LED 灯牌实验版型跟着药丸一起退役了（样式已删，想要回 git 拿）。 */
+.hero-org {
+  display: block;
+  /* 上面是 .hero-welcome 的 margin-bottom:0.4em（欢迎词和语言标签之后），
+     下面这 0.9rem 是机构名到主标题的距离 —— h1 自己还有 margin-bottom 管副标题。 */
+  margin-top: 0;
+  margin-bottom: 0.9rem;
 }
-.hero-badge .dot {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--brand); box-shadow: 0 0 8px rgba(20, 76, 144, 0.5);
+/* 「来到」：连接词，轻一点小一点，字距拉开透点空气 */
+.hero-org-to {
+  display: block;
+  font-size: clamp(1rem, 0.44em, 1.7rem);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-indent: 0.14em;   /* 抵掉最后一个字后的字距，让整体视觉居中 */
+  color: var(--text-subtle);
+  margin-bottom: 0.3em;
 }
-/* 徽章文案是「广州优联外籍人员子女学校-ULC英式国际部·义工组织」，
-   窄屏要折两行。不锁的话浏览器会在最后一个「织」字前断，
-   变成第二行孤零零一个字。把机构名整体锁成不断行，
-   断点就落到「·」后面，读起来顺得多。
-   （<span class="nb"> 写在 assets/i18n.js 的 hero.badge 值里，index.html 里也有一份） */
-.hero-badge .nb { white-space: nowrap; }
-
-/* ---------- LED 灯牌版型（2026-10-03 试做）----------
-   挂在同一个 .hero-badge 上，加一个 .led 类就从「浅蓝药丸」变成「深色 LED 屏」：
-   · 背景 = 4px 点阵网纹 + 深蓝渐变（屏的底色）
-   · 文字 = 青色发光 + 等宽字（像机场/车站的电子信息屏）
-   · 左侧小点变成会闪的绿色指示灯，另加一层扫描线
-   再加 .is-matrix 会叠上「点孔遮罩」，字变成灯珠拼出来的：
-   ⚠️ 点阵必须配**更大的字号**（下面把字号提到 1.05rem、点孔缩到 2px）——
-      13px 的中文配 3px 点孔会糊成一团，实测看不清字（2026-10-03 踩过）。
-   ⚠️ 想整块回退：把 index.html 徽章上的 led / is-matrix 去掉，这里不用动。 */
-.hero-badge.led {
-  position: relative; overflow: hidden;
-  padding: 0.5rem 1.15rem 0.5rem 1rem;
-  border-radius: 10px;
-  background:
-    radial-gradient(rgba(84, 180, 216, 0.18) 1px, transparent 1.2px) 0 0 / 4px 4px,
-    radial-gradient(120% 160% at 50% 0%, #182742 0%, #0A1020 62%, #05080F 100%);
-  border: 1px solid rgba(84, 180, 216, 0.30);
-  box-shadow:
-    inset 0 0 14px rgba(3, 6, 12, 0.92),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.03),
-    0 8px 20px rgba(5, 8, 15, 0.32);
-  color: #8FE4FF;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
-  font-size: 0.85rem; font-weight: 600; letter-spacing: 0.07em;
-  text-shadow: 0 0 6px rgba(84, 180, 216, 0.60), 0 0 16px rgba(84, 180, 216, 0.28);
-}
-/* 点阵档：字号加大 + 2px 点孔，灯珠感明显但仍读得出来 */
-.hero-badge.led.is-matrix {
-  font-size: 1.05rem; letter-spacing: 0.1em;
-  padding: 0.55rem 1.3rem 0.55rem 1.1rem;
-}
-.hero-badge.led.is-matrix > span {
-  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 46%, transparent 52%);
-          mask-image: radial-gradient(circle at 50% 50%, #000 46%, transparent 52%);
-  -webkit-mask-size: 2px 2px; mask-size: 2px 2px;
-  -webkit-mask-repeat: repeat; mask-repeat: repeat;
-}
-/* 扫描线：让「屏」不是死平的 */
-.hero-badge.led::after {
-  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
-  background: repeating-linear-gradient(to bottom,
-    rgba(255, 255, 255, 0.045) 0 1px, transparent 1px 3px);
-}
-.hero-badge.led .dot {
-  width: 8px; height: 8px;
-  background: #5BE07F;
-  box-shadow: 0 0 6px rgba(91, 224, 127, 0.9), 0 0 14px rgba(91, 224, 127, 0.5);
-  animation: ledBlink 1.6s steps(1, end) infinite;
-}
-@keyframes ledBlink { 0%, 62% { opacity: 1; } 63%, 100% { opacity: 0.28; } }
-/* 系统开了「减少动态效果」就别闪了 */
-@media (prefers-reduced-motion: reduce) {
-  .hero-badge.led .dot { animation: none; }
+/* 机构名：这一行的主角 */
+.hero-org-name {
+  display: block;
+  font-size: clamp(1.3rem, 0.62em, 2.8rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--brand-deep);
 }
 
 .hero-title {
@@ -580,10 +538,13 @@ section { position: relative; z-index: 2; padding: clamp(4rem, 9vw, 7rem) 0; scr
 
    结构（index.html）：
      .hero-title
-       .hero-welcome          ← 整块，自成一行（在主标题上面）
+       .hero-welcome          ← 整块，自成一行（在最上面）
          .hw-slot             ← 词槽
            .hw-layer × 2      ← 两层绝对定位叠着，一层显示一层待命
          .hw-lang             ← 语言小标签（中文 / English / …）
+       .hero-org              ← 机构名两行（2026-10-25 定稿，纯文字无框）
+         .hero-org-to         ← 「来到」（英文版 "to"）
+         .hero-org-name       ← GUIS-ULC义工组织 / Volunteer Association
        .hero-title-main       ← 主标题（data-i18n 在这一层）
 
    ⚠️ 动效纪律（沿用首屏那两条铁律，2026-10-08 用户反馈「像卡了」之后定的）：
@@ -1001,7 +962,6 @@ section { position: relative; z-index: 2; padding: clamp(4rem, 9vw, 7rem) 0; scr
   /* ⚠️ 首页首屏的大标志 2026-10-02 已撤（index.html 里没有 .hero-brand 了），
      这条对首页是空转 —— 留着是因为 join / signup / admin 各自的页头还有 hero-brand。 */
   .hero-brand .hero-logo { width: clamp(200px, 26vw, 285px); }
-  .hero-badge { margin-bottom: 1.15rem; }
   .hero-title { margin-bottom: 1rem; }
   .hero-actions { margin-top: 1.5rem; }
   .hero-tab { margin-top: 1.3rem; }
@@ -1013,10 +973,8 @@ section { position: relative; z-index: 2; padding: clamp(4rem, 9vw, 7rem) 0; scr
   .hero-title { font-size: clamp(1.7rem, 4vw, 2.7rem); margin-bottom: 0.7rem; }
   .hero-sub { font-size: clamp(0.9rem, 1.4vw, 1rem); line-height: 1.5; }
   .hero-brand .hero-logo { width: clamp(155px, 17vw, 195px); }
-  /* 2026-10-02：这里原来是 display:none —— 当初为了给打字机腾出首屏空间才藏掉徽章。
-     首屏那组大标志撤掉之后空间够了，改成「留着但小一号」：
-     它现在是首屏唯一的机构全称（导航只有标志，页尾才有全称）。 */
-  .hero-badge { font-size: 0.72rem; padding: 0.34rem 0.85rem; margin-bottom: 0.9rem; }
+  /* 2026-10-25（第二轮）：机构名改成纯文字两行（来到 + 机构名，无药丸框），
+     字号用 em 相对 h1，这一档不用再单独压它。 */
   .hero-actions { margin-top: 1.1rem; }
   .hero-tab { margin-top: 1rem; }
   .btn { padding: 0.62rem 1.35rem; font-size: 0.86rem; }
@@ -1227,23 +1185,14 @@ html.js .page-home .reveal.is-in {
   animation-fill-mode: backwards;
   animation-iteration-count: 1;
 }
-.page-home .hero-badge  { animation-delay: 0.02s; }
 .page-home .hero-title  { animation-delay: 0.07s; }
 .page-home .hero-sub    { animation-delay: 0.12s; }
 .page-home .hero-actions{ animation-delay: 0.17s; }
 .page-home .hero-tab    { animation-delay: 0.22s; }
 /* 滚动提示放在最后 —— 它是「首屏讲完了，往下看」的收尾，晚一点出现反而更合节奏 */
 .page-home .scroll-hint { animation-delay: 0.27s; }
-/* 徽章落定后自己轻轻浮 —— 两个动画叠着写时，后面的 fx-bob 一启动就接管 transform，
-   所以它的延迟要正好接在 fx-pop 结束之后（0.02 + 0.62 ≈ 0.64s），不然会把落定动作吃掉。 */
-.page-home .hero-badge {
-  animation-name: fx-pop, fx-bob;
-  animation-duration: 0.62s, 7.4s;
-  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1), ease-in-out;
-  animation-delay: 0.02s, 0.66s;
-  animation-iteration-count: 1, infinite;
-  animation-fill-mode: backwards, none;
-}
+/* ⚠️ 2026-10-25（第二轮）：机构名两行住在 h1 里，跟着 h1 的 fx-pop 一起进场，
+   不再单独挂动画（药丸时代的 fx-pop + fx-bob 浮动已删）。 */
 /* 数据看板三格：各自给不同的时长，几秒后就自然错开，看着像各自随波浪起伏。
    幅度比首版小（-3px 而非 -6px）—— 呼吸感要的是若有若无，不是明显在动。 */
 .page-home #stats .stat { animation: fx-bob 7.6s ease-in-out infinite; }
