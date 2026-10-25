@@ -554,10 +554,128 @@ section { position: relative; z-index: 2; padding: clamp(4rem, 9vw, 7rem) 0; scr
      「同一个世界，」/「同一种爱。」（老浏览器忽略这条，不影响功能） */
   text-wrap: balance;
 }
+/* ⚠️ 2026-10-25：主标题现在包在 .hero-title-main 里（因为 h1 本身要装欢迎词块，
+   而 data-i18n 只能挂在内层 —— applyLang() 会覆盖带 data-i18n 元素的 innerHTML）。
+   主标题这一层恢复成「自己一个块级元素」，让 h1 里的欢迎词和它各占一行。 */
+.hero-title-main { display: block; }
 .hero-title .grad {
   background: linear-gradient(180deg, var(--brand) 10%, #54B4D8 100%);
   -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+/* 只给读屏用，视觉上藏起来。
+   （多语言欢迎词对读屏没有意义 —— 它一直在换，念出来只会吵） */
+.vh {
+  position: absolute !important; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%);
+  white-space: nowrap; border: 0;
+}
+
+/* ---------- 多语言欢迎词（首屏标题行内嵌轮播）----------
+   参照 Western Sydney International Airport 的抬头：一行大标题里嵌一个
+   循环替换的多语言欢迎词（他们依次是 Dharug 原住民语 / 普通话拼音 /
+   阿拉伯语 / 越南语）。这里用中文 / English / 한국어 / 日本語 / हिन्दी。
+
+   结构（index.html）：
+     .hero-title
+       .hero-welcome          ← 整块，自成一行（在主标题上面）
+         .hw-slot             ← 词槽
+           .hw-layer × 2      ← 两层绝对定位叠着，一层显示一层待命
+         .hw-lang             ← 语言小标签（中文 / English / …）
+       .hero-title-main       ← 主标题（data-i18n 在这一层）
+
+   ⚠️ 动效纪律（沿用首屏那两条铁律，2026-10-08 用户反馈「像卡了」之后定的）：
+      ① 只用 transform 上下滑动，**不碰 blur()**（糊 = 像没加载完 = 最像卡顿）；
+      ② opacity 只做「旧词淡出 / 新词淡入」，**不中途回落**。
+      上下滑动 + 交叉淡入淡出 = 读起来是「翻页」，不是「抖动」。
+
+   ⚠️ 为什么不用 JS 量宽度锁死：
+      词槽是**整块宽**，每个词自己用 left:50% + translateX(-50%) 居中 →
+      词变宽变窄都是**从中心往两边长**，中心点纹丝不动 → 天然不抖。
+      （早期版本把词槽做成 max-content，宽度随词变化，整行会左右晃，已弃用。）
+   ⚠️ 两层用绝对定位叠在同一个槽里 + 槽 overflow:hidden：
+      新词从槽底升上来、旧词往槽顶退出去，超出部分被裁掉 → 像翻页而不是糊在一起。 */
+.hero-welcome {
+  display: block;
+  /* ⚠️ 比主标题略大：欢迎词是首屏的视觉主角（跟 WSI 那个抬头一样），
+     主标题「同一个世界，同一种爱。」不能被它压住，但也不能反过来压它。
+     1.05em = 主标题的 1.05 倍，两者几乎等重，谁也不抢。 */
+  font-size: 1.05em;
+  line-height: 1;
+  margin-bottom: 0.4em;
+}
+
+/* 词槽：整块宽，固定高度，两层叠在里面 */
+.hw-slot {
+  position: relative;
+  display: block;
+  /* ⚠️ 高度必须够装**带上下伸部**的文字：
+     天城文（स्वागत है）、韩文（환영합니다）、阿拉伯文都有上伸/下伸，
+     1.5em 会把它们的上半截和下半截裁掉（第一版就是这样，截图才看出来的）。
+     1.95em 是实测能全放下又不撑太多留白的值。 */
+  height: 1.95em;
+  overflow: hidden;
+}
+
+/* 一层词 */
+.hw-layer {
+  position: absolute;
+  left: 50%; top: 50%;
+  white-space: nowrap;
+  line-height: 1.5;
+  /* ⚠️ 渐变必须挂在**会动的这一层**上，不能挂父级 .hw-slot：
+     background-clip:text 的背景画在元素自己的盒子上，
+     而这一层是要做 transform 的 —— 合成时背景留在旧位置、
+     文字跑到新位置 → 同一个词出现两遍的重影（实测截图抓到了）。
+     挂在自己身上，渐变和文字就是一个整体，一起动，不会错位。
+     渐变是 180deg（垂直方向）→ 每个词都是上深下浅，跟词宽无关，一致。 */
+  background: linear-gradient(180deg, var(--brand) 0%, #54B4D8 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+  /* 只有 transform 在动，opacity 只做交叉淡入淡出 */
+  /* ⚠️ 时长跟 assets/welcome.js 的 OUT_MS 对齐（420ms）：
+     JS 等旧词退完才放新词进来，两段不重叠 → 中间有 ~60ms 空档。
+     改这里要同步改 JS 那个数，否则会出现两层同时在场（糊成一团）。 */
+  transition: transform 420ms cubic-bezier(.22, .61, .36, 1),
+              opacity   300ms ease;
+}
+/* 进场：从槽底升上来 */
+.hw-layer.is-in { transform: translate(-50%, -50%); opacity: 1; }
+/* 退场：往槽顶退出去 */
+.hw-layer.is-out { transform: translate(-50%, calc(-50% - 1.1em)); opacity: 0; }
+/* 复位态：过渡关掉，把 transform 归位 —— JS 在换词前打这个类，
+   强制回流后再换成 is-in，新词才是「从下面升上来」而不是原地淡入 */
+.hw-layer.is-reset {
+  transform: translate(-50%, calc(-50% + 1.1em));
+  opacity: 0;
+  transition: none;
+}
+
+/* 语言小标签：跟着词一起换，但更轻 */
+.hw-lang {
+  display: block;
+  text-align: center;
+  font-size: 0.3em;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-indent: 0.22em;   /* 抵掉最后一个字母后的字距，让整体视觉居中 */
+  color: var(--text-subtle);
+  margin-top: 0.45em;
+  transition: opacity 300ms ease;
+}
+.hw-lang.is-in { opacity: 1; }
+.hw-lang.is-out { opacity: 0; }
+
+/* 系统开了「减少动态效果」→ 不轮播，停在第一个词（JS 里也会 return） */
+@media (prefers-reduced-motion: reduce) {
+  .hw-layer, .hw-lang { transition: none !important; }
+}
+
+/* 窄屏：欢迎词跟着主标题一起缩（主标题用 clamp，这里只做一点点收窄） */
+@media (max-width: 640px) {
+  .hero-welcome { font-size: 0.92em; }
 }
 
 .hero-sub {
