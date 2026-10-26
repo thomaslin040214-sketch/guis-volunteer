@@ -65,6 +65,10 @@ window.SITE_I18N = {
     "hero.cta2": "浏览活动板块",
     "hero.scroll": "向下浏览",
 
+    /* 2026-10-26：万圣节 banner（首页导航栏下方）——「不给糖就捣蛋」。
+       ⚠️ 万圣节过完随 banner 一起删（index.html 的 .halloween-bar 整块）。 */
+    "halloween.trick": "不给糖就捣蛋",
+
     /* ⚠️ 统计条 2026-10-03 起只有 3 格（stat4 已删）—— 文案以 index.html 为准，这里必须同步 */
     "stat1.label": "在校服务学生义工",
     "stat2.label": "累计服务时长（小时）",
@@ -492,6 +496,10 @@ window.SITE_I18N = {
     "hero.cta1": "Read the president's welcome",
     "hero.cta2": "Explore programme types",
     "hero.scroll": "Scroll",
+
+    /* 2026-10-26: Halloween banner under the nav (homepage only) — "Trick or Treat!".
+       Remove together with the banner (.halloween-bar in index.html) after Halloween. */
+    "halloween.trick": "Trick or Treat!",
 
     "stat1.label": "Student volunteers serving on campus",
     "stat2.label": "Service hours logged in total",

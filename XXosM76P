@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-ver="20261026c" data-page-title="doc.signup.title">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta http-equiv="Cache-Control" content="no-cache, must-revalidate" />
+<script>
+/* 文档自愈：托管服务器只给 last-modified，没有 Cache-Control / ETag，
+   浏览器会启发式复用旧版 HTML —— 旧版里引用的还是旧版本号的 CSS/JS，
+   于是点站内链接（全是裸路径）进去时整页退回旧设计。
+   这里比对 <html data-ver>：不是当前版本就带查询串重拉一次（查询串必定回源）。 */
+(function () {
+  var VER = "20261026c";
+  try {
+    var el = document.documentElement;
+    var healed = /[?&]_v=/.test(location.search);
+
+    /* ① 这台电脑见过更新的版本，却拿到了更旧的一份 —— 一定是缓存，重拉一次。
+       版本号是定长 YYYYMMDD+字母，字典序就能比大小。
+       （托管服务器只认裸路径，裸根 / 会被边缘节点单独冻住：带查询串必定回源，
+        光靠比对 data-ver 发现不了「自己是旧的但自洽」这种情况。） */
+    var seen = "";
+    try { seen = localStorage.getItem("guis-doc-ver-seen") || ""; } catch (e) {}
+    if (seen && seen > VER && !healed) {
+      sessionStorage.setItem("guis-doc-ver", VER);
+      var su = location.href.split("#")[0];
+      location.replace(su + (su.indexOf("?") >= 0 ? "&" : "?") + "_v=" + VER + "&cb=" + Date.now() + (location.hash || ""));
+      return;
+    }
+    try { if (VER > seen) localStorage.setItem("guis-doc-ver-seen", VER); } catch (e) {}
+
+    /* ② 常规比对：<html data-ver> 不是当前版本就重拉一次 */
+    if (el.getAttribute("data-ver") === VER) {
+      if (healed && history.replaceState) {
+        var q = location.search.replace(/[?&]_v=[^&]*/, "").replace(/[?&]cb=[^&]*/g, "").replace(/^\?&/, "?");
+        history.replaceState(null, "", location.pathname + (q === "?" ? "" : q) + location.hash);
+      }
+      return;
+    }
+    if (healed) return;                                          /* 带串进来还是旧的，别再跳 */
+    if (sessionStorage.getItem("guis-doc-ver") === VER) return;   /* 本次会话只试一次 */
+    sessionStorage.setItem("guis-doc-ver", VER);
+    var u = location.href.split("#")[0];
+    location.replace(u + (u.indexOf("?") >= 0 ? "&" : "?") + "_v=" + VER + "&cb=" + Date.now() + (location.hash || ""));
+  } catch (e) {}
+})();
+</script>
+<title>义工活动报名 | GUIS 义工组织</title>
+<meta name="description" content="GUIS 义工组织义工活动报名 —— 广州优联国际学校学生志愿服务组织。" />
+<meta name="theme-color" content="#FFFFFF" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261026c" />
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261026c" />
+<!-- 品牌标志兜底样式（内联，随 HTML 一起下发）。
+     即使 assets/site.css 被浏览器缓存成旧版本，标志也不会按图片原始尺寸撑破布局。
+     这里只设尺寸上限（max-*），正常加载 site.css 时这些上限都不会生效。 -->
+<style>
+.nav-logo{display:flex;align-items:center;gap:.5rem}
+.hero-brand{display:flex;align-items:center;justify-content:center;gap:.9rem}
+.footer-brand{display:flex;align-items:center;gap:.9rem}
+.nav-logo .logo-img,.nav-logo .logo-va{max-height:34px;width:auto}
+.hero-brand .hero-logo{max-width:360px;height:auto}
+.hero-brand .hero-va{max-height:96px;width:auto}
+.footer-brand img{max-height:34px;width:auto}
+@media (max-width:640px){
+  .nav-logo .logo-img,.nav-logo .logo-va{max-height:26px}
+  .hero-brand .hero-logo{max-width:210px}
+  .hero-brand .hero-va{max-height:48px}
+  .footer-brand img{max-height:26px}
+}
+@media (max-width:480px){
+  .nav-logo .logo-img,.nav-logo .logo-va{max-height:24px}
+  .hero-brand .hero-logo{max-width:175px}
+  .hero-brand .hero-va{max-height:40px}
+}
+</style>
+<link rel="stylesheet" href="assets/site.css?v=20261026c" />
+<link rel="stylesheet" href="assets/app.css?v=20261026c" />
+<script>document.documentElement.classList.add("js");</script>
+</head>
+<body>
+
+<div class="bg" aria-hidden="true">
+  <div class="bg-mesh"></div>
+  <div class="bg-blob blob-a"></div>
+  <div class="bg-blob blob-b"></div>
+  <div class="bg-blob blob-c"></div>
+  <!-- 合并背景：左边 GUIS 凤凰出血约半个，右边 ULC 标记出血约半个 -->
+  <img class="bg-phoenix" src="assets/logo/guis-phoenix-blue.png" alt="" />
+  <svg class="bg-ulc" viewBox="0 0 406 389">
+    <polygon fill="#144C90" points="24,381 163,242 242,242 381,381" />
+    <polygon fill="#2C68AC" points="6,6 146,146 146,225 6,365" />
+    <polygon fill="#54B4D8" points="259,146 398,7 398,364 259,225" />
+  </svg>
+</div>
+<div class="spotlight" id="spotlight"></div>
+
+<nav>
+  <a href="index.html" class="nav-logo">
+    <img class="logo-img" src="assets/logo/guis-ulc-lockup.png" alt="GUIS · Guangzhou Ulink International School | ULC · Ulink College" />
+    <span class="logo-div"></span>
+    <img class="logo-va" src="assets/logo/va-logo.png" alt="GUIS Volunteer Association" />
+    <span class="org"><span class="org-script" data-i18n="nav.org">义工组织</span></span>
+  </a>
+  <div class="nav-links">
+    <a href="index.html" data-i18n="nav.home">回到主页</a>
+
+    <div class="nav-drop">
+      <button type="button" class="nav-drop-btn" aria-haspopup="true" aria-expanded="false">
+        <span data-i18n="nav.about">关于我们</span><span class="nav-caret" aria-hidden="true"></span>
+      </button>
+      <div class="nav-drop-menu">
+        <a href="team.html" data-i18n="nav.team">部门成员</a>
+        <a href="journey.html" data-i18n="nav.journey">发展历程</a>
+        <a href="index.html#footer-contact" data-i18n="nav.contact">联系我们</a>
+      </div>
+    </div>
+
+    <a href="programs.html" data-i18n="nav.programs">活动</a>
+    <a href="signup.html" class="is-active" data-i18n="nav.signup">义工活动报名</a>
+    <a href="announcements.html" data-i18n="nav.news">公告</a>
+    <a href="index.html#journal" data-i18n="nav.journal">刊物</a>
+
+  </div>
+  <div class="nav-right">
+    <div class="lang-switch" role="group" aria-label="Language / 语言">
+      <button class="lang-btn is-active" data-lang="zh" aria-pressed="true">中文</button>
+      <button class="lang-btn" data-lang="en" aria-pressed="false">EN</button>
+    </div>
+    <a href="login.html" class="nav-login" data-i18n="nav.login">登录</a>
+  </div>
+</nav>
+
+<main class="page-head">
+  <section style="padding-top:0;">
+    <div class="wrap">
+
+      <div class="reveal" style="margin-bottom:2rem;">
+        <p class="eyebrow" data-i18n="sg.eyebrow">义工活动报名</p>
+        <h1 class="page-title" data-i18n="sg.title">报名成为下一次行动的志愿者</h1>
+        <p class="page-lede" data-i18n="sg.lede">选一个你愿意固定参加的板块，填完下面这张表就可以了。不需要经验，也不需要提前准备什么 —— 但需要守时。</p>
+      </div>
+
+      <!-- 选择活动 -->
+      <div class="panel reveal d1" id="pick-panel">
+        <div class="panel-head">
+          <div>
+            <h2 data-i18n="sg.pickTitle">第一步 · 选择活动</h2>
+            <div class="sub" data-i18n="sg.pickHint">点击下方任一活动即可选中，然后再填写报名信息。</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div id="sg-origin" hidden></div>
+          <div id="pick-loading" class="empty"><span class="loading"></span> <span data-i18n="sg.loading">正在读取活动列表…</span></div>
+          <div id="pick-list" class="act-list" hidden></div>
+          <div id="pick-empty" class="empty" hidden data-i18n="sg.empty">目前没有开放报名的活动，请稍后再来，或写信告诉我们你想参加哪个板块。</div>
+        </div>
+      </div>
+
+      <!-- 报名表单 -->
+      <div class="panel reveal d2" id="form-panel" hidden>
+        <div class="panel-head">
+          <div>
+            <h2 data-i18n="sg.formTitle">第二步 · 填写报名信息</h2>
+            <div class="sub" id="form-activity-name"></div>
+          </div>
+          <button type="button" class="link-btn" id="change-activity" data-i18n="sg.change">换个活动</button>
+        </div>
+        <div class="panel-body">
+          <div id="form-alerts"></div>
+
+          <form id="signup-form" novalidate>
+            <div class="form-grid">
+              <div class="field">
+                <label for="f-name" data-i18n="f.name">姓名 <span class="req">*</span></label>
+                <input id="f-name" name="name" type="text" required autocomplete="name" />
+              </div>
+
+              <div class="field">
+                <label for="f-email" data-i18n="f.email">邮箱 <span class="req">*</span></label>
+                <input id="f-email" name="email" type="email" required autocomplete="email" />
+                <span class="hint" data-i18n="f.emailHint">同一个邮箱对同一活动只能报名一次</span>
+              </div>
+
+              <div class="field">
+                <label for="f-phone" data-i18n="f.phone">手机号</label>
+                <input id="f-phone" name="phone" type="tel" autocomplete="tel" />
+              </div>
+
+              <div class="field">
+                <label for="f-grade" data-i18n="f.grade">年级</label>
+                <select id="f-grade" name="grade">
+                  <option value="" data-i18n="f.choose">请选择</option>
+                  <option value="G10">G10</option>
+                  <option value="G11">G11</option>
+                  <option value="G12">G12</option>
+                  <option value="other" data-i18n="f.other">其他</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="f-programme" data-i18n="f.programme">课程体系</label>
+                <select id="f-programme" name="programme">
+                  <option value="" data-i18n="f.choose">请选择</option>
+                  <option value="ULC" data-i18n="f.ulc">ULC 英式课程</option>
+                  <option value="NCPA" data-i18n="f.ncpa">NCPA 美式课程</option>
+                  <option value="other" data-i18n="f.other">其他</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="f-student-id" data-i18n="f.studentId">VA ID</label>
+                <input id="f-student-id" name="student_id" type="text" spellcheck="false"
+                       placeholder="留空即可，我们按邮箱自动取" />
+                <span class="hint">学校邮箱就是学号@school（例：2510032@guiscn.com），一般不用填。</span>
+              </div>
+
+              <!-- 职位选择：由后台「职位与名额」决定有没有、有几个。
+                   一个职位的活动自动选中（不显示），多个职位才让学生挑。
+                   容器默认 hidden，renderPositions() 按需打开。 -->
+              <div class="field span-2" id="f-pos-field" hidden>
+                <label data-i18n="f.pos">选择职位</label>
+                <div id="f-pos-list" class="pos-pick"></div>
+                <span class="hint" data-i18n="f.posHint">每个职位的名额单独算；选了哪个职位，就按哪个职位排队。</span>
+              </div>
+
+              <div class="field span-2">
+                <label for="f-slot" data-i18n="f.slot">希望参与的岗位或时段</label>
+                <input id="f-slot" name="slot" type="text" />
+                <span class="hint" data-i18n="f.slotHint">例如：周六上午课业辅导 / 净滩称重记录 / 摊位收银</span>
+              </div>
+
+              <div class="field span-2">
+                <label for="f-experience" data-i18n="f.exp">相关经验</label>
+                <textarea id="f-experience" name="experience" data-i18n-attr="placeholder:f.expPh"></textarea>
+              </div>
+
+              <div class="field span-2">
+                <label for="f-note" data-i18n="f.note">备注</label>
+                <textarea id="f-note" name="note" data-i18n-attr="placeholder:f.notePh"></textarea>
+              </div>
+            </div>
+
+            <p class="hint" style="margin-top:1.1rem;" data-i18n="f.privacy">这些信息只用于本次活动的联络与排班，由义工组织保管，不会对外公开。</p>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary" id="submit-btn" data-i18n="f.submit">提交报名</button>
+              <a href="index.html" class="btn btn-secondary" data-i18n="sg.backHome">返回首页</a>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- 提交成功 -->
+      <div class="panel reveal" id="done-panel" hidden>
+        <div class="panel-body">
+          <div class="done-wrap">
+            <div class="done-mark">✓</div>
+            <h2 class="page-title" data-i18n="sg.doneTitle">报名成功</h2>
+            <p class="page-lede" style="margin:0 auto;" id="done-detail"></p>
+            <div class="form-actions" style="justify-content:center;">
+              <a href="index.html" class="btn btn-primary" data-i18n="sg.backHome">返回首页</a>
+              <a href="signup.html" class="btn btn-secondary" data-i18n="sg.signupMore">再报一个活动</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ 活动日历 ============
+           过往活动 + 未来排期合并进报名页。一周以星期一开始，今天高亮，
+           顶部 12 个月是缩略条，可以直接跳月。 -->
+      <section id="archive" style="margin-top:3rem;">
+        <div class="reveal">
+          <p class="eyebrow" data-i18n="cal.eyebrow">活动日历</p>
+          <h2 class="section-title" data-i18n="cal.title">排期与回顾</h2>
+          <p class="lede" data-i18n="cal.lede">高亮的那格是今天。点任意一天可以看到当天的活动安排、报名截止时间；未来的活动也会提前排进来。</p>
+        </div>
+
+        <div id="cal-origin" hidden></div>
+        <div id="cal-loading" class="empty" style="margin-top:1.4rem;"><span class="loading"></span> <span data-i18n="cal.loading">正在读取活动日历…</span></div>
+        <!-- 注意：这里不能挂 .reveal —— 它是隐藏容器里动态插入的，
+             initReveal() 只在 DOMContentLoaded 扫一次，补注册不到，会永远 opacity:0 -->
+        <div id="cal-root" hidden style="margin-top:1.4rem;"></div>
+        <div id="cal-fail" class="empty" hidden data-i18n="cal.fail">读取失败，请稍后重试。</div>
+      </section>
+
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap footer-inner">
+    <div class="footer-brand">
+      <img src="assets/logo/guis-ulc-lockup.png" alt="GUIS | ULC" />
+      <img class="footer-va" src="assets/logo/va-logo.png" alt="GUIS Volunteer Association" />
+      <span class="footer-org" data-i18n="footer.org">广州优联外籍人员子女学校-ULC英式国际部·义工组织<br />Guangzhou ULink International School - ULC Division·Volunteer Association</span>
+    </div>
+    <span data-i18n="footer.text">© 2026 GUIS 义工组织 · 学生自主运营 · 服务记录公开可查。</span>
+    <div class="footer-links">
+      <a href="index.html" data-i18n="nav.home">回到主页</a>
+      <a href="index.html#footer-contact" data-i18n="nav.contact">联系我们</a>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
+<script src="assets/cloud-config.js?v=20261026c"></script>
+<script src="assets/cloud.js?v=20261026c"></script>
+<script src="assets/i18n.js?v=20261026c"></script>
+<script src="assets/board.js?v=20261026c"></script>
+<script src="assets/calendar.js?v=20261026c"></script>
+<script src="assets/nav.js?v=20261026c"></script>
+<script src="assets/navfit.js?v=20261026c"></script>
+<script src="assets/roles.js?v=20261026c"></script>
+<script src="assets/session.js?v=20261026c"></script>
+<script src="assets/main.js?v=20261026c"></script>
+<script src="assets/queue.js?v=20261026c"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  "use strict";
+
+  var C = window.GUISCloud;
+  var $ = function (id) { return document.getElementById(id); };
+
+  var pickPanel = $("pick-panel"), formPanel = $("form-panel"), donePanel = $("done-panel");
+  var pickLoading = $("pick-loading"), pickList = $("pick-list"), pickEmpty = $("pick-empty");
+  var alerts = $("form-alerts"), formName = $("form-activity-name");
+
+  var activities = [];
+  var selected = null;
+
+  /* ---------- 职位（按活动分组） ----------
+     后台可以给一个活动拆若干个职位（如家长会的「指引义工」「翻译义工」），
+     每个职位各有名额与备选名额。整页只需要拉一次：一次 listPositions() +
+     一次 positionCounts()，之后按 activity_id 分组用。
+     ⚠️ count 走 position_counts()（SECURITY DEFINER）—— 匿名读不到 registrations，
+        只剩这条 SECURITY DEFINER 的路能告诉我们每个职位还剩几个位子。 */
+  var posByAct = {};
+  var posCounts = {};
+
+  function loadPositions() {
+    posByAct = {}; posCounts = {};
+    return C.listPositions().then(function (res) {
+      var rows = (res && res.data) || [];
+      rows.forEach(function (p) {
+        var k = String(p.activity_id);
+        (posByAct[k] = posByAct[k] || []).push(p);
+      });
+      return C.positionCounts();
+    }).then(function (res) {
+      var rows = (res && res.data) || [];
+      rows.forEach(function (p) { posCounts[String(p.position_id)] = p; });
+    }).catch(function () {
+      /* 职位读不到不影响报名本身：降级成「不分职位」的老样子 */
+      posByAct = {}; posCounts = {};
+    });
+  }
+
+  function positionsOf(a) { return (a && posByAct[String(a.id)]) || []; }
+  function takenOf(p) {
+    var c = posCounts[String(p.id)];
+    return c ? Number(c.taken || 0) : 0;
+  }
+  function waitingOf(p) {
+    var c = posCounts[String(p.id)];
+    return c ? Number(c.waiting || 0) : 0;
+  }
+  /* 还剩几个位子：capacity <= 0 表示不限 */
+  function leftOf(p) {
+    if (!p.capacity || p.capacity <= 0) return Infinity;
+    return Math.max(0, p.capacity - takenOf(p));
+  }
+  function posFull(p) { return leftOf(p) <= 0; }
+
+  /* ---------- 工具 ---------- */
+  function t(key, fallback) {
+    var lang = (document.documentElement.lang === "en") ? "en" : "zh";
+    var pack = (window.SITE_I18N && window.SITE_I18N[lang]) || {};
+    return pack[key] != null ? pack[key] : (fallback || key);
+  }
+
+  function showAlert(kind, html) {
+    alerts.innerHTML = '<div class="alert alert-' + kind + '">' + html + "</div>";
+  }
+  function clearAlert() { alerts.innerHTML = ""; }
+
+  /* 排队界面的重试倒计时，按当前语言渲染 */
+  function retryLine(attempt, max, seconds) {
+    return t("q.retry", "第 {a} / {m} 次尝试 · {s} 秒后自动重试")
+      .replace("{a}", attempt).replace("{m}", max).replace("{s}", seconds);
+  }
+
+  function fmtDateTime(iso) { return window.GUISTime.fmtDT(iso); }   /* 北京时间，见 assets/time.js */
+
+  function metaLine(a) {
+    var bits = [];
+    /* 全天的不印时刻 —— 写了「09:00」反而像只在那个点开始 */
+    if (a.all_day) bits.push("🕘 " + t("cal.allDay", "全天"));
+    else if (a.starts_at) bits.push("🕘 " + fmtDateTime(a.starts_at));
+    if (a.location) bits.push("📍 " + a.location);
+    /* 有职位就按职位报余位 —— 这时 activities.capacity 已经不参与计算了，
+       再显示「已报名 x / 30 人」只会让人以为还有位子。 */
+    var ps = positionsOf(a);
+    if (ps.length) {
+      ps.forEach(function (p) {
+        var left = leftOf(p);
+        bits.push("• " + p.name + " " +
+          (posFull(p)
+            ? (p.waitlist_capacity > 0 && waitingOf(p) < p.waitlist_capacity
+                ? t("sg.posWait", "满 · 可排备选") : t("sg.posFull", "已满"))
+            : t("sg.posLeft", "剩 {n}").replace("{n}", isFinite(left) ? String(left) : t("sg.noLimit", "充足"))));
+      });
+    } else if (a.capacity) {
+      bits.push("👥 " + t("sg.taken", "已报名 {a} / {b} 人")
+        .replace("{a}", String(a._taken || 0)).replace("{b}", String(a.capacity)));
+    }
+    /* 没到报名开始时间时把时间写出来，别让人以为已经结束了 */
+    if (a.signup_opens_at && new Date(a.signup_opens_at).getTime() > Date.now()) {
+      bits.push("⏳ " + t("sg.opensAt", "报名开始") + " " + fmtDateTime(a.signup_opens_at));
+    }
+    return bits;
+  }
+
+  /* 名额说了算：满了、备选也满了、还没开始、已通知 —— 都不能再报。
+     判定统一走 assets/board.js，避免和首页看板、后台各写一套。 */
+  function board() { return window.GUISBoard; }
+  function isClosed(a) {
+    var B = board();
+    return B ? B.isClosed(a) : false;
+  }
+  function reasonOf(a) {
+    var B = board();
+    return B ? B.reasonOf(a) : "green";
+  }
+
+  /* ---------- 弹窗（名额 / 备选名单要用） ---------- */
+  function dialog(opts) {
+    return new Promise(function (resolve) {
+      var mask = document.createElement("div");
+      mask.className = "sg-modal-mask";
+      mask.innerHTML =
+        '<div class="sg-modal" role="dialog" aria-modal="true">' +
+          '<h3 class="sg-modal-title"></h3>' +
+          '<div class="sg-modal-body"></div>' +
+          '<div class="sg-modal-actions">' +
+            '<button type="button" class="btn btn-secondary" data-x="no"></button>' +
+            '<button type="button" class="btn btn-primary" data-x="yes"></button>' +
+          "</div>" +
+        "</div>";
+      mask.querySelector(".sg-modal-title").textContent = opts.title || "";
+      mask.querySelector(".sg-modal-body").textContent = opts.body || "";
+      mask.querySelector('[data-x="no"]').textContent = opts.cancel || t("sg.no", "算了");
+      mask.querySelector('[data-x="yes"]').textContent = opts.ok || t("sg.yes", "好的");
+      document.body.appendChild(mask);
+      requestAnimationFrame(function () { mask.classList.add("is-on"); });
+
+      function close(v) {
+        mask.classList.remove("is-on");
+        setTimeout(function () { if (mask.parentNode) mask.parentNode.removeChild(mask); }, 200);
+        resolve(v);
+      }
+      mask.addEventListener("click", function (e) {
+        if (e.target === mask) { close(false); return; }
+        var b = e.target.closest ? e.target.closest("[data-x]") : null;
+        if (!b) return;
+        close(b.getAttribute("data-x") === "yes");
+      });
+      document.addEventListener("keydown", function esc(e) {
+        if (e.key !== "Escape") return;
+        document.removeEventListener("keydown", esc);
+        close(false);
+      });
+    });
+  }
+
+  /* ---------- 载入活动 ---------- */
+  function loadActivities() {
+    pickLoading.hidden = false;
+    pickList.hidden = true;
+    pickEmpty.hidden = true;
+
+    window.GUISQueue.run(function () { return C.listOpenActivities(); }, {
+      title: t("sg.loading", "正在读取活动列表…"),
+      busyTitle: t("q.busy", "正在为你接通…"),
+      sub: t("q.sub", "访问的人有点多，我们正在排队处理，稍等一下就好。"),
+      doneText: t("q.done", "请稍等，即将进入站点"),
+      cancelText: t("q.cancel", "稍后再来"),
+      retryText: retryLine
+    }).then(function (res) {
+      var data = C.unwrap(res, "读取活动失败") || [];
+      /* 名额先并进来 —— 满没满、还剩几个位子都要用它 */
+      return (window.GUISBoard && window.GUISBoard.withCounts
+        ? window.GUISBoard.withCounts(C, data) : Promise.resolve(data));
+    }).then(function (data) {
+      /* 职位要跟活动同时就位：列表上的余位、表单里的职位选项都靠它 */
+      return loadPositions().then(function () { return data || []; });
+    }).then(function (data) {
+      activities = data;
+      pickLoading.hidden = true;
+
+      if (!activities.length) { pickEmpty.hidden = false; return; }
+
+      pickList.innerHTML = "";
+      activities.forEach(function (a) {
+        var closed = isClosed(a);
+
+        var item = document.createElement("label");
+        item.className = "act-pick";
+        item.setAttribute("for", "act-" + a.id);
+
+        var left = document.createElement("div");
+        left.style.minWidth = "0";
+        var title = document.createElement("div");
+        title.className = "t";
+        /* 活动编号（SAO26001）：后台维护用得上，学生也能凭它对上邮件里的通知 */
+        if (a.code_prefix || a.code_no) {
+          var codeChip = document.createElement("span");
+          codeChip.className = "act-code";
+          codeChip.textContent = String(a.code_prefix || "") + String(a.code_no || "");
+          title.appendChild(codeChip);
+          title.appendChild(document.createTextNode(" "));
+        }
+        title.appendChild(document.createTextNode(a.title));
+        var meta = document.createElement("div");
+        meta.className = "d";
+        meta.textContent = metaLine(a).join(" · ");
+        left.appendChild(title);
+        if (a.summary) {
+          var sum = document.createElement("div");
+          sum.className = "d";
+          sum.style.marginTop = "0.3rem";
+          sum.textContent = a.summary;
+          left.appendChild(sum);
+        }
+        /* 黄灯有好几种原因（满了 / 还没开始 / 已通知），文案要分开说 */
+        var reason = reasonOf(a);
+        if (reason !== "green") {
+          var st = document.createElement("div");
+          st.className = "d";
+          st.style.marginTop = "0.3rem";
+          st.style.color = reason === "full" ? "var(--danger)" : "var(--text-muted)";
+          st.textContent = board() ? board().reasonText(a) : "";
+          left.appendChild(st);
+        }
+        /* 名额满了但备选还有位子：先讲清楚，提交时还会再弹一次窗确认 */
+        if (reason === "wait") {
+          var wn = document.createElement("div");
+          wn.className = "d";
+          wn.style.marginTop = "0.3rem";
+          wn.style.color = "var(--danger)";
+          wn.textContent = t("sg.waitNotice", "名额已满 —— 现在提交会进入 waiting list 备选名单。");
+          left.appendChild(wn);
+        }
+        left.appendChild(meta);
+
+        var right = document.createElement("div");
+        right.style.flex = "0 0 auto";
+        right.style.display = "flex";
+        right.style.alignItems = "center";
+        right.style.gap = "0.6rem";
+
+        /* 红绿灯取代原来的「报名中 / 已截止」文字徽章 */
+        var lamp = document.createElement("span");
+        lamp.innerHTML = window.GUISBoard.lampOf(a, { short: true });
+        right.appendChild(lamp);
+
+        var radio = document.createElement("input");
+        radio.type = "radio";
+        radio.name = "activity";
+        radio.id = "act-" + a.id;
+        radio.value = a.id;
+        if (closed) radio.disabled = true;
+        right.appendChild(radio);
+
+        item.appendChild(left);
+        item.appendChild(right);
+
+        radio.addEventListener("change", function () {
+          Array.prototype.forEach.call(pickList.querySelectorAll(".act-pick"), function (el) {
+            el.classList.remove("is-on");
+          });
+          item.classList.add("is-on");
+          selectActivity(a);
+        });
+
+        pickList.appendChild(item);
+      });
+
+      pickList.hidden = false;
+
+      /* URL 里指定了活动就自动选中 */
+      var want = new URLSearchParams(window.location.search).get("activity");
+      if (want) {
+        var hit = activities.filter(function (a) { return String(a.id) === String(want); })[0];
+        if (hit) {
+          var r = document.getElementById("act-" + hit.id);
+          if (r && !r.disabled) { r.checked = true; r.dispatchEvent(new Event("change")); }
+        }
+      }
+    }).catch(function (err) {
+      pickLoading.hidden = true;
+      pickEmpty.hidden = false;
+      pickEmpty.textContent = err && err.cancelled
+        ? t("q.cancelledLoad", "已取消加载，刷新页面可以重新读取。")
+        : t("sg.loadFail", "读取活动列表失败") + "：" + (err && err.message ? err.message : "");
+      console.error("[GUIS] load activities failed", err && err.message);
+    });
+  }
+
+  function selectActivity(a) {
+    selected = a;
+    formName.textContent = a.title +
+      (a.all_day ? " · " + t("cal.allDay", "全天")
+                 : (a.starts_at ? " · " + fmtDateTime(a.starts_at) : ""));
+    formPanel.hidden = false;
+    clearAlert();
+    renderPositions(a);
+    formPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  /* ---------- 表单里的职位选项 ----------
+     规则（后台那个「显示职位选项」开关就是为它准备的）：
+       · 没有职位        → 整块隐藏，报名不带 position_id
+       · 只有一个职位    → 自动选中，整块隐藏（学生没必要点一下）
+       · 两个以上        → 列出来让学生选；show_positions=false 时也还是列出
+                           （多于一个职位却不给选，等于随机分配，不合理）
+     名额按职位各自算，这里直接把「剩几个」写出来，选满的那个会禁用。 */
+  var posField = $("f-pos-field"), posList = $("f-pos-list");
+  var chosenPos = null;
+
+  function renderPositions(a) {
+    chosenPos = null;
+    if (!posField || !posList) return;
+    posList.innerHTML = "";
+    posField.hidden = true;
+
+    var ps = positionsOf(a);
+    if (!ps.length) return;
+
+    if (ps.length === 1) { chosenPos = ps[0]; return; }
+
+    posField.hidden = false;
+    var pickedFirst = false;
+    ps.forEach(function (p) {
+      var row = document.createElement("label");
+      row.className = "pos-pick-row" + (posFull(p) ? " is-full" : "");
+      row.setAttribute("for", "pos-" + p.id);
+
+      var radio = document.createElement("input");
+      radio.type = "radio";
+      radio.name = "position";
+      radio.id = "pos-" + p.id;
+      radio.value = p.id;
+      radio.disabled = posFull(p);
+
+      var body = document.createElement("span");
+      body.className = "pos-pick-body";
+      var nm = document.createElement("span");
+      nm.className = "pos-pick-name";
+      nm.textContent = p.name;
+      var cnt = document.createElement("span");
+      cnt.className = "pos-pick-cnt";
+      if (posFull(p)) {
+        cnt.textContent = (p.waitlist_capacity > 0 && waitingOf(p) < p.waitlist_capacity)
+          ? t("sg.posWait", "满 · 可排备选") : t("sg.posFull", "已满");
+      } else {
+        var n = leftOf(p);
+        cnt.textContent = t("sg.posLeft", "剩 {n}").replace("{n}", isFinite(n) ? String(n) : t("sg.noLimit", "充足"));
+      }
+      body.appendChild(nm);
+      body.appendChild(cnt);
+
+      row.appendChild(radio);
+      row.appendChild(body);
+
+      /* :has() 在旧一点的浏览器里不认，所以选中态自己挂一个 class 兜底 */
+      radio.addEventListener("change", function () {
+        chosenPos = p;
+        Array.prototype.forEach.call(posList.querySelectorAll(".pos-pick-row"), function (el) {
+          el.classList.remove("is-on");
+        });
+        row.classList.add("is-on");
+      });
+      posList.appendChild(row);
+      /* 默认落在第一个还有位子的职位上（都满了就一个都不选，由提交时提示） */
+      if (!pickedFirst && !radio.disabled) { radio.checked = true; chosenPos = p; pickedFirst = true; row.classList.add("is-on"); }
+    });
+  }
+
+  $("change-activity").addEventListener("click", function () {
+    selected = null;
+    formPanel.hidden = true;
+    pickPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  /* ---------- 提交 ---------- */
+  $("signup-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    clearAlert();
+
+    /* ⚠️ btn 以前忘了定义，下面 goSend / btn.disabled 全是 ReferenceError ——
+       等于提交按钮按了什么都没发生（还不报错到控制台以外的地方）。 */
+    var btn = $("submit-btn");
+
+    if (!selected) {
+      showAlert("error", t("msg.pickFirst", "请先选择一个活动"));
+      return;
+    }
+    if (isClosed(selected)) {
+      showAlert("warn", reasonOf(selected) === "full"
+        ? t("sg.full", "报名人数已满")
+        : t("msg.closed", "这个活动已经截止报名了。"));
+      return;
+    }
+
+    var name = $("f-name").value.trim();
+    var email = $("f-email").value.trim();
+
+    if (!name || !email) {
+      showAlert("error", t("msg.required", "姓名和邮箱是必填的。"));
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showAlert("error", t("msg.badEmail", "邮箱格式看起来不太对，请检查一下。"));
+      return;
+    }
+
+    /* 两个以上职位时必须选一个（一个职位的已经在 renderPositions 里自动选好了） */
+    var ps = positionsOf(selected);
+    if (ps.length > 1 && !chosenPos) {
+      showAlert("warn", ps.every(posFull)
+        ? t("sg.posAllFull", "这个活动的每个职位都报满了，暂时无法报名。")
+        : t("msg.pickPos", "请先选择一个职位。"));
+      return;
+    }
+
+    /* 名额满了但备选还有位子：先弹窗说清楚，学生自己决定要不要继续。
+       ⚠️ 有职位时跳过这个弹窗 —— 名额是职位各自的，这里的活动级数字已经不作数了，
+          报出来的名次也是错的；交由 register_signup() 回来说明（下面按 waitlisted 展示）。 */
+    var goSend = function () { sendSignup(btn, name, email); };
+    if (ps.length === 0 && reasonOf(selected) === "wait") {
+      btn.disabled = true;
+      dialog({
+        title: t("sg.waitTitle", "你会进入 waiting list 备选名单"),
+        body: t("sg.waitBody", "「{a}」的 {b} 个名额已经报满了。你的报名我们照样收下，排在备选名单第 {c} 位；一旦有人退出，会按顺序递补并通过邮件通知你。")
+          .replace("{a}", selected.title)
+          .replace("{b}", String(selected.capacity || 0))
+          .replace("{c}", String((selected._waiting || 0) + 1)),
+        ok: t("sg.keepGoing", "继续报名"),
+        cancel: t("sg.no", "算了")
+      }).then(function (yes) {
+        btn.disabled = false;
+        if (yes) goSend();
+      });
+      return;
+    }
+    goSend();
+  });
+
+  function sendSignup(btn, name, email) {
+    var original = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = t("f.submitting", "提交中…");
+
+    /* VA ID：填了就用填的；留空则从邮箱前缀自动取（学校邮箱就是 <VA ID>@guiscn.com）。
+       非数字前缀（例如 teacher.demo@）就留空，不硬凑。 */
+    var vaInput = String($("f-student-id").value || "").trim();
+    var vaPrefix = String(email || "").split("@")[0] || "";
+    var vaId = vaInput || (/^\d{4,}$/.test(vaPrefix) ? vaPrefix : null);
+    var payload = {
+      activity_id: selected.id,
+      name: name,
+      email: email,
+      phone: $("f-phone").value.trim() || null,
+      grade: $("f-grade").value || null,
+      programme: $("f-programme").value || null,
+      student_id: vaId,
+      slot: $("f-slot").value.trim() || null,
+      experience: $("f-experience").value.trim() || null,
+      note: $("f-note").value.trim() || null,
+      /* 服务器会拿着 position_id 去查这个职位自己的名额 / 备选名额。
+         没设职位的活动就是 null，走 activities.capacity 那条老路。 */
+      position_id: chosenPos ? chosenPos.id : null
+    };
+
+    /* 提交走排队组件：请求慢或拥塞时自动排队重试；重复报名 / 无权限这类
+       确定性错误不重试，直接交给下面的提示处理。 */
+    window.GUISQueue.run(function () { return C.register(payload); }, {
+      title: t("f.submitting", "提交中…"),
+      busyTitle: t("q.busy", "正在为你接通…"),
+      sub: t("q.sub", "报名的人有点多，我们正在排队提交，不要关闭页面。"),
+      doneText: t("q.doneSubmit", "报名已提交"),
+      cancelText: t("q.cancel", "稍后再来"),
+      retryText: retryLine,
+      shouldRetry: function (e) {
+        return !(e && /^(23505|42501)$/.test(String(e.code)));
+      }
+    }).then(function (res) {
+      var out = C.unwrap(res, "提交失败") || {};
+      /* register_signup() 回的不是一行数据，而是 { ok, status, waitlisted, position }
+         或 { ok:false, error } —— 满了 / 重复都在这里说清楚，不再靠报错码猜。 */
+      if (out.ok === false) {
+        btn.disabled = false;
+        btn.textContent = original;
+        if (out.error === "duplicate") showAlert("warn", t("msg.dup", "这个邮箱已经报名过该活动了，无需重复提交。"));
+        else if (out.error === "full") showAlert("warn", t("sg.full", "报名人数已满"));
+        else if (out.error === "not_signup") showAlert("warn", t("sg.eventOnly", "这是校内日程 —— 它的时间在下面日历里能看到。"));
+        else if (out.error === "position_required") showAlert("warn", t("msg.pickPos", "请先选择一个职位。"));
+        else showAlert("error", t("msg.denied", "提交被拒绝：该活动可能已关闭报名。"));
+        return;
+      }
+
+      btn.disabled = false;
+      btn.textContent = original;
+      pickPanel.hidden = true;
+      formPanel.hidden = true;
+      donePanel.hidden = false;
+
+      if (out.waitlisted) {
+        $("done-detail").textContent =
+          t("sg.waitDone", "已加入备选名单，排在第 {c} 位。").replace("{c}", String(out.position || 1)) +
+          " " + t("sg.doneTailWait", "有人退出时会按顺序递补，我们会发邮件通知你。");
+      } else {
+        /* 有职位时把职位复述一遍，学生能对上自己报的是哪个岗位 */
+        var pos = (out.position_name) || (chosenPos && chosenPos.name) || "";
+        $("done-detail").textContent =
+          t("sg.doneLead", "我们已收到你对") + "「" + selected.title + "」" +
+          (pos ? "（" + pos + "）" : "") +
+          t("sg.doneTail", "的报名，组织成员会在活动前通过邮件与你确认排班。");
+      }
+      donePanel.scrollIntoView({ behavior: "smooth", block: "start" });
+    }).catch(function (err) {
+      btn.disabled = false;
+      btn.textContent = original;
+      if (err && err.cancelled) {
+        showAlert("warn", t("q.cancelled", "已取消，可以稍后再试一次。"));
+      } else if (err && err.code === "23505") {
+        showAlert("warn", t("msg.dup", "这个邮箱已经报名过该活动了，无需重复提交。"));
+      } else if (err && err.code === "42501") {
+        showAlert("error", t("msg.denied", "提交被拒绝：该活动可能已关闭报名。"));
+      } else {
+        showAlert("error", t("msg.fail", "提交失败，请稍后重试") + (err && err.message ? "（" + err.message + "）" : ""));
+      }
+      console.error("[GUIS] register failed", err && err.code);
+    });
+  }
+
+  /* ---------- 活动日历（过往活动 + 未来排期） ---------- */
+  var calRoot = $("cal-root"), calLoading = $("cal-loading"), calFail = $("cal-fail");
+  var cal = null;
+
+  function loadCalendar() {
+    if (!calRoot) return;
+    C.listCalendarActivities().then(function (res) {
+      var rows = C.unwrap(res, "读取失败") || [];
+      if (calLoading) calLoading.hidden = true;
+      cal = window.GUISCalendar.create(calRoot, {});
+      cal.setData(rows);
+      calRoot.hidden = false;
+    }).catch(function (err) {
+      if (calLoading) calLoading.hidden = true;
+      if (calFail) { calFail.hidden = false; }
+      console.error("[GUIS] calendar failed", err && err.message);
+    });
+  }
+
+  function calendarMirrorNotice(endpoint) {
+    if (calLoading) calLoading.hidden = true;
+    var box = $("cal-origin");
+    if (box) {
+      box.innerHTML =
+        '<div class="origin-banner"><b>当前站点是静态镜像，读不到活动日历。</b>' +
+        "请在正式地址上查看：" +
+        '<a href="' + endpoint + '/signup.html#archive"><b>' + endpoint + "/signup.html#archive</b></a></div>";
+      box.hidden = false;
+    }
+  }
+
+  /* 域名与云端点不一致（静态镜像站点）时，云服务会拒绝请求 —— 给出明确指引，
+     而不是显示一个看起来像「没有活动」的空状态。 */
+  var hostOK = location.origin.replace(/\/+$/, "") === C.endpoint.replace(/\/+$/, "");
+  if (!hostOK) {
+    var box = document.getElementById("sg-origin");
+    if (box) {
+      box.innerHTML =
+        '<div class="origin-banner"><b>当前站点是静态镜像，读不到报名数据。</b>' +
+        "请在正式地址上报名：" +
+        '<a href="' + C.endpoint + '/signup.html"><b>' + C.endpoint + "/signup.html</b></a></div>";
+      box.hidden = false;
+    }
+    calendarMirrorNotice(C.endpoint);
+    pickLoading.hidden = true;
+    return;
+  }
+
+  loadActivities();
+  loadCalendar();
+});
+</script>
+</body>
+</html>

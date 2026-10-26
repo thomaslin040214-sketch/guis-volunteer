@@ -438,6 +438,123 @@ section { position: relative; z-index: 2; padding: clamp(4rem, 9vw, 7rem) 0; scr
 
 .hairline { height: 1px; background: var(--hairline); border: 0; }
 
+/* ---------- 万圣节 banner（2026-10-26 上线，只在首页）----------
+   按用户要求加在导航栏下面：「不给糖就捣蛋」+ 英文 Trick or Treat。
+   位置：文档流里排在 nav 和 hero 之间，margin-top:var(---nav-h
+   让它正好落在固定导航下面（nav 是 position:fixed，会盖住文档流最顶部，
+   --nav-h 由 assets/navfit.js 量真实高度写进 :root，窄屏导航折行也自动跟上）。
+
+   配色故意跟全站品牌蓝拉开 —— 万圣节夜的紫 + 南瓜橙，它是个节气装饰，
+   不该长得像站内组件。动效纪律沿用首屏那两条：只用 transform / opacity，
+   不碰 blur()；系统开「减少动态效果」时文末 *{animation:none!important}
+   全掐掉，静态下蝙蝠停在飞程、糖果不晃、星星不闪，观感不变。
+
+   ⚠️ 万圣节过完拆除：删掉本节全部 + index.html 里 .halloween-bar 整块
+      + i18n.js 两条 halloween.trick。下面那三条 .page-home .hero 是
+      「banner 接管导航偏移」的配套，也要一起删（删了 hero 自动恢复原留白）。 */
+.halloween-bar {
+  position: relative; z-index: 2;      /* 压过 .bg / .spotlight（z 0/1），跟 section 同级 */
+  overflow: hidden;
+  margin-top: var(--nav-h);            /* 让出固定导航的高度，落在它正下方 */
+  min-height: 58px;
+  display: flex; align-items: center; justify-content: center;
+  background:
+    radial-gradient(120% 200% at 50% -60%, rgba(255, 138, 42, 0.16), transparent 60%),
+    linear-gradient(90deg, #1B0F3B 0%, #31166B 50%, #1B0F3B 100%);
+}
+/* 底边一条暖光细线，给深紫色条子收口 */
+.halloween-bar::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, #FF8A2A 30%, #FFB35C 50%, #FF8A2A 70%, transparent);
+  opacity: .75; pointer-events: none;
+}
+
+/* 背景装饰层 */
+.hw-sky { position: absolute; inset: 0; pointer-events: none; }
+/* 星星：clip-path 四角星，只闪 opacity + scale */
+.hw-star {
+  position: absolute; width: 4px; height: 4px; background: #FFD98A;
+  clip-path: polygon(50% 0%, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0% 50%, 39% 39%);
+  animation: hw-twinkle 2.8s ease-in-out infinite;
+}
+.hw-star-1 { top: 9px;  left: 11%; }
+.hw-star-2 { top: 36px; left: 25%; width: 3px; height: 3px; animation-delay: .9s; }
+.hw-star-3 { top: 15px; right: 16%; animation-delay: 1.7s; }
+@keyframes hw-twinkle {
+  0%, 100% { opacity: .25; transform: scale(.8); }
+  50%      { opacity: 1;   transform: scale(1.15); }
+}
+/* 飞蝙蝠：剪影色比底色深，从左飞到右（幅度带上下的轻微弧线，单动画不拆两条） */
+.hw-bat { position: absolute; color: #0D0620; }
+.hw-bat-a { width: 26px; top: 7px;  left: -30px; animation: hw-fly 11s linear infinite; }
+.hw-bat-b { width: 17px; top: 31px; left: -30px; animation: hw-fly 15s linear infinite 4s; }
+@keyframes hw-fly {
+  0%   { transform: translate(0, 0) rotate(0deg);      opacity: 0; }
+  8%   { opacity: .95; }
+  50%  { transform: translate(50vw, -7px) rotate(4deg); }
+  92%  { opacity: .95; }
+  100% { transform: translate(calc(100vw + 30px), 0) rotate(0deg); opacity: 0; }
+}
+/* 糖果：原地轻轻晃 */
+.hw-candy { position: absolute; width: 20px; top: 12px; right: 8%; animation: hw-candy-float 6s ease-in-out infinite; }
+@keyframes hw-candy-float {
+  0%, 100% { transform: translateY(0) rotate(-8deg); }
+  50%      { transform: translateY(5px) rotate(8deg); }
+}
+/* 吊丝蜘蛛：从条子上缘垂下来（丝在 banner 顶边被裁掉，像挂在导航上），左右慢摆 */
+.hw-spider { position: absolute; top: -2px; left: 16%; width: 15px; transform-origin: top center; animation: hw-spider-sway 5s ease-in-out infinite; }
+@keyframes hw-spider-sway {
+  0%, 100% { transform: rotate(-5deg); }
+  50%      { transform: rotate(5deg); }
+}
+
+/* 前排：南瓜灯 + 正文 + 小幽灵 */
+.hw-row {
+  position: relative; z-index: 2;
+  display: flex; align-items: center; justify-content: center;
+  gap: clamp(.5rem, 1.6vw, .9rem);
+  padding: .55rem 1rem;
+}
+.hw-trick {
+  font-size: clamp(1rem, 1.9vw, 1.2rem);
+  font-weight: 800;
+  letter-spacing: .14em; text-indent: .14em;   /* 抵掉尾字后的字距，让整体视觉居中 */
+  color: #FFB25E;
+  text-shadow: 0 0 14px rgba(255, 138, 42, .55), 0 1px 0 rgba(0, 0, 0, .25);
+  white-space: nowrap;
+}
+/* 南瓜灯：轻微摇头（像被风吹） */
+.hw-pumpkin { width: clamp(26px, 3vw, 32px); height: auto; flex: none; animation: hw-pumpkin-bob 3.4s ease-in-out infinite; }
+@keyframes hw-pumpkin-bob {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50%      { transform: translateY(-2px) rotate(3deg); }
+}
+/* 小幽灵：上下漂浮，晚半拍出场错开节奏 */
+.hw-ghost { width: clamp(22px, 2.6vw, 28px); height: auto; flex: none; animation: hw-ghost-float 4.2s ease-in-out infinite .6s; }
+@keyframes hw-ghost-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+
+/* 窄屏：条子压矮、少点花哨（只留一只蝙蝠和一颗星），蜘蛛换个不挡字的位置 */
+@media (max-width: 640px) {
+  .halloween-bar { min-height: 50px; }
+  .hw-star-2, .hw-bat-b, .hw-candy { display: none; }
+  .hw-spider { left: 7%; }
+  .hw-trick { font-size: 1.02rem; letter-spacing: .1em; text-indent: .1em; }
+}
+
+/* ⚠️ 首页 hero 的「导航偏移留白」被 banner 接管了 ——
+   banner 自带 margin-top:var(---nav-h，hero 顶部若再留 calc(var(--nav-h) + …)
+   就是双重偏移，白多一条导航高度的死白。
+   这里把首页 hero 的 padding-top 改成纯审美值，与 base 规则的三个变体一一对应：
+   base 1.15rem / (max-height:900px) 1.6rem / (max-height:780px) 0.6rem。
+   ⚠️ specificity：.page-home .hero(0,2,0) 稳赢 .hero(0,1,0)，
+      所以写在前面也能压过后面媒体查询里的 .hero 规则。 */
+.page-home .hero { padding-top: 1.15rem; }
+@media (max-height: 900px) { .page-home .hero { padding-top: 1.6rem; } }
+@media (max-height: 780px) { .page-home .hero { padding-top: 0.6rem; } }
+
 /* ---------- Hero ---------- */
 .hero {
   position: relative; z-index: 2;
