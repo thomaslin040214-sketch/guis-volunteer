@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-ver="20261025b" data-page-title="doc.title">
+<html lang="zh-CN" data-ver="20261026a" data-page-title="doc.title">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,7 +10,7 @@
    于是点站内链接（全是裸路径）进去时整页退回旧设计。
    这里比对 <html data-ver>：不是当前版本就带查询串重拉一次（查询串必定回源）。 */
 (function () {
-  var VER = "20261025b";
+  var VER = "20261026a";
   try {
     var el = document.documentElement;
     var healed = /[?&]_v=/.test(location.search);
@@ -48,8 +48,8 @@
 <title>GUIS 义工组织 | 广州优联国际学校学生志愿服务组织</title>
 <meta name="description" content="广州优联国际学校（GUIS）义工组织 —— 由学生自主运营的志愿服务组织。社区关怀、环保行动、教育支持、公益募捐、赛事会务与文化交流。" />
 <meta name="theme-color" content="#FFFFFF" />
-<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261025b" />
-<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261025b" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261026a" />
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261026a" />
 
 <!-- Open Graph -->
 <meta property="og:type" content="website" />
@@ -80,8 +80,8 @@
   .hero-brand .hero-va{max-height:40px}
 }
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20261025b" />
-<link rel="stylesheet" href="assets/app.css?v=20261025b" />
+<link rel="stylesheet" href="assets/site.css?v=20261026a" />
+<link rel="stylesheet" href="assets/app.css?v=20261026a" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <!-- ⚠️ page-home 是「浮动闪现进场」的开关：site.css 里 fx-pop / fx-bob 只认这个类名，
@@ -153,28 +153,33 @@
        ⚠️ join.html / signup.html / admin.html 里各自还有一份 hero-brand，那是它们自己的页头，别一起删。 -->
 
   <!-- 首屏标题：欢迎词（多语言轮播）+ 机构名两行 + 主标题。
-       ⚠️ data-i18n 只能挂在**内层**（.hero-org-to / .hero-org-name / .hero-title-main）上：
+       ⚠️ data-i18n 只能挂在**内层**（.hero-org-name / .hero-title-main）上：
           applyLang() 会直接 set innerHTML 覆盖掉带 data-i18n 的元素整个内容，
           挂在 h1 上会把欢迎词一起冲掉。
+       ⚠️ 2026-10-26：.hero-org-to（连接词「来到」）**不挂 data-i18n** ——
+          它跟着欢迎词轮换语言（词表在 assets/welcome.js 的 WORDS，每个词配一个 to），
+          挂上 data-i18n 会被 applyLang() 按界面语言冲掉，轮换就断了。
        ⚠️ 欢迎词的词表在 assets/welcome.js（**故意不进 i18n 词典**）：
-          它是「同时展示多种语言」，跟站点当前界面语言无关。
-       ⚠️ 词槽宽度由 welcome.js 量最宽的词锁死 —— 不锁的话换词时整行会左右晃。 -->
+          它是「同时展示多种语言」，跟站点当前界面语言无关；机构名才跟界面语言。
+       ⚠️ 词槽宽度**不用 JS 量**：词槽整块宽，每个词自己 left:50% + translateX(-50%)
+          居中，词变宽变窄都从中心往两边长 → 天然不抖（早年 max-content 方案会晃，已弃用）。 -->
   <h1 class="hero-title">
     <span class="hero-welcome" aria-hidden="true">
       <span class="hw-slot" id="hw-slot">
         <span class="hw-layer is-in">欢迎</span>
         <span class="hw-layer is-reset"></span>
       </span>
-      <span class="hw-lang" id="hw-lang">中文</span>
     </span>
     <!-- 2026-10-25（第二轮反馈后定稿）首屏标题区三行结构：
            欢迎（转动）→ 来到 → GUIS-ULC义工组织
          · 不要药丸框：纯文字。「来到」是「欢迎来到 + 机构名」这句里的连接词；
-           机构名放大做主视觉副题（英文界面「来到」对应 "to"）。
+           机构名放大做主视觉副题（跟随站点中英文切换）。
+         · 2026-10-26 起「来到」跟随欢迎词轮换语言（来到/to/에/へ/में，词表在 welcome.js），
+           所以它身上**没有** data-i18n —— 挂了会被 applyLang() 冲掉，轮换就断了。
          ⚠️ 都用 <span>：这一家子住在 h1 里，h1 的内容模型只收 phrasing content。
          ⚠️ 2026-10-03 的 LED 灯牌实验版型跟着药丸一起退役（样式已从 site.css 删除）。 -->
     <span class="hero-org">
-      <span class="hero-org-to" data-i18n="hero.orgTo">来到</span>
+      <span class="hero-org-to">来到</span>
       <span class="hero-org-name" data-i18n="hero.badge">GUIS-ULC义工组织</span>
     </span>
     <span class="vh">欢迎 Welcome。</span>
@@ -473,22 +478,22 @@
 <!-- 工作照（#gallery）已整块删除，灯箱只服务那一块的 .shot，一起删掉 -->
 
 <script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
-<script src="assets/cloud-config.js?v=20261025b"></script>
-<script src="assets/cloud.js?v=20261025b"></script>
-<script src="assets/i18n.js?v=20261025b"></script>
-<script src="assets/board.js?v=20261025b"></script>
-<script src="assets/editor.js?v=20261025b"></script>
-<script src="assets/feed.js?v=20261025b"></script>
+<script src="assets/cloud-config.js?v=20261026a"></script>
+<script src="assets/cloud.js?v=20261026a"></script>
+<script src="assets/i18n.js?v=20261026a"></script>
+<script src="assets/board.js?v=20261026a"></script>
+<script src="assets/editor.js?v=20261026a"></script>
+<script src="assets/feed.js?v=20261026a"></script>
 <!-- 部门成员已独立成 team.html，team.js / team-render.js 只在那一页加载 -->
-<script src="assets/queue.js?v=20261025b"></script>
-<script src="assets/nav.js?v=20261025b"></script>
-<script src="assets/navfit.js?v=20261025b"></script>
-<script src="assets/time.js?v=20261025b"></script>
-<script src="assets/roles.js?v=20261025b"></script>
-<script src="assets/session.js?v=20261025b"></script>
-<script src="assets/main.js?v=20261025b"></script>
-<script src="assets/typer.js?v=20261025b"></script>
-<script src="assets/welcome.js?v=20261025b"></script>
+<script src="assets/queue.js?v=20261026a"></script>
+<script src="assets/nav.js?v=20261026a"></script>
+<script src="assets/navfit.js?v=20261026a"></script>
+<script src="assets/time.js?v=20261026a"></script>
+<script src="assets/roles.js?v=20261026a"></script>
+<script src="assets/session.js?v=20261026a"></script>
+<script src="assets/main.js?v=20261026a"></script>
+<script src="assets/typer.js?v=20261026a"></script>
+<script src="assets/welcome.js?v=20261026a"></script>
 <script>
 /* ---------- 首页「活动报名」板块 ----------
    看板的全部逻辑（红绿灯判定、数字、图例、以及「旧结构自愈」）都在 assets/board.js，

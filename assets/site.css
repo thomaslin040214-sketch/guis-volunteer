@@ -478,12 +478,15 @@ section { position: relative; z-index: 2; padding: clamp(4rem, 9vw, 7rem) 0; scr
    ⚠️ 2026-10-03 的 LED 灯牌实验版型跟着药丸一起退役了（样式已删，想要回 git 拿）。 */
 .hero-org {
   display: block;
-  /* 上面是 .hero-welcome 的 margin-bottom:0.4em（欢迎词和语言标签之后），
+  /* 上面是 .hero-welcome 的 margin-bottom:1.2em（2026-10-26 语言标签删除后补上的），
      下面这 0.9rem 是机构名到主标题的距离 —— h1 自己还有 margin-bottom 管副标题。 */
   margin-top: 0;
   margin-bottom: 0.9rem;
 }
-/* 「来到」：连接词，轻一点小一点，字距拉开透点空气 */
+/* 「来到」：连接词，轻一点小一点，字距拉开透点空气
+   2026-10-26：改成跟随欢迎词轮换语言（welcome.js 的 WORDS 词表每个词配一个 to）。
+   淡出淡入跟大词同节奏：420ms 出（和 .hw-layer 的 transition 对齐），
+   新词升上来的那一刻（OUT_MS）换字并摘掉 is-swap 淡入。 */
 .hero-org-to {
   display: block;
   font-size: clamp(1rem, 0.44em, 1.7rem);
@@ -492,11 +495,16 @@ section { position: relative; z-index: 2; padding: clamp(4rem, 9vw, 7rem) 0; scr
   text-indent: 0.14em;   /* 抵掉最后一个字后的字距，让整体视觉居中 */
   color: var(--text-subtle);
   margin-bottom: 0.3em;
+  transition: opacity 420ms ease, transform 420ms ease;
 }
-/* 机构名：这一行的主角 */
+/* 轮换中：跟着大词一起往上淡出 */
+.hero-org-to.is-swap { opacity: 0; transform: translateY(-0.3em); }
+/* 机构名：这一行的主角
+   2026-10-26 按用户要求「放大一点」：0.62em → 0.74em。
+   仍明显小于欢迎词（1.05em）和主标题（0.88em，见 .hero-title-main），层级不乱。 */
 .hero-org-name {
   display: block;
-  font-size: clamp(1.3rem, 0.62em, 2.8rem);
+  font-size: clamp(1.3rem, 0.74em, 2.8rem);
   font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--brand-deep);
@@ -514,8 +522,10 @@ section { position: relative; z-index: 2; padding: clamp(4rem, 9vw, 7rem) 0; scr
 }
 /* ⚠️ 2026-10-25：主标题现在包在 .hero-title-main 里（因为 h1 本身要装欢迎词块，
    而 data-i18n 只能挂在内层 —— applyLang() 会覆盖带 data-i18n 元素的 innerHTML）。
-   主标题这一层恢复成「自己一个块级元素」，让 h1 里的欢迎词和它各占一行。 */
-.hero-title-main { display: block; }
+   主标题这一层恢复成「自己一个块级元素」，让 h1 里的欢迎词和它各占一行。
+   ⚠️ 2026-10-26 按用户要求「稍微小一点」：0.88em —— 欢迎词（1.05em）仍是首屏主角，
+   机构名（0.74em）第三，层级不变只是都收敛一点。 */
+.hero-title-main { display: block; font-size: 0.88em; }
 .hero-title .grad {
   background: linear-gradient(180deg, var(--brand) 10%, #54B4D8 100%);
   -webkit-background-clip: text; background-clip: text;
@@ -541,7 +551,6 @@ section { position: relative; z-index: 2; padding: clamp(4rem, 9vw, 7rem) 0; scr
        .hero-welcome          ← 整块，自成一行（在最上面）
          .hw-slot             ← 词槽
            .hw-layer × 2      ← 两层绝对定位叠着，一层显示一层待命
-         .hw-lang             ← 语言小标签（中文 / English / …）
        .hero-org              ← 机构名两行（2026-10-25 定稿，纯文字无框）
          .hero-org-to         ← 「来到」（英文版 "to"）
          .hero-org-name       ← GUIS-ULC义工组织 / Volunteer Association
@@ -565,7 +574,10 @@ section { position: relative; z-index: 2; padding: clamp(4rem, 9vw, 7rem) 0; scr
      1.05em = 主标题的 1.05 倍，两者几乎等重，谁也不抢。 */
   font-size: 1.05em;
   line-height: 1;
-  margin-bottom: 0.4em;
+  /* ⚠️ 2026-10-26：语言小标签删了，这里从 0.4em 加到 1.2em ——
+     当年欢迎词到「来到」的空隙有 ~0.9em 是标签占的（margin-top 0.45em + 行高），
+     不补回来欢迎词会直接贴到「来到」脸上。1.2em 是补上标签位移后的实测值。 */
+  margin-bottom: 1.2em;
 }
 
 /* 词槽：整块宽，固定高度，两层叠在里面 */
@@ -614,24 +626,12 @@ section { position: relative; z-index: 2; padding: clamp(4rem, 9vw, 7rem) 0; scr
   transition: none;
 }
 
-/* 语言小标签：跟着词一起换，但更轻 */
-.hw-lang {
-  display: block;
-  text-align: center;
-  font-size: 0.3em;
-  font-weight: 600;
-  letter-spacing: 0.22em;
-  text-indent: 0.22em;   /* 抵掉最后一个字母后的字距，让整体视觉居中 */
-  color: var(--text-subtle);
-  margin-top: 0.45em;
-  transition: opacity 300ms ease;
-}
-.hw-lang.is-in { opacity: 1; }
-.hw-lang.is-out { opacity: 0; }
+/* 2026-10-26：语言小标签（.hw-lang）按用户要求删除 —— 原话「太恶心了」。
+   样式、JS 里的 langEl 逻辑、词表里的 lang 字段一并清除（welcome.js 有记录）。 */
 
 /* 系统开了「减少动态效果」→ 不轮播，停在第一个词（JS 里也会 return） */
 @media (prefers-reduced-motion: reduce) {
-  .hw-layer, .hw-lang { transition: none !important; }
+  .hw-layer, .hero-org-to { transition: none !important; }
 }
 
 /* 窄屏：欢迎词跟着主标题一起缩（主标题用 clamp，这里只做一点点收窄） */

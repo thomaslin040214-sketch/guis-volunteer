@@ -11,6 +11,11 @@
    要改节奏 → 改 HOLD_MS（一个词停多久）
    离场/进场的时长在 site.css 的 .hw-layer（transition）
 
+   ⚠️ 2026-10-26：词下面的语言小标签（中文 / English / …）按用户要求删了
+      （原话「太恶心了」）—— 词表里的 lang 字段、SWAP_MS、langEl 一干逻辑
+      全部随之移除，只留轮播本身。同日用户又要求「来到也改成对应语言的文字」，
+      于是词表改用 { w, to } 结构：连接词跟着大词一起轮换（详见词表注释）。
+
    ⚠️ 这个词表**不进 i18n 词典**：
       它本来就是「同时展示多种语言」，跟站点当前是中文还是英文界面无关。
       塞进 zh/en 词典会让人误以为它该跟着界面语言变。
@@ -23,32 +28,40 @@
 (function () {
   "use strict";
 
-  /* ---------- 词表 ---------- */
+  /* ---------- 词表 ----------
+     2026-10-26：每个词配一个 to（「欢迎X来到」里的连接词）——
+     用户要求「来到也改成对应语言的文字」：大词是哪种语言，
+     下面的连接词就用哪种语言（欢迎→来到、Welcome→to、ようこそ→へ…）。
+     ⚠️ to 字段**不进 i18n 词典**：它跟大词绑死轮换，与站点当前界面语言无关
+        （站点语言只管下面的机构名 hero.badge）。
+     ⚠️ 日/韩/印地语是后置词（てにをは 体系），所以 へ / 에 / में 排在机构名**上方**
+        紧贴着它 —— 视觉上读作「机构名へようこそ」，语序才对。 */
   var WORDS = [
-    { w: "欢迎", lang: "中文" },
-    { w: "Welcome", lang: "English" },
-    { w: "환영합니다", lang: "한국어" },
-    { w: "ようこそ", lang: "日本語" },
-    { w: "स्वागत है", lang: "हिन्दी" }
+    { w: "欢迎",       to: "来到" },
+    { w: "Welcome",    to: "to"   },
+    { w: "환영합니다",  to: "에"   },
+    { w: "ようこそ",   to: "へ"   },
+    { w: "स्वागत है", to: "में"  }
   ];
 
   var HOLD_MS = 2600;   /* 一个词停多久（够读完一句，不赶） */
   var OUT_MS  = 420;    /* 旧词退场时长（与 site.css 的 .hw-layer transition 对齐） */
-  var SWAP_MS = 200;    /* 语言小标签换字的时机（离场过渡的中点） */
 
   function $(id) { return document.getElementById(id); }
 
   function boot() {
     var slot = $("hw-slot");
-    var langEl = $("hw-lang");
-    if (!slot || !langEl) return;
+    if (!slot) return;
 
     var layers = slot.querySelectorAll(".hw-layer");
     if (layers.length < 2) return;
 
+    /* 连接词元素（.hero-org-to）—— 找不到也不影响轮播本身 */
+    var toEl = document.querySelector(".hero-org-to");
+
     /* top = 当前显示的那层，bottom = 藏在下面等着的那层 */
     var top = layers[0], bottom = layers[1];
-    var idx = 0, timer = 0, langTimer = 0, swapTimer = 0, running = false, inView = true;
+    var idx = 0, timer = 0, swapTimer = 0, running = false, inView = true;
 
     function reduceMotion() {
       return !!(window.matchMedia &&
@@ -65,13 +78,8 @@
       var next = (idx + 1) % WORDS.length;
 
       top.className = "hw-layer is-out";
-
-      if (langTimer) clearTimeout(langTimer);
-      langEl.className = "hw-lang is-out";
-      langTimer = setTimeout(function () {
-        langEl.textContent = WORDS[next].lang;
-        langEl.className = "hw-lang is-in";
-      }, SWAP_MS);
+      /* 连接词跟大词同节奏淡出（420ms，见 site.css 的 .hero-org-to） */
+      if (toEl) toEl.classList.add("is-swap");
 
       if (swapTimer) clearTimeout(swapTimer);
       swapTimer = setTimeout(function () {
@@ -81,6 +89,12 @@
         bottom.textContent = WORDS[next].w;
         void bottom.offsetWidth;          /* 强制回流 */
         bottom.className = "hw-layer is-in";
+
+        /* 新词升上来的那一刻，连接词换字并淡入 */
+        if (toEl) {
+          toEl.textContent = WORDS[next].to;
+          toEl.classList.remove("is-swap");
+        }
 
         var t = top; top = bottom; bottom = t;
         idx = next;
@@ -102,8 +116,7 @@
     top.textContent = WORDS[0].w;
     bottom.className = "hw-layer is-reset";
     bottom.textContent = WORDS[1].w;
-    langEl.textContent = WORDS[0].lang;
-    langEl.className = "hw-lang is-in";
+    if (toEl) toEl.textContent = WORDS[0].to;
 
     if (reduceMotion()) return;   /* 开了「减少动态效果」就停在这一个词 */
 
