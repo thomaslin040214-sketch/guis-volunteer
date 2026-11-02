@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-ver="20261102b" data-page-title="dc.title">
+<html lang="zh-CN" data-ver="20261102c" data-page-title="dc.title">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,7 +10,7 @@
    于是点站内链接（全是裸路径）进去时整页退回旧设计。
    这里比对 <html data-ver>：不是当前版本就带查询串重拉一次（查询串必定回源）。 */
 (function () {
-  var VER = "20261102b";
+  var VER = "20261102c";
   try {
     var el = document.documentElement;
     var healed = /[?&]_v=/.test(location.search);
@@ -41,15 +41,15 @@
 })();
 </script>
 <title>GUIS-ULC义工组织站点 | 文件披露 | 同一颗心同一种爱</title>
-<meta name="description" content="GUIS 义工组织文件披露 —— 章程、规章制度、财务与活动记录等官方文件公开查阅与下载。" />
+<meta name="description" content="GUIS 义工组织文件披露 —— 章程、规章制度、财务与活动记录等官方文件公开在线预览查阅。" />
 <meta name="theme-color" content="#FFFFFF" />
-<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261102b" />
-<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261102b" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261102c" />
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261102c" />
 
 <!-- Open Graph -->
 <meta property="og:type" content="website" />
 <meta property="og:title" content="GUIS 义工组织 | 文件披露" />
-<meta property="og:description" content="义工组织章程、规章制度、财务与活动记录等官方文件公开查阅与下载。" />
+<meta property="og:description" content="义工组织章程、规章制度、财务与活动记录等官方文件公开在线预览查阅。" />
 <meta property="og:image" content="assets/logo/guis-ulc-lockup.png" />
 
 <style>
@@ -62,8 +62,8 @@
   .footer-brand img{max-height:26px}
 }
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20261102b" />
-<link rel="stylesheet" href="assets/app.css?v=20261102b" />
+<link rel="stylesheet" href="assets/site.css?v=20261102c" />
+<link rel="stylesheet" href="assets/app.css?v=20261102c" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
@@ -117,7 +117,7 @@
       <div class="reveal">
         <p class="eyebrow" data-i18n="dc.eyebrow">信息公开</p>
         <h1 class="page-title" data-i18n="dc.title">文件披露</h1>
-        <p class="page-lede" data-i18n="dc.lede">义工组织的章程、规章制度、财务与活动记录等文件在此公开，可随时查阅与下载。</p>
+        <p class="page-lede" data-i18n="dc.lede">义工组织的章程、规章制度、财务与活动记录等文件在此公开，可在线预览查阅。</p>
       </div>
 
       <!-- 分类筛选 + 文件列表由 assets/disclosure.js 渲染 -->
@@ -142,6 +142,20 @@
     </div>
   </div>
 </footer>
+
+<div class="dc-modal" id="dc-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-label="文件预览">
+  <div class="dc-modal-mask" data-close></div>
+  <div class="dc-modal-box">
+    <div class="dc-modal-head">
+      <div class="dc-modal-titles">
+        <strong class="dc-modal-title" id="dc-modal-title"></strong>
+        <span class="dc-modal-sub" id="dc-modal-sub"></span>
+      </div>
+      <button type="button" class="dc-modal-close" id="dc-modal-close" data-close aria-label="关闭预览">&times;</button>
+    </div>
+    <div class="dc-modal-body" id="dc-modal-body"></div>
+  </div>
+</div>
 
 <style>
 .dc-filters { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1.6rem 0 1.8rem; }
@@ -181,19 +195,49 @@
   .dc-meta { align-items: flex-start; text-align: left; }
   .dc-dl { width: 100%; }
 }
+
+/* ===== 预览弹窗（点击列表项内嵌预览，不提供下载） ===== */
+.dc-row { font: inherit; width: 100%; text-align: left; cursor: pointer; }
+.dc-modal {
+  position: fixed; inset: 0; z-index: 1400;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; visibility: hidden;
+  transition: opacity .25s ease, visibility .25s ease;
+}
+.dc-modal.is-open { opacity: 1; visibility: visible; }
+.dc-modal-mask { position: absolute; inset: 0; background: rgba(20,12,14,.55); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+.dc-modal-box {
+  position: relative; width: min(960px, 94vw); height: min(88vh, 860px);
+  background: #fff; border-radius: 16px; box-shadow: 0 24px 70px rgba(0,0,0,.35);
+  display: flex; flex-direction: column; overflow: hidden;
+  transform: translateY(10px) scale(.98); transition: transform .25s cubic-bezier(.16,1,.3,1);
+}
+.dc-modal.is-open .dc-modal-box { transform: none; }
+.dc-modal-head { display: flex; align-items: flex-start; gap: .8rem; padding: .95rem 1.1rem; border-bottom: 1px solid var(--hairline); background: var(--card-bg); }
+.dc-modal-titles { display: flex; flex-direction: column; min-width: 0; gap: .15rem; flex: 1 1 auto; }
+.dc-modal-title { font-size: 1rem; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dc-modal-sub { font-size: .78rem; color: var(--text-muted); }
+.dc-modal-close { flex: 0 0 auto; width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--hairline); background: var(--bg-soft); color: var(--text-soft); font-size: 1.4rem; line-height: 1; cursor: pointer; transition: .2s; }
+.dc-modal-close:hover { color: var(--brand); border-color: var(--brand); }
+.dc-modal-body { flex: 1 1 auto; min-height: 0; background: #f6f5f4; display: flex; }
+.dc-modal-body iframe, .dc-modal-body img { width: 100%; height: 100%; border: 0; display: block; }
+.dc-modal-nopreview { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .6rem; color: var(--text-muted); text-align: center; padding: 2rem; }
+.dc-modal-nopreview .big { font-size: 1.05rem; color: var(--text-soft); }
+.dc-modal-nopreview .small { font-size: .8rem; letter-spacing: .05em; }
+body.modal-lock { overflow: hidden; }
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
-<script src="assets/cloud-config.js?v=20261102b"></script>
-<script src="assets/cloud.js?v=20261102b"></script>
-<script src="assets/i18n.js?v=20261102b"></script>
-<script src="assets/nav.js?v=20261102b"></script>
-<script src="assets/navfit.js?v=20261102b"></script>
-<script src="assets/time.js?v=20261102b"></script>
-<script src="assets/roles.js?v=20261102b"></script>
-<script src="assets/session.js?v=20261102b"></script>
-<script src="assets/main.js?v=20261102b"></script>
-<script src="assets/disclosure.js?v=20261102b"></script>
+<script src="assets/cloud-config.js?v=20261102c"></script>
+<script src="assets/cloud.js?v=20261102c"></script>
+<script src="assets/i18n.js?v=20261102c"></script>
+<script src="assets/nav.js?v=20261102c"></script>
+<script src="assets/navfit.js?v=20261102c"></script>
+<script src="assets/time.js?v=20261102c"></script>
+<script src="assets/roles.js?v=20261102c"></script>
+<script src="assets/session.js?v=20261102c"></script>
+<script src="assets/main.js?v=20261102c"></script>
+<script src="assets/disclosure.js?v=20261102c"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   if (window.GUISDisclosure) window.GUISDisclosure.init();
