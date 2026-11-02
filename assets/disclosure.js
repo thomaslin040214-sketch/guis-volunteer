@@ -1,8 +1,11 @@
 /* ============================================================
    GUIS 义工组织 — 文件披露页渲染逻辑（assets/disclosure.js）
 
-   交互：点击列表项（文件 tab）→ 在该行下方就地展开内嵌预览，
-        再点一次收起（手风琴式，同一时间只展开一个）。不提供下载。
+   交互：
+   - 点击文件行（除下载按钮外）→ 在该行下方就地展开内嵌预览（手风琴式，
+     同一时间只展开一个），再点一次收起。
+   - 每行末尾有独立的「下载 ↓」按钮 → 仅触发下载，不影响预览展开。
+   预览：
    - PDF / 图片 / 纯文本：浏览器内嵌预览（PDF 隐藏原生工具栏，减少下载入口）
    - 其它格式（docx / xlsx / pptx 等）：提示“暂不支持在线预览”
 
@@ -104,7 +107,10 @@ window.GUISDisclosure = (function () {
       +   '<span class="dc-date">' + esc(t("dc.date", "发布")) + "：" + esc(fmtDate(f.date, en)) + "</span>"
       +   (f.size ? '<span class="dc-size">' + esc(f.size) + "</span>" : "")
       + "</span>"
-      + '<span class="dc-dl">' + esc(t("dc.preview", "预览")) + " ↗</span>";
+      + '<span class="dc-actions">'
+      +   '<span class="dc-dl">' + esc(t("dc.preview", "预览")) + " ↗</span>"
+      +   '<button type="button" class="dc-download" data-download="' + esc(f.id) + '" aria-label="' + esc(t("dc.download", "下载")) + '">' + esc(t("dc.download", "下载")) + " ↓</button>"
+      + "</span>";
   }
 
   function render() {
@@ -120,10 +126,10 @@ window.GUISDisclosure = (function () {
       return;
     }
 
-    /* 行改为 <button>：点击就地展开预览（不再有下载链接，也没有独立弹窗） */
+    /* 行改为 <div>：点击（除下载按钮外）就地展开预览；下载是行内独立按钮 */
     var html = "";
     rows.forEach(function (f) {
-      html += '<button type="button" class="dc-row" data-preview="' + esc(f.id) + '">' + rowHTML(f, en) + "</button>";
+      html += '<div class="dc-row" data-preview="' + esc(f.id) + '">' + rowHTML(f, en) + "</div>";
     });
     list.innerHTML = html;
   }
@@ -197,6 +203,17 @@ window.GUISDisclosure = (function () {
     openId = f.id;
   }
 
+  /* 独立下载按钮：新建 <a download> 触发浏览器下载，不影响预览展开 */
+  function doDownload(f) {
+    var a = document.createElement("a");
+    a.href = f.file;
+    a.download = (f.file.split("/").pop()) || "file";
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
   function renderFilters() {
     var bar = document.getElementById("dc-filters");
     if (!bar) return;
@@ -216,19 +233,28 @@ window.GUISDisclosure = (function () {
     });
   }
 
+  function findFile(id) {
+    for (var i = 0; i < FILES.length; i++) { if (FILES[i].id === id) return FILES[i]; }
+    return null;
+  }
+
   function init() {
     renderFilters();
     render();
 
-    /* 点击列表项 → 就地展开/收起预览（事件委托，兼容分类切换后重渲染的行） */
+    /* 点击列表：先判断是否点中「下载」按钮（仅下载），否则切换预览展开 */
     var list = document.getElementById("dc-list");
     if (list) {
       list.addEventListener("click", function (e) {
+        var dlBtn = e.target.closest ? e.target.closest(".dc-download") : null;
+        if (dlBtn) {
+          var df = findFile(dlBtn.getAttribute("data-download"));
+          if (df) doDownload(df);
+          return;
+        }
         var row = e.target.closest ? e.target.closest(".dc-row") : null;
         if (!row) return;
-        var id = row.getAttribute("data-preview");
-        var f = null;
-        for (var i = 0; i < FILES.length; i++) { if (FILES[i].id === id) { f = FILES[i]; break; } }
+        var f = findFile(row.getAttribute("data-preview"));
         if (f) toggle(f, row);
       });
     }
