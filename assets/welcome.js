@@ -44,7 +44,7 @@
     { w: "स्वागत है", to: "में"  }
   ];
 
-  var HOLD_MS = 2600;   /* 一个词停多久（够读完一句，不赶） */
+  var HOLD_MS = 4100;   /* 一个词停多久（2600 + 1500：用户要求每个语言延长 1.5 秒） */
   var OUT_MS  = 420;    /* 旧词退场时长（与 site.css 的 .hw-layer transition 对齐） */
 
   function $(id) { return document.getElementById(id); }
