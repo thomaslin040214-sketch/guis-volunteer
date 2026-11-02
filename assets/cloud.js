@@ -801,6 +801,61 @@
       return cloud.storage.createSignedUrl(p, ttl || 900);
     },
 
+    /* ================= 文件披露（云存储 + 数据库，2026-11-03 加） =================
+       文件本体进云存储 shared 路径（任何登录用户可读，匿名读不到 ——
+       平台存储不暴露公开 URL）；元数据进 disclosure_files 表
+       （anon 可读清单、owner 可增删改）。
+       所以披露页「内容」需登录才能看/下载，「清单」则公开。 */
+    uploadDisclosure: function (file, uid) {
+      var ext = String(file.name || "").split(".").pop() || "bin";
+      ext = ext.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 5) || "bin";
+      var name = "disclosure/" + Date.now() + "-" +
+        Math.random().toString(36).slice(2, 10) + "." + ext;
+      var p = cloud.storage.sharedPath(uid, name);
+      return cloud.storage
+        .upload(p, file, { contentType: file.type || "application/octet-stream", upsert: false })
+        .then(function (res) {
+          if (!res || res.error) return res;
+          return { data: { path: p }, error: null };
+        });
+    },
+
+    /* 清单公开：匿名也能拉。排序按展示日期倒序、再按入库时间倒序。
+       owner_id 一并摘回，供「我的上传」按上传者筛。 */
+    listDisclosure: function () {
+      return db
+        .from("disclosure_files")
+        .select("id, cat, storage_path, original_name, title_zh, desc_zh, title_en, desc_en, file_date, size, created_at, owner_id")
+        .order("file_date", { ascending: false })
+        .order("created_at", { ascending: false });
+    },
+
+    insertDisclosure: function (payload) {
+      /* ⚠️ 不链 .select()：owner 写入后回读受 SELECT 策略约束（anon 也看不到自己刚插的行，
+         会误报 42501）。不回读，靠插入是否抛错判断成败。 */
+      return db.from("disclosure_files").insert(payload);
+    },
+
+    deleteDisclosureRow: function (id) {
+      return db.from("disclosure_files").delete().eq("id", id);
+    },
+
+    /* 删行之后把存储对象也删掉（只 owner 能删自己的 shared 路径）。 */
+    deleteDisclosureStorage: function (path) {
+      if (!path) return Promise.resolve({ data: null, error: null });
+      return cloud.storage.remove([path]);
+    },
+
+    /* 预览 / 下载都走签名 URL：获取 URL 需登录，URL 本身是短时效密钥，不外泄。 */
+    disclosureUrl: function (p, ttl) {
+      return cloud.storage.createSignedUrl(p, ttl || 900);
+    },
+
+    disclosureExt: function (path) {
+      var i = String(path || "").lastIndexOf(".");
+      return i >= 0 ? String(path).slice(i + 1).toLowerCase() : "file";
+    },
+
     /* ================= 招新面试 · 安排与记录（2026-10-06 加） =================
        两张表，各管一件事：
          · interview_slots   —— 面试时间表。一行 = 一位候选人的一个 15 分钟场次。
