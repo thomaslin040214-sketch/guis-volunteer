@@ -10,7 +10,7 @@ window.GUISDisclosureAdmin = (function () {
   var C = window.GUISCloud;
 
   /* 分类 key —— 与公开页 disclosure.js 保持一致；要加分类在此加并在 i18n 补文案。 */
-  var CATEGORIES = ["charter", "regulation", "finance", "report", "notice"];
+  var CATEGORIES = ["charter", "personnel", "report", "notice"];
   var ALLOWED_EXT = ["pdf","doc","docx","xls","xlsx","ppt","pptx","txt","md","csv","png","jpg","jpeg","gif","webp","bmp","svg","json","log"];
   var MAX_BYTES = 20 * 1024 * 1024;   /* 平台单文件上限 20MB */
 

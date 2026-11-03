@@ -16,7 +16,7 @@ window.GUISDisclosure = (function () {
 
   /* 分类 key —— 顺序即筛选条从左到右的顺序；要加分类就在此加 key，
      并在 assets/i18n.js 的 zh / en 里补 dc.cat.<key> 文案。 */
-  var CATEGORIES = ["charter", "regulation", "finance", "report", "notice"];
+  var CATEGORIES = ["charter", "personnel", "report", "notice"];
 
   var openId = null;            /* 当前就地展开的行 id */
   var isAuthed = false;
