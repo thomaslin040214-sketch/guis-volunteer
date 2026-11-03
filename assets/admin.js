@@ -148,7 +148,8 @@ document.addEventListener("DOMContentLoaded", function () {
     people: "owner",      /* 人员管理：改角色、开通账号 */
     students: "owner",    /* 学生名单：开通白名单 */
     hours: "owner",       /* 校外时长审核 */
-    cert: "owner"         /* 证明审核（另需审核人名单，见 applyCertUI） */
+    cert: "owner",        /* 证明审核（另需审核人名单，见 applyCertUI） */
+    disclosure: "owner"   /* 文件披露：后台自助上传，仅组织成员 */
   };
 
   function canSeeTab(tab) {
@@ -362,7 +363,7 @@ document.addEventListener("DOMContentLoaded", function () {
   /* ---------------- Tab 切换 ----------------
      每个页签进场时要做的第一件事写在 onEnter 里（拉数据、启动轮询等），
      离开实时报名时要停掉定时器，否则它会一直在后台刷新。 */
-  var TAB_IDS = ["acts", "calendar", "regs", "live", "archive", "journal", "announce", "people", "students", "hours", "cert"];
+  var TAB_IDS = ["acts", "calendar", "regs", "live", "archive", "journal", "announce", "people", "students", "hours", "cert", "disclosure"];
   var TAB_ENTER = {
     calendar: function () { if (isOwner()) loadAdminCalendar(true); },
     people: function () { if (isOwner()) { loadPeople(); loadManagerOptions(); } },
@@ -375,7 +376,8 @@ document.addEventListener("DOMContentLoaded", function () {
       if ($("arc-activity").value) loadArchiveDetail();
     },
     journal: function () { loadJournalOptions(); },
-    announce: function () { loadAnnouncements(); }
+    announce: function () { loadAnnouncements(); },
+    disclosure: function () { if (isOwner()) window.GUISDisclosureAdmin.init(); }
   };
   var TAB_LEAVE = {
     live: function () { stopLiveTimer(); }

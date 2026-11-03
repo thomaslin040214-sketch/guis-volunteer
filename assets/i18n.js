@@ -63,6 +63,9 @@ window.SITE_I18N = {
     "dc.badType": "不支持的文件格式",
     "dc.loadFail": "加载失败，请刷新。",
     "dc.delete": "删除",
+    "dc.needTitleZh": "请填写中文标题",
+    "dc.noMyYet": "你还没有上传过文件。",
+    "dc.deleteFail": "删除失败：",
 
     "lg.title": "登录义工组织",
     "lg.tabPass": "密码登录",
@@ -536,6 +539,9 @@ window.SITE_I18N = {
     "dc.badType": "Unsupported file type",
     "dc.loadFail": "Failed to load. Please refresh.",
     "dc.delete": "Delete",
+    "dc.needTitleZh": "Chinese title is required",
+    "dc.noMyYet": "You haven't uploaded any files yet.",
+    "dc.deleteFail": "Delete failed: ",
 
     "lg.title": "Sign in",
     "lg.tabPass": "Password",

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-ver="20261102b">
+<html lang="zh-CN" data-ver="20261102c">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,7 +10,7 @@
    于是点站内链接（全是裸路径）进去时整页退回旧设计。
    这里比对 <html data-ver>：不是当前版本就带查询串重拉一次（查询串必定回源）。 */
 (function () {
-  var VER = "20261102b";
+  var VER = "20261102c";
   try {
     var el = document.documentElement;
     var healed = /[?&]_v=/.test(location.search);
@@ -49,8 +49,8 @@
 <meta name="description" content="GUIS 义工组织后台管理：创建义工活动、查看报名名单、导出 Excel。" />
 <meta name="theme-color" content="#FFFFFF" />
 <meta name="robots" content="noindex, nofollow" />
-<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261102b" />
-<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261102b" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261102c" />
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261102c" />
 <!-- 品牌标志兜底样式（内联，随 HTML 一起下发）。
      即使 assets/site.css 被浏览器缓存成旧版本，标志也不会按图片原始尺寸撑破布局。
      这里只设尺寸上限（max-*），正常加载 site.css 时这些上限都不会生效。 -->
@@ -73,9 +73,23 @@
   .hero-brand .hero-logo{max-width:175px}
   .hero-brand .hero-va{max-height:40px}
 }
+/* === 文件披露 · 后台上传页签 === */
+.da-msg{font-size:.9rem;min-height:1.2rem;margin:0 0 .6rem}
+.da-msg.err{color:#9C2126}
+.da-msg.ok{color:#1a7f37}
+.dc-file-name{display:block;margin-top:.25rem;color:#6b7280;font-size:.82rem;word-break:break-all}
+.da-date-note{background:#f4f1f1;border-left:3px solid #9C2126;padding:.5rem .75rem;border-radius:6px;font-size:.85rem;color:#5b3a3c}
+.dc-empty{padding:1rem 0;color:#6b7280;font-size:.9rem}
+.dc-myuploads-list{display:flex;flex-direction:column;gap:.5rem}
+.dc-my-item{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;padding:.6rem .75rem;border:1px solid #e6e1e1;border-radius:8px;background:#fff}
+.dc-my-name{font-weight:600;flex:1 1 200px;min-width:160px}
+.dc-my-cat{font-size:.78rem;color:#9C2126;background:#f4e9ea;padding:.1rem .5rem;border-radius:999px}
+.dc-my-date{font-size:.82rem;color:#6b7280}
+.dc-my-del{border:1px solid #9C2126;color:#9C2126;background:#fff;border-radius:999px;padding:.25rem .8rem;cursor:pointer;font-size:.82rem}
+.dc-my-del:hover{background:#9C2126;color:#fff}
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20261102b" />
-<link rel="stylesheet" href="assets/app.css?v=20261102b" />
+<link rel="stylesheet" href="assets/site.css?v=20261102c" />
+<link rel="stylesheet" href="assets/app.css?v=20261102c" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
@@ -168,6 +182,7 @@
               <div class="side-title">内容</div>
               <button type="button" class="side-btn" data-tab="journal">刊物</button>
               <button type="button" class="side-btn" data-tab="announce">公告</button>
+              <button type="button" class="side-btn" data-tab="disclosure">文件披露</button>
             </div>
 
             <div class="side-group" data-navgroup>
@@ -728,6 +743,70 @@
           </div>
         </div>
 
+        <!-- ---------- 文件披露（后台上传） ---------- -->
+        <div id="tab-disclosure" hidden>
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>上传披露文件</h2>
+                <div class="sub">组织成员专用：选文件、填标题即可上传。发布日期自动记为今天（北京时间），无需手动选择；文件会立刻出现在公开页「文件披露」清单中。</div>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div id="da-upload-msg" class="da-msg"></div>
+              <form id="da-form" class="form-grid">
+                <div class="field">
+                  <label for="da-file">选择文件 <span class="req">*</span></label>
+                  <input id="da-file" type="file" required />
+                  <small id="da-file-name" class="dc-file-name"></small>
+                </div>
+                <div class="field">
+                  <label for="da-cat">分类</label>
+                  <select id="da-cat">
+                    <option value="charter">组织章程</option>
+                    <option value="regulation">规章制度</option>
+                    <option value="finance">财务披露</option>
+                    <option value="report">活动报告</option>
+                    <option value="notice" selected>通知公告</option>
+                  </select>
+                </div>
+                <div class="field span-2">
+                  <label for="da-title-zh">中文标题 <span class="req">*</span></label>
+                  <input id="da-title-zh" type="text" placeholder="例如：2026 年度财务披露报告" required />
+                </div>
+                <div class="field span-2">
+                  <label for="da-title-en">English Title</label>
+                  <input id="da-title-en" type="text" placeholder="e.g. 2026 Annual Financial Disclosure" />
+                </div>
+                <div class="field span-2">
+                  <label for="da-desc-zh">中文说明</label>
+                  <input id="da-desc-zh" type="text" placeholder="一句话说明这份文件的内容" />
+                </div>
+                <div class="field span-2">
+                  <label for="da-desc-en">English Description</label>
+                  <input id="da-desc-en" type="text" placeholder="Short description of this file" />
+                </div>
+                <div class="field span-2">
+                  <div class="da-date-note">发布日期：自动取今天（北京时间），无需选择。</div>
+                </div>
+                <div class="form-actions span-2">
+                  <button type="submit" class="btn btn-primary" id="da-submit">上传</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div><h2>我上传的文件</h2><div class="sub">只有你自己上传的文件可以删除（数据库按上传者隔离）。</div></div>
+              <button type="button" class="link-btn" id="da-refresh">刷新</button>
+            </div>
+            <div class="panel-body">
+              <div id="da-myuploads" class="dc-myuploads-list"></div>
+            </div>
+          </div>
+        </div>
+
         <!-- ---------- 人员管理 ---------- -->
         <div id="tab-people" hidden>
           <div class="panel">
@@ -1047,20 +1126,21 @@
 <!-- 导出 Excel：ExcelJS 才能往表里插 logo（SheetJS 社区版写不了图片），加载失败时用 SheetJS 降级 -->
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="assets/cloud-config.js?v=20261102b"></script>
-<script src="assets/cloud.js?v=20261102b"></script>
-<script src="assets/navfit.js?v=20261102b"></script>
-<script src="assets/time.js?v=20261102b"></script>
-<script src="assets/roles.js?v=20261102b"></script>
-<script src="assets/session.js?v=20261102b"></script>
-<script src="assets/qr.js?v=20261102b"></script>
-<script src="assets/board.js?v=20261102b"></script>
-<script src="assets/calendar.js?v=20261102b"></script>
-<script src="assets/export.js?v=20261102b"></script>
-<script src="assets/editor.js?v=20261102b"></script>
-<script src="assets/feed.js?v=20261102b"></script>
-<script src="assets/backup.js?v=20261102b"></script>
-<script src="assets/table-import.js?v=20261102b"></script>
-<script src="assets/admin.js?v=20261102b"></script>
+<script src="assets/cloud-config.js?v=20261102c"></script>
+<script src="assets/cloud.js?v=20261102c"></script>
+<script src="assets/navfit.js?v=20261102c"></script>
+<script src="assets/time.js?v=20261102c"></script>
+<script src="assets/roles.js?v=20261102c"></script>
+<script src="assets/session.js?v=20261102c"></script>
+<script src="assets/qr.js?v=20261102c"></script>
+<script src="assets/board.js?v=20261102c"></script>
+<script src="assets/calendar.js?v=20261102c"></script>
+<script src="assets/export.js?v=20261102c"></script>
+<script src="assets/editor.js?v=20261102c"></script>
+<script src="assets/feed.js?v=20261102c"></script>
+<script src="assets/backup.js?v=20261102c"></script>
+<script src="assets/table-import.js?v=20261102c"></script>
+<script src="assets/disclosure-admin.js?v=20261102c"></script>
+<script src="assets/admin.js?v=20261102c"></script>
 </body>
 </html>
