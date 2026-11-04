@@ -115,37 +115,66 @@ window.GUISDisclosureAdmin = (function () {
 
       busy = true; submit.disabled = true; setMsg(msg, "ok", t("dc.uploading", "上传中…"));
 
-      var base = {
-        cat: cat,
-        original_name: file.name,
-        title_zh: titleZh,
-        desc_zh: descZh,
-        title_en: titleEn,
-        desc_en: descEn,
-        file_date: todayISO(),          /* 默认当天，不再让选 */
-        size: fmtSize(file.size)
-      };
+      /* 兜底：云端存储请求在某些情况下既不 resolve 也不 reject（静默挂起），
+         必须靠超时把 UI 救回来，否则会永久停在「上传中」。 */
+      var timer = setTimeout(function () {
+        if (busy) {
+          busy = false; submit.disabled = false;
+          setMsg(msg, "err", t("dc.uploadTimeout", "上传超时（约 40 秒无响应）。请检查网络后重试；若反复失败，按 F12 打开 Console 把红色报错发我。"));
+        }
+      }, 40000);
 
-      C.uploadDisclosure(file, uid)
-        .then(function (res) {
-          if (!res || res.error) throw (res && res.error) || new Error("upload failed");
-          var path = res.data && res.data.path;
-          if (!path) throw new Error("no path");
-          return C.insertDisclosure(Object.assign({ storage_path: path }, base));
-        })
-        .then(function () {
-          setMsg(msg, "ok", t("dc.uploadOk", "上传成功，已加入公开清单"));
-          form.reset();
-          if (nameEl) nameEl.textContent = "";
-          return refreshMy();
-        })
+      function reset() {
+        clearTimeout(timer);
+        busy = false; submit.disabled = false;
+      }
+
+      function run() {
+        if (!uid) throw new Error(t("dc.needLoginUpload", "登录状态已失效，请重新登录后再上传"));
+        var base = {
+          cat: cat,
+          original_name: file.name,
+          title_zh: titleZh,
+          desc_zh: descZh,
+          title_en: titleEn,
+          desc_en: descEn,
+          file_date: todayISO(),          /* 默认当天，不再让选 */
+          size: fmtSize(file.size)
+        };
+        return C.uploadDisclosure(file, uid)
+          .then(function (res) {
+            if (!res || res.error) throw (res && res.error) || new Error("upload failed");
+            var path = res.data && res.data.path;
+            if (!path) throw new Error("no path");
+            return C.insertDisclosure(Object.assign({ storage_path: path }, base));
+          })
+          .then(function () {
+            setMsg(msg, "ok", t("dc.uploadOk", "上传成功，已加入公开清单"));
+            form.reset();
+            if (nameEl) nameEl.textContent = "";
+            return refreshMy();
+          });
+      }
+
+      var chain;
+      try {
+        /* 提交前重新拉一次会话，确保 uid 有效；
+           用 try/catch + Promise.reject 把 uploadDisclosure 的「同步异常」转成 rejected，
+           否则同步抛错会绕过下面的 .catch，导致 busy 永远不复位、「上传中」卡死。 */
+        chain = refreshAuth().then(function () { return run(); });
+      } catch (e) {
+        chain = Promise.reject(e);
+      }
+
+      chain
         .catch(function (err) {
           console.error("[disclosure-admin] upload failed", err);
-          setMsg(msg, "err", t("dc.uploadFail", "上传失败，请重试") + "：" + (err && err.message ? err.message : err));
+          var code = err && (err.code || err.status);
+          setMsg(msg, "err",
+            t("dc.uploadFail", "上传失败，请重试") + "：" +
+            (err && err.message ? err.message : err) + (code ? "（code " + code + "）" : ""));
         })
-        .then(function () {
-          busy = false; submit.disabled = false;
-        });
+        .then(reset);
     });
   }
 
