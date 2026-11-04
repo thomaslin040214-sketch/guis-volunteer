@@ -18,6 +18,10 @@ window.GUISDisclosure = (function () {
      并在 assets/i18n.js 的 zh / en 里补 dc.cat.<key> 文案。 */
   var CATEGORIES = ["charter", "personnel", "report", "notice"];
 
+  /* 直接走 C.db 取，含 sort_order（cloud.js 的 listDisclosure 没摘这一列，手动排序要靠它）。
+     disclosure_files 没有 PII，SELECT 公开，直接查没问题。 */
+  var DC_COLS = "id, cat, storage_path, original_name, title_zh, desc_zh, title_en, desc_en, file_date, size, created_at, owner_id, sort_order";
+
   var openId = null;            /* 当前就地展开的行 id */
   var isAuthed = false;
 
@@ -90,7 +94,7 @@ window.GUISDisclosure = (function () {
       +   '<span class="dc-meta">'
       +     '<span class="dc-cat">' + esc(catLbl) + "</span>"
       +     '<span class="dc-date">' + esc(t("dc.date", "发布")) + "：" + esc(fmtDate(f.file_date, en)) + "</span>"
-      +     (f.size ? '<span class="dc-size">' + esc(f.size) + "</span>" : "")
+      +     ""
       +   "</span>"
       +   '<span class="dc-actions">'
       +     '<span class="dc-dl">' + esc(t("dc.preview", "预览")) + " ↗</span>"
@@ -105,9 +109,18 @@ window.GUISDisclosure = (function () {
     var en = isEn();
     openId = null;
     var active = list.getAttribute("data-cat") || "all";
-    Promise.resolve(C.listDisclosure()).then(function (res) {
+    Promise.resolve(C.db.from("disclosure_files").select(DC_COLS)).then(function (res) {
       var rows = (res && res.data) || [];
       rows = rows.filter(function (f) { return active === "all" || f.cat === active; });
+      /* 手动排序：sort_order 升序优先；并列时按发布日期倒序、再按入库时间倒序。 */
+      rows.sort(function (a, b) {
+        var sa = (a.sort_order == null ? 0 : a.sort_order), sb = (b.sort_order == null ? 0 : b.sort_order);
+        if (sa !== sb) return sa - sb;
+        var da = a.file_date || "", db = b.file_date || "";
+        if (da !== db) return da < db ? 1 : -1;
+        var ca = a.created_at || "", cb = b.created_at || "";
+        return ca < cb ? 1 : -1;
+      });
       if (!rows.length) {
         list.innerHTML = '<div class="dc-empty">' + esc(t("dc.empty", "暂无披露文件。")) + "</div>";
         return;
@@ -174,19 +187,22 @@ window.GUISDisclosure = (function () {
     if (openId === id) { collapse(); return; }
     if (!isAuthed) { showLoginHint(); return; }
     var path = row.getAttribute("data-path");
-    var list = document.getElementById("dc-list");
+    var btn = row.querySelector(".dc-dl");
+    if (btn) btn.textContent = t("dc.previewing", "正在打开…");
     Promise.resolve(C.disclosureUrl(path, 900)).then(function (res) {
       if (!res || res.error) throw (res && res.error) || new Error("url failed");
       var url = res.data && res.data.url;
       if (!url) throw new Error("no url");
-      collapse();
-      var panel = buildPreviewEl(path, url);
-      if (row.nextSibling) list.insertBefore(panel, row.nextSibling);
-      else list.appendChild(panel);
-      row.classList.add("is-open");
-      setRowLabel(row, true);
-      openId = id;
-    }).catch(function (err) { console.error("[disclosure] preview failed", err); });
+      /* 用新标签页打开签名 URL：内嵌 iframe 常被存储服务的 X-Frame-Options / CSP
+         拦掉而「打不开」，新标签页不受此限制，最稳。 */
+      var win = window.open(url, "_blank");
+      if (!win) throw new Error("popup blocked");
+      if (btn) btn.textContent = t("dc.preview", "预览") + " ↗";
+    }).catch(function (err) {
+      console.error("[disclosure] preview failed", err);
+      if (btn) btn.textContent = t("dc.preview", "预览") + " ↗";
+      alert(t("dc.previewFail", "预览打开失败：请确认已登录，或检查浏览器是否拦截了弹窗。若仍失败，按 F12 把 Console 红色报错发我。") + (err && err.message ? "\n" + err.message : ""));
+    });
   }
 
   function doDownload(row) {

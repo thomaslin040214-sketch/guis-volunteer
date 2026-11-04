@@ -9,6 +9,12 @@ window.GUISDisclosureAdmin = (function () {
 
   var C = window.GUISCloud;
 
+  /* 直接走 C.db 取，含 sort_order（cloud.js 的 listDisclosure 没摘这一列，手动排序要靠它）。
+     disclosure_files 无 PII，SELECT 公开，直接查没问题。 */
+  function listDC() {
+    return Promise.resolve(C.db.from("disclosure_files").select("id, cat, storage_path, original_name, title_zh, desc_zh, title_en, desc_en, file_date, size, created_at, owner_id, sort_order"));
+  }
+
   /* 分类 key —— 与公开页 disclosure.js 保持一致；要加分类在此加并在 i18n 补文案。 */
   var CATEGORIES = ["charter", "personnel", "report", "notice"];
   var ALLOWED_EXT = ["pdf","doc","docx","xls","xlsx","ppt","pptx","txt","md","csv","png","jpg","jpeg","gif","webp","bmp","svg","json","log"];
@@ -138,7 +144,7 @@ window.GUISDisclosureAdmin = (function () {
           desc_zh: descZh,
           title_en: titleEn,
           desc_en: descEn,
-          file_date: todayISO(),          /* 默认当天，不再让选 */
+          file_date: (function () { var v = (document.getElementById("da-date") || {}).value; return (v && v.trim()) ? v.trim() : todayISO(); })(), /* 默认当天，可选其他日期 */
           size: fmtSize(file.size)
         };
         return C.uploadDisclosure(file, uid)
@@ -202,7 +208,7 @@ window.GUISDisclosureAdmin = (function () {
 
   function refreshMy() {
     if (!uid) { myRows = []; renderMy(); return Promise.resolve(); }
-    return Promise.resolve(C.listDisclosure()).then(function (res) {
+    return Promise.resolve(listDC()).then(function (res) {
       var rows = (res && res.data) || [];
       myRows = rows.filter(function (f) { return f.owner_id === uid; });
       renderMy();
@@ -237,15 +243,90 @@ window.GUISDisclosureAdmin = (function () {
     });
   }
 
+  /* ============ 手动排序（owner 专用；走 SECURITY DEFINER 的 reorder_disclosure RPC，绕过逐行 owner 限制） ============ */
+  var sortRows = [];
+
+  function sortCmp(a, b) {
+    var sa = (a.sort_order == null ? 0 : a.sort_order), sb = (b.sort_order == null ? 0 : b.sort_order);
+    if (sa !== sb) return sa - sb;
+    var da = a.file_date || "", db = b.file_date || "";
+    if (da !== db) return da < db ? 1 : -1;
+    var ca = a.created_at || "", cb = b.created_at || "";
+    return ca < cb ? 1 : -1;
+  }
+
+  function renderSort() {
+    var box = document.getElementById("da-sort-list");
+    if (!box) return;
+    if (!sortRows.length) {
+      box.innerHTML = '<div class="dc-empty">' + esc(t("dc.noMyYet", "暂无披露文件。")) + "</div>";
+      return;
+    }
+    var en = isEn();
+    var html = "";
+    sortRows.forEach(function (f, i) {
+      var lbl = en ? (f.title_en || f.title_zh) : (f.title_zh || f.title_en);
+      html += '<div class="dc-sort-item" data-id="' + esc(String(f.id)) + '">'
+        +   '<span class="dc-sort-idx">' + (i + 1) + "</span>"
+        +   '<span class="dc-sort-name">' + esc(lbl || f.original_name || C.disclosureExt(f.storage_path)) + "</span>"
+        +   '<span class="dc-sort-cat">' + esc(t("dc.cat." + f.cat, f.cat)) + "</span>"
+        +   '<span class="dc-sort-actions">'
+        +     '<button type="button" class="dc-sort-up"' + (i === 0 ? " disabled" : "") + ' data-id="' + esc(String(f.id)) + '">&#8593;</button>'
+        +     '<button type="button" class="dc-sort-down"' + (i === sortRows.length - 1 ? " disabled" : "") + ' data-id="' + esc(String(f.id)) + '">&#8595;</button>'
+        +   "</span>"
+        + "</div>";
+    });
+    box.innerHTML = html;
+  }
+
+  function refreshSort() {
+    return Promise.resolve(listDC()).then(function (res) {
+      sortRows = (res && res.data) || [];
+      sortRows.sort(sortCmp);
+      renderSort();
+    }, function () {
+      sortRows = []; renderSort();
+    });
+  }
+
+  function wireSort() {
+    var box = document.getElementById("da-sort-list");
+    if (!box) return;
+    box.addEventListener("click", function (e) {
+      var btn = e.target.closest ? e.target.closest(".dc-sort-up, .dc-sort-down") : null;
+      if (!btn || btn.disabled) return;
+      var id = btn.getAttribute("data-id");
+      var idx = -1;
+      for (var i = 0; i < sortRows.length; i++) { if (String(sortRows[i].id) === id) { idx = i; break; } }
+      if (idx < 0) return;
+      var dir = btn.classList.contains("dc-sort-up") ? -1 : 1;
+      var j = idx + dir;
+      if (j < 0 || j >= sortRows.length) return;
+      var tmp = sortRows[idx]; sortRows[idx] = sortRows[j]; sortRows[j] = tmp;
+      var ids = sortRows.map(function (r) { return r.id; });
+      btn.disabled = true;
+      Promise.resolve(C.db.rpc("reorder_disclosure", { p_ids: ids })).then(function () {
+        return refreshSort();
+      }).catch(function (err) {
+        console.error("[disclosure-admin] reorder failed", err);
+        alert(t("dc.sortFail", "排序保存失败：") + (err && err.message ? err.message : err));
+        refreshSort();
+      });
+    });
+  }
+
   function init() {
     if (!wired) {
       wireForm();
       wireMy();
+      wireSort();
       var rb = document.getElementById("da-refresh");
       if (rb) rb.addEventListener("click", function () { refreshMy(); });
       wired = true;
     }
-    refreshAuth().then(refreshMy);
+    var di = document.getElementById("da-date");
+    if (di && !di.value) di.value = todayISO();   /* 默认当天（北京时间） */
+    refreshAuth().then(function () { refreshMy(); refreshSort(); });
   }
 
   return { init: init, refreshMy: refreshMy };

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-ver="20261102e">
+<html lang="zh-CN" data-ver="20261102f">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -786,12 +786,38 @@
                   <input id="da-desc-en" type="text" placeholder="Short description of this file" />
                 </div>
                 <div class="field span-2">
-                  <div class="da-date-note">发布日期：自动取今天（北京时间），无需选择。</div>
+                <div class="field span-2">
+                  <label for="da-date" data-i18n="dc.fDate">发布日期</label>
+                  <input id="da-date" type="date" />
+                  <small class="dc-date-hint">默认今天（北京时间）；可手动选其他日期。</small>
+                </div>
                 </div>
                 <div class="form-actions span-2">
                   <button type="submit" class="btn btn-primary" id="da-submit">上传</button>
                 </div>
               </form>
+            </div>
+          </div>
+
+          <style>
+          .dc-sort-list { display: flex; flex-direction: column; gap: .55rem; }
+          .dc-sort-item { display: flex; align-items: center; gap: 1rem; padding: .75rem 1rem; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius-md); }
+          .dc-sort-idx { flex: 0 0 auto; width: 1.6rem; height: 1.6rem; border-radius: 50%; background: var(--brand); color: #fff; font-size: .8rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+          .dc-sort-name { flex: 1 1 auto; min-width: 0; font-weight: 600; color: var(--text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+          .dc-sort-cat { flex: 0 0 auto; color: var(--brand); font-size: .82rem; font-weight: 600; }
+          .dc-sort-actions { flex: 0 0 auto; display: flex; gap: .4rem; }
+          .dc-sort-actions button { font: inherit; font-size: 1rem; line-height: 1; padding: .35rem .6rem; border-radius: 980px; border: 1px solid var(--hairline); background: var(--bg-soft); color: var(--text-soft); cursor: pointer; transition: .2s ease; }
+          .dc-sort-actions button:hover:not(:disabled) { border-color: var(--brand); color: var(--brand); }
+          .dc-sort-actions button:disabled { opacity: .35; cursor: not-allowed; }
+          .dc-date-hint { color: var(--text-muted); }
+          </style>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div><h2>文件排序</h2><div class="sub">用 ↑ / ↓ 调整公开页「文件披露」里文件的显示顺序；顺序会即时保存（owner 专用）。</div></div>
+            </div>
+            <div class="panel-body">
+              <div id="da-sort-list" class="dc-sort-list"></div>
             </div>
           </div>
 
@@ -1139,7 +1165,7 @@
 <script src="assets/feed.js?v=20261102e"></script>
 <script src="assets/backup.js?v=20261102e"></script>
 <script src="assets/table-import.js?v=20261102e"></script>
-<script src="assets/disclosure-admin.js?v=20261102e"></script>
+<script src="assets/disclosure-admin.js?v=20261102f"></script>
 <script src="assets/admin.js?v=20261102e"></script>
 </body>
 </html>
