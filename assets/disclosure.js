@@ -182,34 +182,61 @@ window.GUISDisclosure = (function () {
     openId = null;
   }
 
+  /* ===== 同窗口内嵌「小窗」预览（灯箱，绝不开新标签页） ===== */
+  function modalEl() { return document.getElementById("dc-modal"); }
+
+  function closeModal() {
+    var m = modalEl();
+    if (m) m.hidden = true;
+    var body = document.getElementById("dc-modal-body");
+    if (body) body.innerHTML = "";
+    if (openId) {
+      var list = document.getElementById("dc-list");
+      var cur = list && list.querySelector(".dc-row.is-open");
+      if (cur) { cur.classList.remove("is-open"); setRowLabel(cur, false); }
+      openId = null;
+    }
+  }
+
+  function showModal(path, url, name, btn) {
+    var m = modalEl();
+    if (!m) return;
+    var body = document.getElementById("dc-modal-body");
+    var nameEl = m.querySelector(".dc-modal-name");
+    if (nameEl) nameEl.textContent = name || "";
+    var dl = document.getElementById("dc-modal-dl");
+    if (dl) { dl.href = url; dl.download = name || "file"; }   /* 同窗口下载，不新开标签 */
+    if (body) {
+      body.innerHTML = "";
+      body.appendChild(buildPreviewEl(path, url));
+    }
+    m.hidden = false;
+    if (btn) btn.textContent = t("dc.preview", "预览") + " ↗";
+  }
+
   function toggle(row) {
     var id = row.getAttribute("data-id");
-    if (openId === id) { collapse(); return; }
+    if (openId === id) { closeModal(); return; }
     if (!isAuthed) { showLoginHint(); return; }
     var path = row.getAttribute("data-path");
+    var name = row.getAttribute("data-name") || "file";
     var btn = row.querySelector(".dc-dl");
     if (btn) btn.textContent = t("dc.previewing", "正在打开…");
-    /* 先「同步」开一个空白新标签页：window.open 必须落在用户手势（点击事件）里，
-       一旦挪到异步 .then 回调里，浏览器会当成非手势而直接拦截弹窗（win 为 null）。
-       开好空白页后，拿到签名 URL 再跳转过去，既能避开 X-Frame-Options（内嵌 iframe 被拦），
-       又不会被弹窗拦截器拦掉。 */
-    var win = window.open("", "_blank");
-    if (!win) {
-      if (btn) btn.textContent = t("dc.preview", "预览") + " ↗";
-      alert(t("dc.previewFail", "预览打开失败：浏览器拦截了弹窗。请允许本站点弹窗后重试。"));
-      return;
-    }
+    /* 同窗口灯箱：拿到签名 URL 后把文件塞进页面里的预览层，不开新标签页。
+       之前「打不开」的真正原因是 SDK 返回的是 signedUrl 而非 url（字段名读错），
+       现已在 cloud.js 的 disclosureUrl 里归一化。 */
     Promise.resolve(C.disclosureUrl(path, 900)).then(function (res) {
       if (!res || res.error) throw (res && res.error) || new Error("url failed");
       var url = res.data && (res.data.url || res.data.signedUrl);
       if (!url) throw new Error("no url");
-      win.location.href = url;
-      if (btn) btn.textContent = t("dc.preview", "预览") + " ↗";
+      row.classList.add("is-open");
+      setRowLabel(row, true);
+      openId = id;
+      showModal(path, url, name, btn);
     }).catch(function (err) {
       console.error("[disclosure] preview failed", err);
       if (btn) btn.textContent = t("dc.preview", "预览") + " ↗";
-      try { win.close(); } catch (e) {}
-      alert(t("dc.previewFail", "预览打开失败：请确认已登录，或检查浏览器是否拦截了弹窗。若仍失败，按 F12 把 Console 红色报错发我。") + (err && err.message ? "\n" + err.message : ""));
+      alert(t("dc.previewFail", "预览打开失败：请确认已登录。若仍失败，按 F12 把 Console 红色报错发我。") + (err && err.message ? "\n" + err.message : ""));
     });
   }
 
@@ -268,6 +295,18 @@ window.GUISDisclosure = (function () {
       });
     }
 
+    /* 预览灯箱关闭：点遮罩 / × / Esc（用 _wired 标记只挂一次） */
+    var m = document.getElementById("dc-modal");
+    if (m && !m._wired) {
+      m._wired = true;
+      m.addEventListener("click", function (e) {
+        if (e.target && e.target.hasAttribute && e.target.hasAttribute("data-close")) closeModal();
+      });
+      document.addEventListener("keydown", function (e) {
+        if (e && e.key === "Escape" && m && !m.hidden) closeModal();
+      });
+    }
+
     /* 语言切换钩子：跟踪 document.documentElement.lang，变了就重渲染 */
     var last = document.documentElement.lang;
     Array.prototype.forEach.call(document.querySelectorAll(".lang-btn"), function (b) {
@@ -281,5 +320,5 @@ window.GUISDisclosure = (function () {
     });
   }
 
-  return { init: init, render: render, toggle: toggle, collapse: collapse };
+  return { init: init, render: render, toggle: toggle, collapse: closeModal };
 })();

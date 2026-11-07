@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-ver="20261102k" data-page-title="dc.title">
+<html lang="zh-CN" data-ver="20261102l" data-page-title="dc.title">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,7 +10,7 @@
    于是点站内链接（全是裸路径）进去时整页退回旧设计。
    这里比对 <html data-ver>：不是当前版本就带查询串重拉一次（查询串必定回源）。 */
 (function () {
-  var VER = "20261102k";
+  var VER = "20261102l";
   try {
     var el = document.documentElement;
     var healed = /[?&]_v=/.test(location.search);
@@ -43,8 +43,8 @@
 <title>GUIS-ULC义工组织站点 | 文件披露 | 同一颗心同一种爱</title>
 <meta name="description" content="GUIS 义工组织文件披露 —— 章程、规章制度、财务与活动记录等官方文件公开在线预览查阅。" />
 <meta name="theme-color" content="#FFFFFF" />
-<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261102k" />
-<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261102k" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261102l" />
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261102l" />
 
 <!-- Open Graph -->
 <meta property="og:type" content="website" />
@@ -62,8 +62,8 @@
   .footer-brand img{max-height:26px}
 }
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20261102k" />
-<link rel="stylesheet" href="assets/app.css?v=20261102k" />
+<link rel="stylesheet" href="assets/site.css?v=20261102l" />
+<link rel="stylesheet" href="assets/app.css?v=20261102l" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
@@ -151,6 +151,21 @@
   </div>
 </footer>
 
+<!-- 文件预览灯箱：同窗口内嵌小窗，绝不开新标签页 -->
+<div class="dc-modal" id="dc-modal" hidden>
+  <div class="dc-modal-backdrop" data-close></div>
+  <div class="dc-modal-panel" role="dialog" aria-modal="true" aria-label="文件预览">
+    <div class="dc-modal-head">
+      <span class="dc-modal-name"></span>
+      <button type="button" class="dc-modal-x" data-close aria-label="关闭">×</button>
+    </div>
+    <div class="dc-modal-body" id="dc-modal-body"></div>
+    <div class="dc-modal-foot">
+      <a class="dc-modal-dl" id="dc-modal-dl" rel="noopener">下载</a>
+    </div>
+  </div>
+</div>
+
 <style>
 .dc-filters { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1.6rem 0 1.8rem; }
 .dc-chip {
@@ -227,21 +242,56 @@
 }
 .dc-login-btn:hover { background: #7d1a1e; }
 
+/* ===== 文件预览灯箱（同窗口小窗，不开新标签页） ===== */
+.dc-modal { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 4vh 4vw; }
+.dc-modal[hidden] { display: none; }
+.dc-modal-backdrop { position: absolute; inset: 0; background: rgba(24,12,12,.55); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
+.dc-modal-panel {
+  position: relative; z-index: 1; width: min(900px, 100%); max-height: 92vh;
+  display: flex; flex-direction: column; background: #fff; border-radius: 16px;
+  box-shadow: 0 24px 80px rgba(0,0,0,.35); overflow: hidden;
+  animation: dc-modal-in .25s cubic-bezier(.16,1,.3,1);
+}
+@keyframes dc-modal-in { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: none; } }
+.dc-modal-head { display: flex; align-items: center; gap: 1rem; padding: .9rem 1.1rem; border-bottom: 1px solid var(--hairline); }
+.dc-modal-name { flex: 1 1 auto; min-width: 0; font-weight: 600; color: var(--text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dc-modal-x {
+  flex: 0 0 auto; font: inherit; font-size: 1.4rem; line-height: 1; width: 34px; height: 34px; border-radius: 50%;
+  border: 1px solid var(--hairline); background: var(--bg-soft); color: var(--text-soft); cursor: pointer; transition: .2s ease;
+}
+.dc-modal-x:hover { border-color: var(--brand); color: var(--brand); }
+.dc-modal-body { flex: 1 1 auto; min-height: 0; overflow: auto; background: #f6f5f4; }
+/* 复用 buildPreviewEl 产出的 .dc-preview，但在灯箱里去掉列表展开时的负边距/边框 */
+.dc-modal-body .dc-preview { margin: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; animation: none; }
+.dc-modal-body .dc-preview-frame { height: min(78vh, 820px); }
+.dc-modal-body .dc-preview-nopreview { background: #fff; }
+.dc-modal-foot { padding: .7rem 1.1rem; border-top: 1px solid var(--hairline); display: flex; justify-content: flex-end; }
+.dc-modal-dl {
+  font: inherit; font-size: .84rem; font-weight: 600; padding: .42rem .95rem; border-radius: 980px;
+  background: var(--brand); color: #fff; text-decoration: none; cursor: pointer; transition: .2s ease;
+}
+.dc-modal-dl:hover { background: #7d1a1e; }
+@media (max-width: 640px) {
+  .dc-modal { padding: 0; }
+  .dc-modal-panel { width: 100%; height: 100%; max-height: 100%; border-radius: 0; }
+  .dc-modal-body .dc-preview-frame { height: 82vh; }
+}
+
 
 
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
-<script src="assets/cloud-config.js?v=20261102k"></script>
-<script src="assets/cloud.js?v=20261102k"></script>
-<script src="assets/i18n.js?v=20261102k"></script>
-<script src="assets/nav.js?v=20261102k"></script>
-<script src="assets/navfit.js?v=20261102k"></script>
-<script src="assets/time.js?v=20261102k"></script>
-<script src="assets/roles.js?v=20261102k"></script>
-<script src="assets/session.js?v=20261102k"></script>
-<script src="assets/main.js?v=20261102k"></script>
-<script src="assets/disclosure.js?v=20261102k"></script>
+<script src="assets/cloud-config.js?v=20261102l"></script>
+<script src="assets/cloud.js?v=20261102l"></script>
+<script src="assets/i18n.js?v=20261102l"></script>
+<script src="assets/nav.js?v=20261102l"></script>
+<script src="assets/navfit.js?v=20261102l"></script>
+<script src="assets/time.js?v=20261102l"></script>
+<script src="assets/roles.js?v=20261102l"></script>
+<script src="assets/session.js?v=20261102l"></script>
+<script src="assets/main.js?v=20261102l"></script>
+<script src="assets/disclosure.js?v=20261102l"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   if (window.GUISDisclosure) window.GUISDisclosure.init();
