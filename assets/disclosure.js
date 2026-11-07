@@ -201,7 +201,7 @@ window.GUISDisclosure = (function () {
     }
     Promise.resolve(C.disclosureUrl(path, 900)).then(function (res) {
       if (!res || res.error) throw (res && res.error) || new Error("url failed");
-      var url = res.data && res.data.url;
+      var url = res.data && (res.data.url || res.data.signedUrl);
       if (!url) throw new Error("no url");
       win.location.href = url;
       if (btn) btn.textContent = t("dc.preview", "预览") + " ↗";
@@ -220,7 +220,7 @@ window.GUISDisclosure = (function () {
     var name = row.getAttribute("data-name") || "file";
     Promise.resolve(C.disclosureUrl(path, 900)).then(function (res) {
       if (!res || res.error) throw (res && res.error) || new Error("url failed");
-      var url = res.data && res.data.url;
+      var url = res.data && (res.data.url || res.data.signedUrl);
       if (!url) throw new Error("no url");
       var a = document.createElement("a");
       a.href = url; a.download = name; a.rel = "noopener";

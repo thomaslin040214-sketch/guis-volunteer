@@ -846,9 +846,17 @@
       return cloud.storage.remove([path]);
     },
 
-    /* 预览 / 下载都走签名 URL：获取 URL 需登录，URL 本身是短时效密钥，不外泄。 */
+    /* 预览 / 下载都走签名 URL：获取 URL 需登录，URL 本身是短时效密钥，不外泄。
+       ⚠️ 关键坑：SDK 的 createSignedUrl 返回的是 res.data.signedUrl（不是 .url）。
+       之前直接透传，调用方读 .url 永远是 undefined → 报「no url」、预览永远打不开。
+       这里统一归一化成调用方都期望的 .url，一处修好、所有调用方受益。 */
     disclosureUrl: function (p, ttl) {
-      return cloud.storage.createSignedUrl(p, ttl || 900);
+      return Promise.resolve(cloud.storage.createSignedUrl(p, ttl || 900)).then(function (res) {
+        if (res && res.data && res.data.signedUrl != null) {
+          return { data: { url: res.data.signedUrl }, error: res.error || null };
+        }
+        return res;
+      });
     },
 
     disclosureExt: function (path) {
