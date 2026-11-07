@@ -176,7 +176,7 @@
         .select(ACT_COLS)
         .eq("status", "open")
         .eq("kind", "signup")
-        .order("starts_at", { ascending: true, nullsFirst: false });
+        .order("starts_at", { ascending: true });
     },
 
     /* 日历专用：不加 status 过滤，交给 RLS 决定能看到哪些
@@ -186,7 +186,7 @@
       return db
         .from("activities")
         .select(ACT_COLS.replace(" status,", " status, archived,"))
-        .order("starts_at", { ascending: true, nullsFirst: false });
+        .order("starts_at", { ascending: true });
     },
 
     listMyActivities: function () {
@@ -464,7 +464,7 @@
         .from("activities")
         .select(ACT_COLS.replace(" status,", " contact, notes, status, recap_html, archived, archived_at,"))
         .eq("archived", true)
-        .order("starts_at", { ascending: false, nullsFirst: false });
+        .order("starts_at", { ascending: false });
     },
 
     getActivity: function (id) {
@@ -492,7 +492,7 @@
       var q = db
         .from("articles")
         .select("id, title, author, cover, excerpt, activity_id, status, published_at, created_at, updated_at")
-        .order("published_at", { ascending: false, nullsFirst: false });
+        .order("published_at", { ascending: false });
       if (onlyPublished) q = q.eq("status", "published");
       return q;
     },
@@ -518,7 +518,7 @@
       var q = db
         .from("announcements")
         .select("id, title, body_html, priority, status, published_at, created_at, updated_at")
-        .order("published_at", { ascending: false, nullsFirst: false });
+        .order("published_at", { ascending: false });
       if (onlyPublished) q = q.eq("status", "published");
       return q;
     },
