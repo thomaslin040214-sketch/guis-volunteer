@@ -1033,6 +1033,21 @@ section { position: relative; z-index: 2; padding: clamp(4rem, 9vw, 7rem) 0; scr
 .footer-line strong { color: var(--text-main); font-weight: 600; }
 .footer-meta { color: var(--text-subtle); font-size: 0.8rem; }
 
+/* 页脚社交媒体图标（替换原 footer-lines 信息行） */
+.footer-social { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.5rem; }
+.footer-social-link {
+  width: 36px; height: 36px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border); border-radius: 50%;
+  color: var(--text-muted);
+  transition: color .18s ease, background-color .18s ease, border-color .18s ease, transform .18s ease;
+}
+.footer-social-link svg { width: 18px; height: 18px; fill: currentColor; display: block; }
+.footer-social-link:hover {
+  color: #fff; background: var(--brand); border-color: var(--brand);
+  transform: translateY(-2px);
+}
+
 /* ---------- Lightbox ---------- */
 .lightbox {
   position: fixed; inset: 0; z-index: 200;
@@ -1418,7 +1433,7 @@ html.js .page-home .reveal.is-in {
   .footer-inner { flex-direction: column; gap: 0.85rem; text-align: center; }
   /* 页尾联系区跟着一起居中（它自己是竖排 flex，只改父级不够） */
   .footer-contact { align-items: center; text-align: center; }
-  .footer-actions, .footer-lines { justify-content: center; }
+  .footer-actions, .footer-lines, .footer-social { justify-content: center; }
   .hero-tab { margin-top: 1.6rem; }
   /* ⚠️ .footer-brand 自己也是横向 flex —— 只把 .footer-inner 改成竖排不够，
      标志右边那条「广州优联外籍人员子女学校-ULC英式国际部·义工组织」会被挤成
