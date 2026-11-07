@@ -652,12 +652,6 @@ section { position: relative; z-index: 2; padding: clamp(4rem, 9vw, 7rem) 0; scr
   .hero-welcome { font-size: 0.92em; }
 }
 
-.hero-sub {
-  color: var(--text-muted);
-  font-size: clamp(1rem, 1.9vw, 1.2rem);
-  line-height: 1.65; max-width: 640px; letter-spacing: 0;
-}
-
 .hero-actions { display: flex; gap: 0.85rem; flex-wrap: wrap; justify-content: center; margin-top: 2.3rem; }
 
 .btn {
@@ -984,7 +978,6 @@ section { position: relative; z-index: 2; padding: clamp(4rem, 9vw, 7rem) 0; scr
 @media (max-height: 780px) {
   .hero { padding-top: calc(var(--nav-h) + 0.6rem); padding-bottom: 1.3rem; }
   .hero-title { font-size: clamp(1.7rem, 4vw, 2.7rem); margin-bottom: 0.7rem; }
-  .hero-sub { font-size: clamp(0.9rem, 1.4vw, 1rem); line-height: 1.5; }
   .hero-brand .hero-logo { width: clamp(155px, 17vw, 195px); }
   /* 2026-10-25（第二轮）：机构名改成纯文字两行（来到 + 机构名，无药丸框），
      字号用 em 相对 h1，这一档不用再单独压它。 */
@@ -1199,7 +1192,6 @@ html.js .page-home .reveal.is-in {
   animation-iteration-count: 1;
 }
 .page-home .hero-title  { animation-delay: 0.07s; }
-.page-home .hero-sub    { animation-delay: 0.12s; }
 .page-home .hero-actions{ animation-delay: 0.17s; }
 .page-home .hero-tab    { animation-delay: 0.22s; }
 /* 滚动提示放在最后 —— 它是「首屏讲完了，往下看」的收尾，晚一点出现反而更合节奏 */
@@ -1356,7 +1348,6 @@ html.js .page-home .reveal.is-in {
      加上左右内边距就顶出 390px 的视口了 —— 整个页面会横向滚动，
      右上角的「登录」先被推出屏幕。窄屏必须把字号压下来。 */
   .hero-title { font-size: clamp(1.7rem, 8.4vw, 2.2rem); }
-  .hero-sub { font-size: 0.95rem; }
   .nav-logo .logo-img { height: 20px; }
   .nav-logo .logo-va { height: 18px; }
 }

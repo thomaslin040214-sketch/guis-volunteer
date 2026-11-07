@@ -108,7 +108,6 @@ window.SITE_I18N = {
           轮换语言，词表在 assets/welcome.js 的 WORDS（每个词配一个 to），不进词典。 */
     "hero.badge": "GUIS-ULC义工组织",
     "hero.title": "同一个世界，<span class=\"grad\">同一种爱</span>。",
-    "hero.sub": "GUIS-ULC 义工组织由学生发起、管理与运营，在 ULC 学生处的监管之下，把关爱传递给整个学校社区。",
     "hero.cta1": "阅读社长欢迎信",
     "hero.cta2": "浏览活动板块",
     "hero.scroll": "向下浏览",
@@ -595,7 +594,6 @@ window.SITE_I18N = {
     /* hero.orgTo 2026-10-26 已删：连接词跟随欢迎词轮换，见 welcome.js 的 WORDS 词表 */
     "hero.badge": "GUIS-ULC Volunteer Association",
     "hero.title": "One Love, <span class=\"grad\">One Heart</span>.",
-    "hero.sub": "GUIS-ULC Volunteer Association is initiated, managed, and operated by students. Under the supervision of the Office of the Student Affairs, we carry love and care to the entire school community.",
     "hero.cta1": "Read the president's welcome",
     "hero.cta2": "Explore programme types",
     "hero.scroll": "Scroll",
