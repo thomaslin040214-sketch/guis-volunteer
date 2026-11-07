@@ -37,10 +37,12 @@
     return '<div class="avatar">' + ini + "</div>";
   }
 
-  /* 一张带履历的成员卡（部长 / 管理层 / 管理层里的部长引用）
-     isHead=true 时：渲染为部门架构图里的「牵头人」节点——加红边 + 右上角「部长」标签，
-     并省略行内 role（已由标签表达）。 */
-  function memberCard(person, isHead) {
+  /* 一张带履历的成员卡（社长 / 部长 / 管理层里的部长引用）
+     isHead=true  时：渲染为部门架构图里的「牵头人」节点——加红边 + 右上角「部长」标签，
+                    并省略行内 role（已由标签表达）。
+     showAvatar=false 时：不渲染头像（部长用这个；社长仍显示头像）。加入时间始终保留。 */
+  function memberCard(person, isHead, showAvatar) {
+    if (showAvatar === undefined) showAvatar = true;
     var items = (person.resume || []).map(function (it) {
       return '<div class="cv-item">' +
         '<div class="cv-when">' + esc(L(it, "when")) + "</div>" +
@@ -61,10 +63,10 @@
       ? '<span class="role-tag">' + esc(roleText || t("dept.headTag", "部长")) + "</span>"
       : "";
 
-    return '<article class="member reveal' + (isHead ? " is-head" : "") + '">' +
+    return '<article class="member reveal' + (isHead ? " is-head" : "") + (showAvatar ? "" : " no-avatar") + '">' +
       headBadge +
-      '<div class="member-top">' +
-        avatarHTML(person) +
+      '<div class="member-top' + (showAvatar ? "" : " no-avatar") + '">' +
+        (showAvatar ? avatarHTML(person) : "") +
         '<div class="member-id">' +
           '<div class="member-name">' + esc(L(person, "name")) + "</div>" +
           roleHTML +
@@ -87,7 +89,7 @@
   }
 
   /* 部员小卡：只显示姓名（无头像、无加入时间、无履历）。
-     社长与部长走 memberCard，保留头像与加入时间；只有部员不显示。 */
+     社长走 memberCard 且显示头像 + 加入时间；部长走 memberCard 但无头像（仅显示加入时间）。*/
   function miniCard(person) {
     return '<div class="mmini reveal">' +
       '<div class="member-id">' +
@@ -114,7 +116,7 @@
         '<h4 class="dept-name">' + esc(L(dep, "name")) +
           ' <span class="dept-name-en">' + esc(L(dep, "name_en")) + "</span></h4>" +
         '<div class="org-chart">' +
-          '<div class="org-head-wrap">' + memberCard(head, true) + "</div>" +
+          '<div class="org-head-wrap">' + memberCard(head, true, false) + "</div>" +
           '<div class="org-rail" aria-hidden="true"></div>' +
           '<div class="org-leaves">' + leaves + "</div>" +
         "</div>" +
@@ -133,7 +135,7 @@
           role_en: L(byId[p.headRef], "name_en") + " · " + L(person, "role_en")
         });
       }
-      return memberCard(person);
+      return memberCard(person, false, !p.headRef);
     }).join("");
 
     wireAccordions();
