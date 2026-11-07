@@ -189,18 +189,26 @@ window.GUISDisclosure = (function () {
     var path = row.getAttribute("data-path");
     var btn = row.querySelector(".dc-dl");
     if (btn) btn.textContent = t("dc.previewing", "正在打开…");
+    /* 先「同步」开一个空白新标签页：window.open 必须落在用户手势（点击事件）里，
+       一旦挪到异步 .then 回调里，浏览器会当成非手势而直接拦截弹窗（win 为 null）。
+       开好空白页后，拿到签名 URL 再跳转过去，既能避开 X-Frame-Options（内嵌 iframe 被拦），
+       又不会被弹窗拦截器拦掉。 */
+    var win = window.open("", "_blank");
+    if (!win) {
+      if (btn) btn.textContent = t("dc.preview", "预览") + " ↗";
+      alert(t("dc.previewFail", "预览打开失败：浏览器拦截了弹窗。请允许本站点弹窗后重试。"));
+      return;
+    }
     Promise.resolve(C.disclosureUrl(path, 900)).then(function (res) {
       if (!res || res.error) throw (res && res.error) || new Error("url failed");
       var url = res.data && res.data.url;
       if (!url) throw new Error("no url");
-      /* 用新标签页打开签名 URL：内嵌 iframe 常被存储服务的 X-Frame-Options / CSP
-         拦掉而「打不开」，新标签页不受此限制，最稳。 */
-      var win = window.open(url, "_blank");
-      if (!win) throw new Error("popup blocked");
+      win.location.href = url;
       if (btn) btn.textContent = t("dc.preview", "预览") + " ↗";
     }).catch(function (err) {
       console.error("[disclosure] preview failed", err);
       if (btn) btn.textContent = t("dc.preview", "预览") + " ↗";
+      try { win.close(); } catch (e) {}
       alert(t("dc.previewFail", "预览打开失败：请确认已登录，或检查浏览器是否拦截了弹窗。若仍失败，按 F12 把 Console 红色报错发我。") + (err && err.message ? "\n" + err.message : ""));
     });
   }
