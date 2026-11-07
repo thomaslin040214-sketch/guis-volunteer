@@ -86,13 +86,12 @@
     "</article>";
   }
 
-  /* 部员小卡（无履历） */
+  /* 部员小卡：只显示姓名（无头像、无加入时间、无履历）。
+     社长与部长走 memberCard，保留头像与加入时间；只有部员不显示。 */
   function miniCard(person) {
     return '<div class="mmini reveal">' +
-      avatarHTML(person) +
       '<div class="member-id">' +
         '<div class="member-name">' + esc(L(person, "name")) + "</div>" +
-        '<div class="member-meta">' + esc(L(person, "join")) + "</div>" +
       "</div>" +
     "</div>";
   }

@@ -833,6 +833,8 @@ section { position: relative; z-index: 2; padding: clamp(4rem, 9vw, 7rem) 0; scr
   display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 1.25rem; margin-top: 2.6rem; align-items: start;
 }
+/* 管理层区块相对上方标题整体下移一点（用户要求） */
+.lead-block { margin-top: 2.5rem; }
 
 .member {
   background: #fff; border: 1px solid var(--card-border); border-radius: var(--radius-md);

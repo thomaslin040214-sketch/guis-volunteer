@@ -157,7 +157,7 @@ window.SITE_I18N = {
 
 
     "team.eyebrow": "成员架构",
-    "team.title": "谁在把这件事往前推",
+    "team.title": "关于我们",
     "team.lede": "义工组织按办公室下设三个部门，每个部门由一位部长牵头、部员协作；另由社长统筹全局。点开每位部长与社长下方的小三角，可以看到他／她的过往履历。",
 
     "dept.eyebrow": "部门成员",
@@ -615,7 +615,7 @@ window.SITE_I18N = {
 
 
     "team.eyebrow": "Structure",
-    "team.title": "Who keeps this moving",
+    "team.title": "About Us",
     "team.lede": "The organisation runs three office-based departments, each led by a head with supporting members, plus the President overseeing everything. Open the small arrow under each head and under the President to read their background.",
 
     "dept.eyebrow": "Department members",

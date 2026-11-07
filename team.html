@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-ver="20261107j" data-page-title="team.title">
+<html lang="zh-CN" data-ver="20261107k" data-page-title="team.title">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,7 +10,7 @@
    于是点站内链接（全是裸路径）进去时整页退回旧设计。
    这里比对 <html data-ver>：不是当前版本就带查询串重拉一次（查询串必定回源）。 */
 (function () {
-  var VER = "20261107j";
+  var VER = "20261107k";
   try {
     var el = document.documentElement;
     var healed = /[?&]_v=/.test(location.search);
@@ -48,8 +48,8 @@
 <title>GUIS-ULC义工组织站点 | 部门成员 | 同一颗心同一种爱</title>
 <meta name="description" content="GUIS 义工组织的组织成员与三个部门：公关及对外宣传部、人力资源部、组织部。部长与部员的架构、加入时间与过往履历。" />
 <meta name="theme-color" content="#FFFFFF" />
-<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261107j" />
-<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261107j" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261107k" />
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261107k" />
 <!-- 品牌标志兜底样式（内联，随 HTML 一起下发）。
      即使 assets/site.css 被浏览器缓存成旧版本，标志也不会按图片原始尺寸撑破布局。 -->
 <style>
@@ -66,8 +66,8 @@
   .footer-brand img{max-height:24px}
 }
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20261107j" />
-<link rel="stylesheet" href="assets/app.css?v=20261107j" />
+<link rel="stylesheet" href="assets/site.css?v=20261107k" />
+<link rel="stylesheet" href="assets/app.css?v=20261107k" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
@@ -120,13 +120,13 @@
     <div class="wrap">
       <div class="reveal">
         <p class="eyebrow" data-i18n="team.eyebrow">成员架构</p>
-        <h1 class="page-title" data-i18n="team.title">谁在把这件事往前推</h1>
+        <h1 class="page-title" data-i18n="team.title">关于我们</h1>
         <p class="page-lede" data-i18n="team.lede">义工组织按办公室下设三个部门，每个部门由一位部长牵头、部员协作；另由社长统筹全局。点开每位部长与社长下方的小三角，可以看到他／她的过往履历。</p>
       </div>
 
     
         <!-- 管理层 -->
-        <div class="reveal">
+        <div class="reveal lead-block">
           <p class="eyebrow" data-i18n="lead.eyebrow">管理层</p>
           <h3 class="block-title" data-i18n="lead.title">组织成员与部门负责人</h3>
           <p class="lede" data-i18n="lead.lede">社长与三个部门的部长，他们是组织的管理层，均展示完整履历。社长信息在 assets/team.js 的 leadership 数组里编辑，三位部长的履历与其部门头像共用同一份数据。</p>
@@ -142,7 +142,6 @@
         <div class="reveal">
           <p class="eyebrow" data-i18n="dept.eyebrow">部门成员</p>
           <h3 class="block-title" data-i18n="dept.title">三个部门，各有牵头人</h3>
-          <p class="lede" data-i18n="dept.lede">每个部门架构相同：一位部长在上、部员在下。只有部长展示过往履历，部员只列头像、姓名与加入时间。所有头像、姓名、加入时间都在 assets/team.js 里编辑。</p>
         </div>
     
         <div id="dept-list" class="dept-list">
@@ -177,16 +176,16 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
-<script src="assets/cloud-config.js?v=20261107j"></script>
-<script src="assets/cloud.js?v=20261107j"></script>
-<script src="assets/i18n.js?v=20261107j"></script>
-<script src="assets/nav.js?v=20261107j"></script>
-<script src="assets/navfit.js?v=20261107j"></script>
-<script src="assets/time.js?v=20261107j"></script>
-<script src="assets/roles.js?v=20261107j"></script>
-<script src="assets/session.js?v=20261107j"></script>
-<script src="assets/main.js?v=20261107j"></script>
-<script src="assets/team.js?v=20261107j"></script>
-<script src="assets/team-render.js?v=20261107j"></script>
+<script src="assets/cloud-config.js?v=20261107k"></script>
+<script src="assets/cloud.js?v=20261107k"></script>
+<script src="assets/i18n.js?v=20261107k"></script>
+<script src="assets/nav.js?v=20261107k"></script>
+<script src="assets/navfit.js?v=20261107k"></script>
+<script src="assets/time.js?v=20261107k"></script>
+<script src="assets/roles.js?v=20261107k"></script>
+<script src="assets/session.js?v=20261107k"></script>
+<script src="assets/main.js?v=20261107k"></script>
+<script src="assets/team.js?v=20261107k"></script>
+<script src="assets/team-render.js?v=20261107k"></script>
 </body>
 </html>
