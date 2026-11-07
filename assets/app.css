@@ -576,14 +576,14 @@ table.data .row-actions { display: flex; gap: 0.35rem; flex-wrap: wrap; }
 .mmini {
   background: #fff; border: 1px solid var(--card-border); border-radius: var(--radius-md);
   padding: 0.8rem 1rem; box-shadow: var(--shadow-sm);
-  display: flex; align-items: center; gap: 0.65rem;
+  display: flex; align-items: center; justify-content: center; gap: 0.65rem;
   transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
   width: 100%; min-width: 0;
 }
 .mmini:hover { border-color: var(--brand); box-shadow: var(--shadow-md); transform: translateY(-2px); }
 .mmini .avatar { width: 40px; height: 40px; font-size: 0.9rem; flex: 0 0 auto; }
-.mmini .member-id { min-width: 0; }
-.mmini .member-name { font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mmini .member-id { min-width: 0; text-align: center; }
+.mmini .member-name { font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
 .mmini .member-meta { font-size: 0.72rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* 管理层网格（复用 .team-grid） */

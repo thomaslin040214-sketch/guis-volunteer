@@ -859,6 +859,10 @@ section { position: relative; z-index: 2; padding: clamp(4rem, 9vw, 7rem) 0; scr
 .member-role { font-size: 0.8rem; color: var(--brand); font-weight: 600; margin-top: 0.1rem; }
 .member-meta { font-size: 0.78rem; color: var(--text-subtle); margin-top: 0.15rem; }
 
+/* 无头像成员卡（社长 / 部长）：姓名与信息居中 */
+.member.no-avatar .member-top { justify-content: center; }
+.member.no-avatar .member-id { text-align: center; }
+
 .member p.bio { color: var(--text-muted); font-size: 0.89rem; line-height: 1.72; margin-top: 1rem; }
 
 /* Accordion (下拉履历) */

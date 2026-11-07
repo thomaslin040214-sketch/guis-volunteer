@@ -135,7 +135,7 @@
           role_en: L(byId[p.headRef], "name_en") + " · " + L(person, "role_en")
         });
       }
-      return memberCard(person, false, !p.headRef);
+      return memberCard(person, false, false);
     }).join("");
 
     wireAccordions();

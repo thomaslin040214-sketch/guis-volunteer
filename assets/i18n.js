@@ -158,7 +158,6 @@ window.SITE_I18N = {
 
     "team.eyebrow": "成员架构",
     "team.title": "关于我们",
-    "team.lede": "义工组织按办公室下设三个部门，每个部门由一位部长牵头、部员协作；另由社长统筹全局。点开每位部长与社长下方的小三角，可以看到他／她的过往履历。",
 
     "dept.eyebrow": "部门成员",
     "dept.title": "三个部门，各有牵头人",
@@ -168,7 +167,6 @@ window.SITE_I18N = {
 
     "lead.eyebrow": "管理层",
     "lead.title": "组织成员与部门负责人",
-    "lead.lede": "社长与三个部门的部长，他们是组织的管理层，均展示完整履历。社长信息在 assets/team.js 的 leadership 数组里编辑；三位部长的履历与部门头像共用同一份数据。",
 
     "ui.cvHide": "收起履历",
 
@@ -616,7 +614,6 @@ window.SITE_I18N = {
 
     "team.eyebrow": "Structure",
     "team.title": "About Us",
-    "team.lede": "The organisation runs three office-based departments, each led by a head with supporting members, plus the President overseeing everything. Open the small arrow under each head and under the President to read their background.",
 
     "dept.eyebrow": "Department members",
     "dept.title": "Three departments, each with a lead",
@@ -626,7 +623,6 @@ window.SITE_I18N = {
 
     "lead.eyebrow": "Leadership",
     "lead.title": "Executive committee & department heads",
-    "lead.lede": "The President and the three department heads make up the leadership. All show full backgrounds. The President is edited in the leadership array of assets/team.js; the three heads share the same data as their department avatars.",
 
     "ui.cvHide": "Hide background",
 
