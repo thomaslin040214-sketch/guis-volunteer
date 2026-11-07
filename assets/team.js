@@ -143,10 +143,10 @@ window.GUIS_TEAM = {
       role: "社长",
       role_en: "President",
       avatar: "assets/photos/lead-president.jpg",
-      name: "（在此填写社长姓名）",
-      name_en: "",
-      join: "（加入时间）",
-      join_en: "",
+      name: "陈颂茵",
+      name_en: "Joan",
+      join: "于2026年08月就任",
+      join_en: "Inaugurated in August 2026",
       resume: [
         {
           when: "（年份·学期）",
