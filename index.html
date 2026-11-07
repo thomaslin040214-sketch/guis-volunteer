@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-ver="20261102d" data-page-title="doc.title">
+<html lang="zh-CN" data-ver="20261102e" data-page-title="doc.title">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,7 +10,7 @@
    于是点站内链接（全是裸路径）进去时整页退回旧设计。
    这里比对 <html data-ver>：不是当前版本就带查询串重拉一次（查询串必定回源）。 */
 (function () {
-  var VER = "20261102d";
+  var VER = "20261102e";
   try {
     var el = document.documentElement;
     var healed = /[?&]_v=/.test(location.search);
@@ -48,8 +48,8 @@
 <title>GUIS-ULC义工组织站点 | 同一颗心同一种爱</title>
 <meta name="description" content="广州优联国际学校（GUIS）义工组织 —— 由学生自主运营的志愿服务组织。社区关怀、环保行动、教育支持、公益募捐、赛事会务与文化交流。" />
 <meta name="theme-color" content="#FFFFFF" />
-<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261102d" />
-<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261102d" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261102e" />
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261102e" />
 
 <!-- Open Graph -->
 <meta property="og:type" content="website" />
@@ -80,8 +80,8 @@
   .hero-brand .hero-va{max-height:40px}
 }
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20261102d" />
-<link rel="stylesheet" href="assets/app.css?v=20261102d" />
+<link rel="stylesheet" href="assets/site.css?v=20261102e" />
+<link rel="stylesheet" href="assets/app.css?v=20261102e" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <!-- ⚠️ page-home 是「浮动闪现进场」的开关：site.css 里 fx-pop / fx-bob 只认这个类名，
@@ -252,17 +252,17 @@
           <p class="eyebrow" data-i18n="about.eyebrow">关于我们</p>
           <h2 class="section-title" data-i18n="about.title">一所学校，<span class="grad">一群愿意先动手的人</span>。</h2>
           <div class="prose">
-            <p data-i18n="about.p1">GUIS 义工组织成立于广州优联国际学校南沙校园，是<strong>由学生自主运营、学生事务处指导</strong>的志愿服务组织。我们把「知行合一」放进日程表：不只讨论公益，而是每周固定留出时间，去做一件具体、可被看见、可被复盘的事。</p>
-            <p data-i18n="about.p2">我们的服务半径从校园延伸到明珠湾与南沙社区。所有项目都由学生调研需求、设计方案、招募排班、现场执行，再一起复盘——失败的部分也写进记录，因为真实的经验比漂亮的总结更有用。</p>
+            <p data-i18n="about.p1">GUIS-ULC 义工组织由学生发起、管理与运营，在 ULC 学生处的监管之下，把关爱传递给整个学校社区。</p>
           </div>
         </div>
 
         <div class="block reveal d2">
-          <h3 style="font-size:1.05rem;font-weight:650;letter-spacing:-0.015em;margin-bottom:0.35rem;" data-i18n="about.listTitle">我们坚持的三件事</h3>
+          <h3 style="font-size:1.05rem;font-weight:650;letter-spacing:-0.015em;margin-bottom:0.35rem;" data-i18n="about.actsTitle">代表性的活动</h3>
           <ul class="bullets">
-            <li data-i18n="about.li1">服务前先调研：先弄清楚对方真正需要什么，再决定我们要做什么。</li>
-            <li data-i18n="about.li2">可持续而非一次性：能做成长期项目的事，就不只做一场活动。</li>
-            <li data-i18n="about.li3">记录与公开：服务时长、物资与款项全部留痕，可查询、可追溯。</li>
+            <li data-i18n="about.act1">学校家长会：每学期的家长会，我们负责引导家长入场、协助签到与现场翻译，让来自不同国家的家庭都能顺畅参与学校的沟通。</li>
+            <li data-i18n="about.act2">义卖活动：我们发起并落地校园义卖，从募集物资、布置摊位到清点善款都由学生完成，所得全额用于社区公益项目。</li>
+            <li data-i18n="about.act3">成人礼：我们参与策划与执行 ULC 成人礼，用一场有仪式感的典礼，陪伴同学正式接过对自己与他人的责任。</li>
+            <li data-i18n="about.act4">毕业典礼：毕业季我们承担现场的引导、礼仪与幕后支持，把最后一程的秩序与温度都交到毕业生手上。</li>
           </ul>
         </div>
       </div>
@@ -481,22 +481,22 @@
 <!-- 工作照（#gallery）已整块删除，灯箱只服务那一块的 .shot，一起删掉 -->
 
 <script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
-<script src="assets/cloud-config.js?v=20261102d"></script>
-<script src="assets/cloud.js?v=20261102d"></script>
-<script src="assets/i18n.js?v=20261102d"></script>
-<script src="assets/board.js?v=20261102d"></script>
-<script src="assets/editor.js?v=20261102d"></script>
-<script src="assets/feed.js?v=20261102d"></script>
+<script src="assets/cloud-config.js?v=20261102e"></script>
+<script src="assets/cloud.js?v=20261102e"></script>
+<script src="assets/i18n.js?v=20261102e"></script>
+<script src="assets/board.js?v=20261102e"></script>
+<script src="assets/editor.js?v=20261102e"></script>
+<script src="assets/feed.js?v=20261102e"></script>
 <!-- 部门成员已独立成 team.html，team.js / team-render.js 只在那一页加载 -->
-<script src="assets/queue.js?v=20261102d"></script>
-<script src="assets/nav.js?v=20261102d"></script>
-<script src="assets/navfit.js?v=20261102d"></script>
-<script src="assets/time.js?v=20261102d"></script>
-<script src="assets/roles.js?v=20261102d"></script>
-<script src="assets/session.js?v=20261102d"></script>
-<script src="assets/main.js?v=20261102d"></script>
-<script src="assets/typer.js?v=20261102d"></script>
-<script src="assets/welcome.js?v=20261102d"></script>
+<script src="assets/queue.js?v=20261102e"></script>
+<script src="assets/nav.js?v=20261102e"></script>
+<script src="assets/navfit.js?v=20261102e"></script>
+<script src="assets/time.js?v=20261102e"></script>
+<script src="assets/roles.js?v=20261102e"></script>
+<script src="assets/session.js?v=20261102e"></script>
+<script src="assets/main.js?v=20261102e"></script>
+<script src="assets/typer.js?v=20261102e"></script>
+<script src="assets/welcome.js?v=20261102e"></script>
 <script>
 /* ---------- 首页「活动报名」板块 ----------
    看板的全部逻辑（红绿灯判定、数字、图例、以及「旧结构自愈」）都在 assets/board.js，
