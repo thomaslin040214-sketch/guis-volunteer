@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-ver="20261102g" data-page-title="doc.title">
+<html lang="zh-CN" data-ver="20261102h" data-page-title="doc.title">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,7 +10,7 @@
    于是点站内链接（全是裸路径）进去时整页退回旧设计。
    这里比对 <html data-ver>：不是当前版本就带查询串重拉一次（查询串必定回源）。 */
 (function () {
-  var VER = "20261102g";
+  var VER = "20261102h";
   try {
     var el = document.documentElement;
     var healed = /[?&]_v=/.test(location.search);
@@ -48,8 +48,8 @@
 <title>GUIS-ULC义工组织站点 | 同一颗心同一种爱</title>
 <meta name="description" content="广州优联国际学校（GUIS）义工组织 —— 由学生自主运营的志愿服务组织。社区关怀、环保行动、教育支持、公益募捐、赛事会务与文化交流。" />
 <meta name="theme-color" content="#FFFFFF" />
-<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261102g" />
-<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261102g" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261102h" />
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261102h" />
 
 <!-- Open Graph -->
 <meta property="og:type" content="website" />
@@ -80,8 +80,8 @@
   .hero-brand .hero-va{max-height:40px}
 }
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20261102g" />
-<link rel="stylesheet" href="assets/app.css?v=20261102g" />
+<link rel="stylesheet" href="assets/site.css?v=20261102h" />
+<link rel="stylesheet" href="assets/app.css?v=20261102h" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <!-- ⚠️ page-home 是「浮动闪现进场」的开关：site.css 里 fx-pop / fx-bob 只认这个类名，
@@ -334,15 +334,50 @@
             <span class="chip" data-i18n="g6.k3">文化工作坊</span>
           </div>
         </article>
-      </div>
-      <div class="reveal acts-block" style="margin-top:2.5rem;">
-        <h3 class="acts-head" style="font-size:1.05rem;font-weight:650;letter-spacing:-0.015em;margin-bottom:0.35rem;" data-i18n="prog.actsTitle">代表性的活动</h3>
-        <ul class="bullets">
-          <li data-i18n="prog.act1">学校家长会：每学期的家长会，我们负责引导家长入场、协助签到与现场翻译，让来自不同国家的家庭都能顺畅参与学校的沟通。</li>
-          <li data-i18n="prog.act2">义卖活动：我们发起并落地校园义卖，从募集物资、布置摊位到清点善款都由学生完成，所得全额用于社区公益项目。</li>
-          <li data-i18n="prog.act3">成人礼：我们参与策划与执行 ULC 成人礼，用一场有仪式感的典礼，陪伴同学正式接过对自己与他人的责任。</li>
-          <li data-i18n="prog.act4">毕业典礼：毕业季我们承担现场的引导、礼仪与幕后支持，把最后一程的秩序与温度都交到毕业生手上。</li>
-        </ul>
+
+        <article class="card reveal d1">
+          <div class="card-tag" data-i18n="g7.tag">家校沟通</div>
+          <h3 data-i18n="g7.title">学校家长会志愿服务</h3>
+          <p data-i18n="g7.desc">每学期的家长会，我们负责引导家长入场、协助签到与现场翻译，让来自不同国家的家庭都能顺畅参与学校的沟通。</p>
+          <div class="chips">
+            <span class="chip" data-i18n="g7.k1">家长引导</span>
+            <span class="chip" data-i18n="g7.k2">签到协助</span>
+            <span class="chip" data-i18n="g7.k3">现场翻译</span>
+          </div>
+        </article>
+
+        <article class="card reveal d2">
+          <div class="card-tag" data-i18n="g8.tag">公益募捐</div>
+          <h3 data-i18n="g8.title">校园义卖活动</h3>
+          <p data-i18n="g8.desc">我们发起并落地校园义卖，从募集物资、布置摊位到清点善款都由学生完成，所得全额用于社区公益项目。</p>
+          <div class="chips">
+            <span class="chip" data-i18n="g8.k1">物资募集</span>
+            <span class="chip" data-i18n="g8.k2">摊位布置</span>
+            <span class="chip" data-i18n="g8.k3">善款公示</span>
+          </div>
+        </article>
+
+        <article class="card reveal d3">
+          <div class="card-tag" data-i18n="g9.tag">校园典礼</div>
+          <h3 data-i18n="g9.title">ULC 成人礼</h3>
+          <p data-i18n="g9.desc">我们参与策划与执行 ULC 成人礼，用一场有仪式感的典礼，陪伴同学正式接过对自己与他人的责任。</p>
+          <div class="chips">
+            <span class="chip" data-i18n="g9.k1">策划统筹</span>
+            <span class="chip" data-i18n="g9.k2">现场执行</span>
+            <span class="chip" data-i18n="g9.k3">仪式典礼</span>
+          </div>
+        </article>
+
+        <article class="card reveal d1">
+          <div class="card-tag" data-i18n="g10.tag">校园典礼</div>
+          <h3 data-i18n="g10.title">毕业典礼支持</h3>
+          <p data-i18n="g10.desc">毕业季我们承担现场的引导、礼仪与幕后支持，把最后一程的秩序与温度都交到毕业生手上。</p>
+          <div class="chips">
+            <span class="chip" data-i18n="g10.k1">现场引导</span>
+            <span class="chip" data-i18n="g10.k2">礼仪支持</span>
+            <span class="chip" data-i18n="g10.k3">幕后统筹</span>
+          </div>
+        </article>
       </div>
     </div>
   </section>
@@ -478,22 +513,22 @@
 <!-- 工作照（#gallery）已整块删除，灯箱只服务那一块的 .shot，一起删掉 -->
 
 <script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
-<script src="assets/cloud-config.js?v=20261102g"></script>
-<script src="assets/cloud.js?v=20261102g"></script>
-<script src="assets/i18n.js?v=20261102g"></script>
-<script src="assets/board.js?v=20261102g"></script>
-<script src="assets/editor.js?v=20261102g"></script>
-<script src="assets/feed.js?v=20261102g"></script>
+<script src="assets/cloud-config.js?v=20261102h"></script>
+<script src="assets/cloud.js?v=20261102h"></script>
+<script src="assets/i18n.js?v=20261102h"></script>
+<script src="assets/board.js?v=20261102h"></script>
+<script src="assets/editor.js?v=20261102h"></script>
+<script src="assets/feed.js?v=20261102h"></script>
 <!-- 部门成员已独立成 team.html，team.js / team-render.js 只在那一页加载 -->
-<script src="assets/queue.js?v=20261102g"></script>
-<script src="assets/nav.js?v=20261102g"></script>
-<script src="assets/navfit.js?v=20261102g"></script>
-<script src="assets/time.js?v=20261102g"></script>
-<script src="assets/roles.js?v=20261102g"></script>
-<script src="assets/session.js?v=20261102g"></script>
-<script src="assets/main.js?v=20261102g"></script>
-<script src="assets/typer.js?v=20261102g"></script>
-<script src="assets/welcome.js?v=20261102g"></script>
+<script src="assets/queue.js?v=20261102h"></script>
+<script src="assets/nav.js?v=20261102h"></script>
+<script src="assets/navfit.js?v=20261102h"></script>
+<script src="assets/time.js?v=20261102h"></script>
+<script src="assets/roles.js?v=20261102h"></script>
+<script src="assets/session.js?v=20261102h"></script>
+<script src="assets/main.js?v=20261102h"></script>
+<script src="assets/typer.js?v=20261102h"></script>
+<script src="assets/welcome.js?v=20261102h"></script>
 <script>
 /* ---------- 首页「活动报名」板块 ----------
    看板的全部逻辑（红绿灯判定、数字、图例、以及「旧结构自愈」）都在 assets/board.js，
