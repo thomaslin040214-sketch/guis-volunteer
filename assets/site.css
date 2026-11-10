@@ -1040,18 +1040,25 @@ section { position: relative; z-index: 2; padding: clamp(4rem, 9vw, 7rem) 0; scr
 .footer-meta { color: var(--text-subtle); font-size: 0.8rem; }
 
 /* 页脚社交媒体图标（替换原 footer-lines 信息行） */
-.footer-social { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.5rem; }
+.footer-social { display: flex; flex-wrap: wrap; gap: 0.65rem; margin-top: 0.5rem; }
 .footer-social-link {
-  width: 36px; height: 36px;
+  width: 38px; height: 38px;
   display: inline-flex; align-items: center; justify-content: center;
   border: 1px solid var(--border); border-radius: 50%;
-  color: var(--text-muted);
-  transition: color .18s ease, background-color .18s ease, border-color .18s ease, transform .18s ease;
+  color: var(--text-muted); background: #fff;
+  transition: color .18s ease, background-color .18s ease, border-color .18s ease, transform .18s ease, box-shadow .18s ease;
 }
-.footer-social-link svg { width: 18px; height: 18px; fill: currentColor; display: block; }
-.footer-social-link:hover {
-  color: #fff; background: var(--brand); border-color: var(--brand);
-  transform: translateY(-2px);
+.footer-social-link svg { width: 20px; height: 20px; fill: currentColor; display: block; }
+/* 真实品牌色，提升辨识度与美观度（浅色页脚上灰色块太弱） */
+.footer-social-link.ig { color: #E4405F; }
+.footer-social-link.wx { color: #07C160; }
+.footer-social-link.ig:hover {
+  color: #fff; background: #E4405F; border-color: #E4405F; transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(228,64,95,.28);
+}
+.footer-social-link.wx:hover {
+  color: #fff; background: #07C160; border-color: #07C160; transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(7,193,96,.28);
 }
 
 /* ---------- Lightbox ---------- */
