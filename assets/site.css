@@ -205,34 +205,40 @@ nav {
 }
 .site-banner-close:hover { opacity: 1; background: rgba(255, 255, 255, 0.18); }
 .site-banner-close:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
-/* 顶栏右上角状态簇：地区 + 实时延迟（与试点横幅分离，不再叠在一起） */
+/* 顶栏右上角状态簇：地区 + 实时延迟（与试点横幅分离，不再叠在一起）。
+   导航栏是浅色半透明白底，故用「浅灰芯片 + 深色文字 + 彩色圆点/边框」保证高对比、清晰可读。 */
 .status-cluster {
   display: inline-flex; align-items: center; gap: 0.5rem;
 }
 .region-badge, .latency-badge {
-  display: inline-flex; align-items: center; gap: 0.32rem;
-  padding: 0.14rem 0.5rem;
+  display: inline-flex; align-items: center; gap: 0.34rem;
+  padding: 0.18rem 0.6rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.14);
-  color: #fff;
-  font-size: 0.72rem; line-height: 1;
+  background: var(--bg-soft);
+  border: 1px solid var(--hairline);
+  color: var(--text-main);
+  font-size: 0.74rem; line-height: 1;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
   cursor: default; user-select: none;
 }
 .region-dot, .latency-dot {
-  width: 7px; height: 7px; border-radius: 50%;
-  background: #7dd3fc; flex: none;
+  width: 8px; height: 8px; border-radius: 50%;
+  flex: none;
 }
-.region-text { font-weight: 500; }
-.latency-num { font-weight: 600; }
-.latency-unit { opacity: 0.8; }
-.latency-badge.is-ok   .latency-dot { background: #4ade80; }
-.latency-badge.is-warn .latency-dot { background: #facc15; }
-.latency-badge.is-bad  .latency-dot { background: #f87171; }
-.latency-badge.is-bad { background: rgba(248, 113, 113, 0.24); }
+.region-dot { background: var(--brand); }
+.region-text { font-weight: 600; }
+.latency-num { font-weight: 700; }
+.latency-unit { opacity: 0.7; font-weight: 500; }
+/* 延迟三态：用「深色文字 + 浅色底 + 同色边框 + 彩色圆点」表达，避免白字看不清 */
+.latency-badge.is-ok   { background: #ECFDF3; border-color: #ABEFC6; color: #067647; }
+.latency-badge.is-ok   .latency-dot { background: #12B76A; }
+.latency-badge.is-warn { background: #FFFAEB; border-color: #FEDF89; color: #B54708; }
+.latency-badge.is-warn .latency-dot { background: #F79009; }
+.latency-badge.is-bad  { background: #FEF3F2; border-color: #FDA29B; color: #B42318; }
+.latency-badge.is-bad  .latency-dot { background: #F04438; }
 @media (max-width: 640px) {
-  .region-badge, .latency-badge { font-size: 0.66rem; padding: 0.1rem 0.42rem; }
+  .region-badge, .latency-badge { font-size: 0.68rem; padding: 0.14rem 0.5rem; }
 }
 
 .nav-logo {
