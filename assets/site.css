@@ -205,8 +205,34 @@ nav {
 }
 .site-banner-close:hover { opacity: 1; background: rgba(255, 255, 255, 0.18); }
 .site-banner-close:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
+/* 顶栏右上角状态簇：地区 + 实时延迟（与试点横幅分离，不再叠在一起） */
+.status-cluster {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+}
+.region-badge, .latency-badge {
+  display: inline-flex; align-items: center; gap: 0.32rem;
+  padding: 0.14rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-size: 0.72rem; line-height: 1;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  cursor: default; user-select: none;
+}
+.region-dot, .latency-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #7dd3fc; flex: none;
+}
+.region-text { font-weight: 500; }
+.latency-num { font-weight: 600; }
+.latency-unit { opacity: 0.8; }
+.latency-badge.is-ok   .latency-dot { background: #4ade80; }
+.latency-badge.is-warn .latency-dot { background: #facc15; }
+.latency-badge.is-bad  .latency-dot { background: #f87171; }
+.latency-badge.is-bad { background: rgba(248, 113, 113, 0.24); }
 @media (max-width: 640px) {
-  .site-banner { font-size: 0.76rem; padding: 0.45rem 2.2rem; }
+  .region-badge, .latency-badge { font-size: 0.66rem; padding: 0.1rem 0.42rem; }
 }
 
 .nav-logo {
