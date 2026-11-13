@@ -242,49 +242,36 @@ nav {
 }
 
 /* ---------- APEC CHINA 2026 喜迎横幅（标题栏下方，全站）---------- */
-/* 配色取自 APEC CHINA 2026 官方视觉：华章红 + 经纬蓝；21 点环寓意 21 个成员经济体，
-   中央鲲鹏(鹏)展翅意象呼应官方会标“乘大势、共翱翔”。 */
+/* 采用 APEC CHINA 2026 官方会标（assets/apec-2026-logo.png，已去白边）。
+   横幅以净白为底、顶部蓝→红渐变细条呼应官方主色，避免与多色会标抢色、也规避先前自绘会标/配色不准的问题。 */
 .apec-bar {
   position: relative;
   margin-top: var(--nav-h);          /* body 已有 padding-top:var(--banner-h)，故只需再下移一个导航高 */
   width: 100%;
-  overflow: hidden;
-  color: #fff;
-  background:
-    radial-gradient(120% 150% at 10% 15%, rgba(255, 255, 255, 0.12), transparent 55%),
-    linear-gradient(100deg, #0B4F9E 0%, #1159A8 34%, #B5161C 100%);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.20);
-}
-.apec-bar::after {
-  content: ""; position: absolute; inset: 0;
-  background: repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.05) 0 2px, transparent 2px 9px);
-  pointer-events: none; opacity: 0.6;
+  background: #ffffff;
+  border-top: 3px solid transparent;
+  border-image: linear-gradient(90deg, #0B4F9E 0%, #1E66C9 48%, #C8102E 100%) 1;
+  border-bottom: 1px solid #e7e9ee;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.06);
 }
 .apec-bar-inner {
   position: relative; z-index: 2;
   max-width: 1280px; margin: 0 auto;
-  padding: 0.5rem clamp(1rem, 4vw, 3rem);
-  display: flex; align-items: center; gap: 0.9rem;
+  padding: 0.62rem clamp(1rem, 4vw, 3rem);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem; text-align: center;
 }
-.apec-emblem { width: 46px; height: 46px; flex: none; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25)); }
-.apec-emblem svg { width: 100%; height: 100%; display: block; }
-.apec-text { display: flex; flex-direction: column; gap: 0.12rem; min-width: 0; }
-.apec-title { font-size: 1.02rem; font-weight: 800; letter-spacing: 0.02em; line-height: 1.2; }
+.apec-emblem { flex: none; display: flex; align-items: center; justify-content: center; }
+.apec-logo-img { height: 46px; width: auto; display: block; }
+.apec-text { display: flex; flex-direction: column; gap: 0.16rem; min-width: 0; text-align: center; align-items: center; }
+.apec-title { font-size: 1.04rem; font-weight: 800; letter-spacing: 0.02em; line-height: 1.2; color: #9C2126; }
 .apec-title .en { font-weight: 700; letter-spacing: 0.08em; }
-.apec-sub { font-size: 0.72rem; opacity: 0.92; letter-spacing: 0.05em; }
-.apec-theme { font-size: 0.7rem; opacity: 0.8; letter-spacing: 0.04em; }
-.apec-watermark {
-  position: absolute; right: clamp(0.5rem, 4vw, 3rem); top: 50%; transform: translateY(-50%);
-  font-size: 4.6rem; font-weight: 900; line-height: 1;
-  color: rgba(255, 255, 255, 0.10); letter-spacing: 0.04em;
-  pointer-events: none; user-select: none; z-index: 1; font-variant-numeric: tabular-nums;
-}
+.apec-sub { font-size: 0.74rem; color: #5b6b7c; letter-spacing: 0.03em; }
+.apec-theme { font-size: 0.7rem; color: #8a94a3; letter-spacing: 0.04em; }
 @media (max-width: 640px) {
   .apec-bar-inner { gap: 0.6rem; padding-top: 0.42rem; padding-bottom: 0.42rem; }
-  .apec-emblem { width: 38px; height: 38px; }
-  .apec-title { font-size: 0.9rem; }
-  .apec-sub, .apec-theme { font-size: 0.64rem; }
-  .apec-watermark { font-size: 3rem; }
+  .apec-logo-img { height: 36px; }
+  .apec-title { font-size: 0.92rem; }
+  .apec-sub, .apec-theme { font-size: 0.66rem; }
 }
 @media (max-width: 380px) {
   .apec-theme { display: none; }

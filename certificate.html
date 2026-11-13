@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-ver="20261107x">
+<html lang="zh-CN" data-ver="20261107z">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,8 +7,8 @@
 <meta name="description" content="提交已核定的义工小时，经义工组织审核通过后，生成学校格式的志愿服务记录证明。" />
 <meta name="theme-color" content="#FFFFFF" />
 <meta name="robots" content="noindex, nofollow" />
-<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261107x" />
-<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261107x" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261107z" />
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261107z" />
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate" />
 <script>
 /* 文档自愈：托管服务器只给 last-modified，没有 Cache-Control / ETag，
@@ -16,7 +16,7 @@
    于是点站内链接（全是裸路径）进去时整页退回旧设计。
    这里比对 <html data-ver>：不是当前版本就带查询串重拉一次（查询串必定回源）。 */
 (function () {
-  var VER = "20261107x";
+  var VER = "20261107z";
   try {
     var el = document.documentElement;
     var healed = /[?&]_v=/.test(location.search);
@@ -63,28 +63,20 @@
   .footer-brand img{max-height:24px}
 }
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20261107x" />
-<link rel="stylesheet" href="assets/app.css?v=20261107x" />
+<link rel="stylesheet" href="assets/site.css?v=20261107z" />
+<link rel="stylesheet" href="assets/app.css?v=20261107z" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
 <div class="apec-bar" role="img" aria-label="喜迎 APEC CHINA 2026 深圳">
   <div class="apec-bar-inner">
-    <span class="apec-emblem" aria-hidden="true">
-      <svg viewBox="0 0 48 48">
-        <circle cx="24" cy="24" r="22" fill="none" stroke="rgba(255,255,255,0.92)" stroke-width="1.4"/>
-        <circle cx="24" cy="24" r="19.5" fill="none" stroke="rgba(255,255,255,0.72)" stroke-width="2.2" stroke-dasharray="0.1 5.74"/>
-        <path d="M7 25 C 13 16, 19 16, 24 22 C 29 16, 35 16, 41 25" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M24 22 L24 30" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
-      </svg>
-    </span>
+    <span class="apec-emblem" aria-hidden="true"><img src="assets/apec-2026-logo.png?v=20261107z" alt="APEC CHINA 2026 官方会标" class="apec-logo-img"></span>
     <span class="apec-text">
       <span class="apec-title">当好东道主 · 喜迎 <span class="en">APEC</span></span>
-      <span class="apec-sub">APEC CHINA 2026 · 深圳 SHENZHEN</span>
+      <span class="apec-sub">深圳 SHENZHEN · 2026年11月</span>
       <span class="apec-theme">建设亚太共同体 · 促进共同繁荣</span>
     </span>
   </div>
-  <span class="apec-watermark" aria-hidden="true">2026</span>
 </div>
 
 
@@ -426,17 +418,17 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
-<script src="assets/cloud-config.js?v=20261107x"></script>
-<script src="assets/cloud.js?v=20261107x"></script>
-<script src="assets/navfit.js?v=20261107x"></script>
-<script src="assets/time.js?v=20261107x"></script>
-<script src="assets/roles.js?v=20261107x"></script>
-<script src="assets/session.js?v=20261107x"></script>
+<script src="assets/cloud-config.js?v=20261107z"></script>
+<script src="assets/cloud.js?v=20261107z"></script>
+<script src="assets/navfit.js?v=20261107z"></script>
+<script src="assets/time.js?v=20261107z"></script>
+<script src="assets/roles.js?v=20261107z"></script>
+<script src="assets/session.js?v=20261107z"></script>
 <!-- ⚠️ 这里原来引了 assets/docx.js（自己拼 Word 的那套），2026-10-02 起删掉了：
      证明改成「走浏览器打印 → 另存 PDF」，而且要先过审核，不再让学生直接拿 .docx。
      docx.js 文件还留在 assets/ 下没删（万一以后要把 printed version 换回可编辑 Word），
      但目前没有任何页面引用它。 -->
-<script src="assets/cert.js?v=20261107x"></script>
-<script src="assets/latency.js?v=20261107x"></script>
+<script src="assets/cert.js?v=20261107z"></script>
+<script src="assets/latency.js?v=20261107z"></script>
 </body>
 </html>
