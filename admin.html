@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-ver="20261107w">
+<html lang="zh-CN" data-ver="20261107x">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,7 +10,7 @@
    于是点站内链接（全是裸路径）进去时整页退回旧设计。
    这里比对 <html data-ver>：不是当前版本就带查询串重拉一次（查询串必定回源）。 */
 (function () {
-  var VER = "20261107w";
+  var VER = "20261107x";
   try {
     var el = document.documentElement;
     var healed = /[?&]_v=/.test(location.search);
@@ -49,8 +49,8 @@
 <meta name="description" content="GUIS 义工组织后台管理：创建义工活动、查看报名名单、导出 Excel。" />
 <meta name="theme-color" content="#FFFFFF" />
 <meta name="robots" content="noindex, nofollow" />
-<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261107w" />
-<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261107w" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261107x" />
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261107x" />
 <!-- 品牌标志兜底样式（内联，随 HTML 一起下发）。
      即使 assets/site.css 被浏览器缓存成旧版本，标志也不会按图片原始尺寸撑破布局。
      这里只设尺寸上限（max-*），正常加载 site.css 时这些上限都不会生效。 -->
@@ -88,11 +88,31 @@
 .dc-my-del{border:1px solid #9C2126;color:#9C2126;background:#fff;border-radius:999px;padding:.25rem .8rem;cursor:pointer;font-size:.82rem}
 .dc-my-del:hover{background:#9C2126;color:#fff}
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20261107w" />
-<link rel="stylesheet" href="assets/app.css?v=20261107w" />
+<link rel="stylesheet" href="assets/site.css?v=20261107x" />
+<link rel="stylesheet" href="assets/app.css?v=20261107x" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
+<div class="apec-bar" role="img" aria-label="喜迎 APEC CHINA 2026 深圳">
+  <div class="apec-bar-inner">
+    <span class="apec-emblem" aria-hidden="true">
+      <svg viewBox="0 0 48 48">
+        <circle cx="24" cy="24" r="22" fill="none" stroke="rgba(255,255,255,0.92)" stroke-width="1.4"/>
+        <circle cx="24" cy="24" r="19.5" fill="none" stroke="rgba(255,255,255,0.72)" stroke-width="2.2" stroke-dasharray="0.1 5.74"/>
+        <path d="M7 25 C 13 16, 19 16, 24 22 C 29 16, 35 16, 41 25" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M24 22 L24 30" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
+      </svg>
+    </span>
+    <span class="apec-text">
+      <span class="apec-title">当好东道主 · 喜迎 <span class="en">APEC</span></span>
+      <span class="apec-sub">APEC CHINA 2026 · 深圳 SHENZHEN</span>
+      <span class="apec-theme">建设亚太共同体 · 促进共同繁荣</span>
+    </span>
+  </div>
+  <span class="apec-watermark" aria-hidden="true">2026</span>
+</div>
+
+
 <div class="site-banner" role="note" aria-label="试点阶段提示">
   <span class="site-banner-text">本站点正在试点阶段，暂未正式上线；目前您看到的所有内容均不代表最终上线品质。测试期间会存在掉线或卡顿等均为正常情况。</span>
   <button type="button" class="site-banner-close" aria-label="关闭提示">&times;</button>
@@ -1192,22 +1212,22 @@
 <!-- 导出 Excel：ExcelJS 才能往表里插 logo（SheetJS 社区版写不了图片），加载失败时用 SheetJS 降级 -->
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="assets/cloud-config.js?v=20261107w"></script>
-<script src="assets/cloud.js?v=20261107w"></script>
-<script src="assets/navfit.js?v=20261107w"></script>
-<script src="assets/time.js?v=20261107w"></script>
-<script src="assets/roles.js?v=20261107w"></script>
-<script src="assets/session.js?v=20261107w"></script>
-<script src="assets/qr.js?v=20261107w"></script>
-<script src="assets/board.js?v=20261107w"></script>
-<script src="assets/calendar.js?v=20261107w"></script>
-<script src="assets/export.js?v=20261107w"></script>
-<script src="assets/editor.js?v=20261107w"></script>
-<script src="assets/feed.js?v=20261107w"></script>
-<script src="assets/backup.js?v=20261107w"></script>
-<script src="assets/table-import.js?v=20261107w"></script>
-<script src="assets/disclosure-admin.js?v=20261107w"></script>
-<script src="assets/admin.js?v=20261107w"></script>
-<script src="assets/latency.js?v=20261107w"></script>
+<script src="assets/cloud-config.js?v=20261107x"></script>
+<script src="assets/cloud.js?v=20261107x"></script>
+<script src="assets/navfit.js?v=20261107x"></script>
+<script src="assets/time.js?v=20261107x"></script>
+<script src="assets/roles.js?v=20261107x"></script>
+<script src="assets/session.js?v=20261107x"></script>
+<script src="assets/qr.js?v=20261107x"></script>
+<script src="assets/board.js?v=20261107x"></script>
+<script src="assets/calendar.js?v=20261107x"></script>
+<script src="assets/export.js?v=20261107x"></script>
+<script src="assets/editor.js?v=20261107x"></script>
+<script src="assets/feed.js?v=20261107x"></script>
+<script src="assets/backup.js?v=20261107x"></script>
+<script src="assets/table-import.js?v=20261107x"></script>
+<script src="assets/disclosure-admin.js?v=20261107x"></script>
+<script src="assets/admin.js?v=20261107x"></script>
+<script src="assets/latency.js?v=20261107x"></script>
 </body>
 </html>

@@ -241,6 +241,55 @@ nav {
   .region-badge, .latency-badge { font-size: 0.68rem; padding: 0.14rem 0.5rem; }
 }
 
+/* ---------- APEC CHINA 2026 喜迎横幅（标题栏下方，全站）---------- */
+/* 配色取自 APEC CHINA 2026 官方视觉：华章红 + 经纬蓝；21 点环寓意 21 个成员经济体，
+   中央鲲鹏(鹏)展翅意象呼应官方会标“乘大势、共翱翔”。 */
+.apec-bar {
+  position: relative;
+  margin-top: var(--nav-h);          /* body 已有 padding-top:var(--banner-h)，故只需再下移一个导航高 */
+  width: 100%;
+  overflow: hidden;
+  color: #fff;
+  background:
+    radial-gradient(120% 150% at 10% 15%, rgba(255, 255, 255, 0.12), transparent 55%),
+    linear-gradient(100deg, #0B4F9E 0%, #1159A8 34%, #B5161C 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.20);
+}
+.apec-bar::after {
+  content: ""; position: absolute; inset: 0;
+  background: repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.05) 0 2px, transparent 2px 9px);
+  pointer-events: none; opacity: 0.6;
+}
+.apec-bar-inner {
+  position: relative; z-index: 2;
+  max-width: 1280px; margin: 0 auto;
+  padding: 0.5rem clamp(1rem, 4vw, 3rem);
+  display: flex; align-items: center; gap: 0.9rem;
+}
+.apec-emblem { width: 46px; height: 46px; flex: none; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25)); }
+.apec-emblem svg { width: 100%; height: 100%; display: block; }
+.apec-text { display: flex; flex-direction: column; gap: 0.12rem; min-width: 0; }
+.apec-title { font-size: 1.02rem; font-weight: 800; letter-spacing: 0.02em; line-height: 1.2; }
+.apec-title .en { font-weight: 700; letter-spacing: 0.08em; }
+.apec-sub { font-size: 0.72rem; opacity: 0.92; letter-spacing: 0.05em; }
+.apec-theme { font-size: 0.7rem; opacity: 0.8; letter-spacing: 0.04em; }
+.apec-watermark {
+  position: absolute; right: clamp(0.5rem, 4vw, 3rem); top: 50%; transform: translateY(-50%);
+  font-size: 4.6rem; font-weight: 900; line-height: 1;
+  color: rgba(255, 255, 255, 0.10); letter-spacing: 0.04em;
+  pointer-events: none; user-select: none; z-index: 1; font-variant-numeric: tabular-nums;
+}
+@media (max-width: 640px) {
+  .apec-bar-inner { gap: 0.6rem; padding-top: 0.42rem; padding-bottom: 0.42rem; }
+  .apec-emblem { width: 38px; height: 38px; }
+  .apec-title { font-size: 0.9rem; }
+  .apec-sub, .apec-theme { font-size: 0.64rem; }
+  .apec-watermark { font-size: 3rem; }
+}
+@media (max-width: 380px) {
+  .apec-theme { display: none; }
+}
+
 .nav-logo {
   display: flex; align-items: center; gap: 0.7rem;
   font-weight: 600; font-size: 0.95rem; letter-spacing: -0.01em;
