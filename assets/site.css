@@ -301,7 +301,7 @@ html[lang^="zh"] .nav-logo .org-script {
   transform: translateY(1px);    /* 毛笔收笔会略微下沉，抬一点跟标志对齐 */
 }
 /* 义工组织 VA 标志：与 GUIS 校徽并置，组成「GUIS | 义工组织」联合标志 */
-.nav-logo .logo-va { height: 24px; width: auto; }
+.nav-logo .logo-va { height: 30px; width: auto; }
 
 .nav-links {
   display: flex; align-items: center;
@@ -1468,7 +1468,7 @@ html.js .page-home .reveal.is-in {
   .nav-logo { gap: 0.5rem; }
   .nav-logo .logo-img { height: 22px; }
   .nav-logo .logo-div { height: 16px; }
-  .nav-logo .logo-va { height: 20px; }
+  .nav-logo .logo-va { height: 26px; }
   .footer-brand { gap: 0.7rem; }
   .footer-brand img { height: 22px; }
   .footer-brand img.footer-va { height: 22px; }
@@ -1487,7 +1487,7 @@ html.js .page-home .reveal.is-in {
      右上角的「登录」先被推出屏幕。窄屏必须把字号压下来。 */
   .hero-title { font-size: clamp(1.7rem, 8.4vw, 2.2rem); }
   .nav-logo .logo-img { height: 20px; }
-  .nav-logo .logo-va { height: 18px; }
+  .nav-logo .logo-va { height: 24px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1524,7 +1524,7 @@ html.js .page-home .reveal.is-in {
   .nav-logo { gap: 0.4rem; }
   .nav-logo .logo-img { height: 17px; }
   .nav-logo .logo-div { height: 14px; }
-  .nav-logo .logo-va { height: 16px; }
+  .nav-logo .logo-va { height: 22px; }
   .nav-right { gap: 0.35rem; }
   .lang-btn { padding: 0.2rem 0.46rem; font-size: 0.66rem; }
   .nav-login { padding: 0.26rem 0.6rem; font-size: 0.7rem; }

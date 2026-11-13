@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-ver="20261107z" data-page-title="doc.title">
+<html lang="zh-CN" data-ver="20261107aa" data-page-title="doc.title">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,7 +10,7 @@
    于是点站内链接（全是裸路径）进去时整页退回旧设计。
    这里比对 <html data-ver>：不是当前版本就带查询串重拉一次（查询串必定回源）。 */
 (function () {
-  var VER = "20261107z";
+  var VER = "20261107aa";
   try {
     var el = document.documentElement;
     var healed = /[?&]_v=/.test(location.search);
@@ -48,14 +48,17 @@
 <title>GUIS-ULC义工组织站点 | 同一颗心同一种爱</title>
 <meta name="description" content="广州优联国际学校（GUIS）义工组织 —— 由学生自主运营的志愿服务组织。社区关怀、环保行动、教育支持、公益募捐、赛事会务与文化交流。" />
 <meta name="theme-color" content="#FFFFFF" />
-<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261107z" />
-<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261107z" />
+<link rel="icon" type="image/png" href="assets/logo/favicon.png?v=20261107aa" />
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png?v=20261107aa" />
 
 <!-- Open Graph -->
 <meta property="og:type" content="website" />
 <meta property="og:title" content="GUIS 义工组织 | 广州优联国际学校义工组织官网" />
 <meta property="og:description" content="让每一份善意都落到实地。社区关怀、环保行动、教育支持、公益募捐、赛事会务与文化交流。" />
-<meta property="og:image" content="assets/logo/guis-ulc-lockup.png" />
+<meta property="og:image" content="assets/logo/va-og-image.png?v=20261107aa" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="GUIS 义工组织 · Volunteer Association" />
 
 <!-- 品牌标志兜底样式（内联，随 HTML 一起下发）。
      即使 assets/site.css 被浏览器缓存成旧版本，标志也不会按图片原始尺寸撑破布局。
@@ -64,24 +67,24 @@
 .nav-logo{display:flex;align-items:center;gap:.5rem}
 .hero-brand{display:flex;align-items:center;justify-content:center;gap:.9rem}
 .footer-brand{display:flex;align-items:center;gap:.9rem}
-.nav-logo .logo-img,.nav-logo .logo-va{max-height:34px;width:auto}
+.nav-logo .logo-va{max-height:42px;width:auto}
 .hero-brand .hero-logo{max-width:360px;height:auto}
 .hero-brand .hero-va{max-height:96px;width:auto}
 .footer-brand img{max-height:34px;width:auto}
 @media (max-width:640px){
-  .nav-logo .logo-img,.nav-logo .logo-va{max-height:26px}
+  .nav-logo .logo-va{max-height:34px}
   .hero-brand .hero-logo{max-width:210px}
   .hero-brand .hero-va{max-height:48px}
   .footer-brand img{max-height:26px}
 }
 @media (max-width:480px){
-  .nav-logo .logo-img,.nav-logo .logo-va{max-height:24px}
+  .nav-logo .logo-va{max-height:30px}
   .hero-brand .hero-logo{max-width:175px}
   .hero-brand .hero-va{max-height:40px}
 }
 </style>
-<link rel="stylesheet" href="assets/site.css?v=20261107z" />
-<link rel="stylesheet" href="assets/app.css?v=20261107z" />
+<link rel="stylesheet" href="assets/site.css?v=20261107aa" />
+<link rel="stylesheet" href="assets/app.css?v=20261107aa" />
 <script>document.documentElement.classList.add("js");</script>
 </head>
 <!-- ⚠️ page-home 是「浮动闪现进场」的开关：site.css 里 fx-pop / fx-bob 只认这个类名，
@@ -89,7 +92,7 @@
 <body class="page-home">
 <div class="apec-bar" role="img" aria-label="喜迎 APEC CHINA 2026 深圳">
   <div class="apec-bar-inner">
-    <span class="apec-emblem" aria-hidden="true"><img src="assets/apec-2026-logo.png?v=20261107z" alt="APEC CHINA 2026 官方会标" class="apec-logo-img"></span>
+    <span class="apec-emblem" aria-hidden="true"><img src="assets/apec-2026-logo.png?v=20261107aa" alt="APEC CHINA 2026 官方会标" class="apec-logo-img"></span>
     <span class="apec-text">
       <span class="apec-title">当好东道主 · 喜迎 <span class="en">APEC</span></span>
       <span class="apec-sub">深圳 SHENZHEN · 2026年11月</span>
@@ -154,8 +157,6 @@
 <!-- Navigation -->
 <nav>
   <a href="#home" class="nav-logo">
-    <img class="logo-img" src="assets/logo/guis-ulc-lockup.png" alt="GUIS · Guangzhou Ulink International School | ULC · Ulink College" />
-    <span class="logo-div"></span>
     <img class="logo-va" src="assets/logo/va-logo.png" alt="GUIS Volunteer Association" />
     <span class="org"><span class="org-script" data-i18n="nav.org">义工组织</span></span>
   </a>
@@ -490,22 +491,22 @@
 <!-- 工作照（#gallery）已整块删除，灯箱只服务那一块的 .shot，一起删掉 -->
 
 <script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
-<script src="assets/cloud-config.js?v=20261107z"></script>
-<script src="assets/cloud.js?v=20261107z"></script>
-<script src="assets/i18n.js?v=20261107z"></script>
-<script src="assets/board.js?v=20261107z"></script>
-<script src="assets/editor.js?v=20261107z"></script>
-<script src="assets/feed.js?v=20261107z"></script>
+<script src="assets/cloud-config.js?v=20261107aa"></script>
+<script src="assets/cloud.js?v=20261107aa"></script>
+<script src="assets/i18n.js?v=20261107aa"></script>
+<script src="assets/board.js?v=20261107aa"></script>
+<script src="assets/editor.js?v=20261107aa"></script>
+<script src="assets/feed.js?v=20261107aa"></script>
 <!-- 部门成员已独立成 team.html，team.js / team-render.js 只在那一页加载 -->
-<script src="assets/queue.js?v=20261107z"></script>
-<script src="assets/nav.js?v=20261107z"></script>
-<script src="assets/navfit.js?v=20261107z"></script>
-<script src="assets/time.js?v=20261107z"></script>
-<script src="assets/roles.js?v=20261107z"></script>
-<script src="assets/session.js?v=20261107z"></script>
-<script src="assets/main.js?v=20261107z"></script>
-<script src="assets/typer.js?v=20261107z"></script>
-<script src="assets/welcome.js?v=20261107z"></script>
+<script src="assets/queue.js?v=20261107aa"></script>
+<script src="assets/nav.js?v=20261107aa"></script>
+<script src="assets/navfit.js?v=20261107aa"></script>
+<script src="assets/time.js?v=20261107aa"></script>
+<script src="assets/roles.js?v=20261107aa"></script>
+<script src="assets/session.js?v=20261107aa"></script>
+<script src="assets/main.js?v=20261107aa"></script>
+<script src="assets/typer.js?v=20261107aa"></script>
+<script src="assets/welcome.js?v=20261107aa"></script>
 <script>
 /* ---------- 首页「活动报名」板块 ----------
    看板的全部逻辑（红绿灯判定、数字、图例、以及「旧结构自愈」）都在 assets/board.js，
@@ -520,6 +521,6 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 });
 </script>
-<script src="assets/latency.js?v=20261107z"></script>
+<script src="assets/latency.js?v=20261107aa"></script>
 </body>
 </html>
